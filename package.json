@@ -1,0 +1,37 @@
+{
+  "name": "icur",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/generator": "^7.7.7",
+    "@babel/parser": "^7.7.7",
+    "@babel/plugin-transform-modules-commonjs": "^7.7.5",
+    "@babel/plugin-transform-react-jsx": "^7.7.7",
+    "@babel/preset-env": "^7.7.7",
+    "@babel/preset-typescript": "^7.7.7",
+    "@babel/template": "^7.7.4",
+    "@babel/types": "^7.7.4",
+    "@types/babylon": "^6.16.5",
+    "@types/jest": "^24.0.25",
+    "@types/react": "^16.9.17",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
+    "intl-messageformat": "^7.8.2",
+    "react-dom": "^16.12.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.7.7",
+    "@types/node": "^13.1.6",
+    "babel-jest": "^24.9.0",
+    "decache": "^4.5.1",
+    "jest": "^24.9.0",
+    "react": "^16.12.0",
+    "typescript": "^3.7.4"
+  }
+}
