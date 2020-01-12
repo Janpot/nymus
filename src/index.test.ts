@@ -3,7 +3,7 @@
 import { createComponents, render } from './test-utils';
 import * as React from 'react';
 
-describe.only('icur', () => {
+describe('icur', () => {
   it('doesn\'t allow invalid component names', () => {
     expect(() => {
       createComponents({ $hello: '' });
@@ -181,7 +181,7 @@ describe.only('icur', () => {
 })
 
 describe('numbers/dates', () => {
-  it.only('can format numbers and dates', () => {
+  it('can format numbers and dates', () => {
     const { msg } = createComponents({
       msg: 'At {theDate, time, medium} on {theDate, date, medium}, there was {text} on planet {planet, number, decimal}.'
     });
@@ -193,7 +193,7 @@ describe('numbers/dates', () => {
     expect(result).toBe('At 5:12:23 PM on Oct 5, 2017, there was a disturbance in the Force on planet 7.');
   });
 
-  it.only('can format percentages', () => {
+  it('can format percentages', () => {
     const { msg } = createComponents({
       msg: 'Score: {percentage, number, percent}.'
     });
@@ -203,7 +203,7 @@ describe('numbers/dates', () => {
     expect(result).toBe('Score: 65%.');
   });
 
-  it.only('can format currencies', () => {
+  it('can format currencies', () => {
     const { msg } = createComponents({
       msg: 'It costs {amount, number, USD}.'
     }, 'en-US', {
@@ -222,7 +222,7 @@ describe('numbers/dates', () => {
     expect(result).toBe('It costs $123.46.');
   });
 
-  describe('propTypes', () => {
+  describe.skip('propTypes', () => {
     it('allows for numbers', () => {
       const { msg } = createComponents({ msg: '{x, number}' });
       expect(render(msg, { x: 23 })).toBe('23');

@@ -122,11 +122,15 @@ function toJsx (icuNodes: mf.MessageFormatElement[], context: Context): Fragment
 }
 
 const buildNumberFormat = template.expression(`
-  React.useMemo(() => Intl.NumberFormat(%%locale%%, %%options%%), []).format(%%value%%)
+  React.useMemo(() => new Intl.NumberFormat(%%locale%%, %%options%%), []).format(%%value%%)
 `)
 
 const buildDateFormat = template.expression(`
-  React.useMemo(() => Intl.DateTimeFormat(%%locale%%, %%options%%), []).format(%%value%%)
+  React.useMemo(() => new Intl.DateTimeFormat(%%locale%%, %%options%%), []).format(%%value%%)
+`)
+
+const buildPluralRules = template.expression(`
+  React.useMemo(() => new Intl.PluralRules(%%locale%%, %%options%%), []).select(%%value%%)
 `)
 
 function getFormatOptionsAst(formats: Formatters, formatter: keyof Formatters, argStyle: string) {
@@ -175,6 +179,49 @@ function toFragment (icuNode: IcuNode, context: Context): Fragment {
         t.identifier(icuArgumentName),
         casesFragments.map(([name, fragment]) => [name, fragment.ast]),
         otherFragment.ast
+      )
+    })
+  } else if (mf.isPluralElement(icuNode)) {
+    const icuArgumentName = icuNode.value;
+    if (!icuNode.options.hasOwnProperty('other')) {
+      throw new Error('U_DEFAULT_KEYWORD_MISSING');
+    }
+    const { other, ...options } = icuNode.options;
+    const casesFragments = Object.entries(options).map(([name, caseNode]) => {
+      return [name, toFragment(caseNode.value, context)];
+    }) as [string, Fragment][];
+    const otherFragment = toFragment(other.value, context);
+    console.log(icuNode)
+    return createFragment({
+      args: mergeMaps(
+        new Map([[icuArgumentName, {}]]),
+        ...casesFragments.map(fragment => fragment[1].args),
+        otherFragment.args,
+      ),
+      ast: switchExpression(
+        t.binaryExpression(
+          '+',
+          t.stringLiteral('='),
+          t.binaryExpression(
+            '-',
+            t.identifier(icuArgumentName),
+            t.numericLiteral(icuNode.offset)
+          )
+        ),
+        casesFragments.map(([name, fragment]) => [name, fragment.ast]),
+        switchExpression(
+          buildPluralRules({
+            locale: t.identifier('undefined'),
+            options: t.identifier('undefined'),
+            value: t.binaryExpression(
+              '-',
+              t.identifier(icuArgumentName),
+              t.numericLiteral(icuNode.offset)
+            )
+          }),
+          casesFragments.map(([name, fragment]) => [name, fragment.ast]),
+          otherFragment.ast
+        )
       )
     })
   } else if (mf.isNumberElement(icuNode)) {
@@ -292,7 +339,6 @@ export default function icuToReactComponent (componentName, icuStr, options: Opt
 
   return {
     ast,
-    //args: reactFragment.args
-    args: []
+    args: fragment.args
   };
 };

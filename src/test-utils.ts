@@ -44,6 +44,7 @@ export function createComponents<T> (messages: T, locale?, formats = {}): Compon
     // create unique names to invalidate warning cache
     // https://github.com/facebook/react/blob/db6ac5c01c4ad669db7ca264bc81ae5b3d6dfa01/src/isomorphic/classic/types/checkReactTypeSpec.js#L68
     // https://github.com/facebook/react/issues/4302
+    // @ts-ignore
     component.displayName = `${component.name}<${Math.random().toString().slice(2)}>`;
   }
   return components;
