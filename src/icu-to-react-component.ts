@@ -124,17 +124,6 @@ const buildPluralRules = template.expression(`
   React.useMemo(() => new Intl.PluralRules(%%locale%%, %%options%%), []).select(%%value%%)
 `)
 
-function getFormatOptionsAst(formats: Formats, formatter: keyof Formats, argStyle: string) {
-  const format = formats[formatter][argStyle];
-  if (format) {
-    return template.expression(JSON.stringify(format), {
-      placeholderPattern: false
-    })()
-  } else {
-    return t.identifier('undefined');
-  }
-}
-
 function icuNodesToJsExpression (icuNode: IcuNode, context: ComponentContext): t.Expression {
   if (Array.isArray(icuNode)) {
     return icuNodesToJsxExpression(icuNode, context)
@@ -196,22 +185,22 @@ function icuNodesToJsExpression (icuNode: IcuNode, context: ComponentContext): t
   } else if (mf.isNumberElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
     return buildNumberFormat({
-      locale: t.stringLiteral('en'),
-      options: getFormatOptionsAst(context.formats, 'number', icuNode.style as string),
+      locale: context.getLocaleAsAst(),
+      options: context.getFormatOptionsAsAst('number', icuNode.style as string),
       value: argIdentifier
     })
   } else if (mf.isDateElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
     return buildDateFormat({
-      locale: t.stringLiteral('en'),
-      options: getFormatOptionsAst(context.formats, 'date', icuNode.style as string),
+      locale: context.getLocaleAsAst(),
+      options: context.getFormatOptionsAsAst('date', icuNode.style as string),
       value: argIdentifier
     })
   } else if (mf.isTimeElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
     return buildDateFormat({
-      locale: t.stringLiteral('en'),
-      options: getFormatOptionsAst(context.formats, 'time', icuNode.style as string),
+      locale: context.getLocaleAsAst(),
+      options: context.getFormatOptionsAsAst('time', icuNode.style as string),
       value: argIdentifier
     })
   } else {
@@ -239,7 +228,7 @@ function buildArgsAst (args: Map<string, Argument>) {
 
 interface FormatterStyles {
   [style: string]: {
-    [key: string]: any
+    [key: string]: string
   }
 }
 
@@ -277,9 +266,24 @@ class ComponentContext {
     this.args = new Map()
   }
 
-  addArgument (name: string) {
+  addArgument (name: string): t.Identifier {
     this.args.set(name, {});
     return t.identifier(name);
+  }
+
+  getLocaleAsAst (): t.Expression {
+    return this.locale ? t.stringLiteral(this.locale) : t.identifier('undefined');
+  }
+
+  getFormatOptionsAsAst (type: keyof Formats, style: string): t.Expression {
+    const format = this.formats[type][style];
+    if (format) {
+      return t.objectExpression(Object.entries(format).map(([key, value]) => {
+        return t.objectProperty(t.identifier(key), t.stringLiteral(value));
+      }));
+    } else {
+      return t.identifier('undefined');
+    }
   }
 }
 
