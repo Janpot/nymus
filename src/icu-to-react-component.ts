@@ -4,27 +4,8 @@ import template from "@babel/template";
 import * as t from '@babel/types';
 import * as babylon from '@babel/parser';
 
-function mergeMaps<T, U> (dest: Map<T, U>, ...sources: Map<T, U>[]): Map<T, U> {
-  for (const source of sources) {
-    for (const [key, value] of source.entries()) {
-      dest.set(key, value);
-    }
-  }
-  return dest;
-}
-
 interface Argument {
 
-}
-
-interface Fragment {
-  ast: t.Expression
-}
-
-function createFragment ({ ast }: Partial<Fragment> = {}): Fragment {
-  return {
-    ast: ast || t.nullLiteral()
-  };
 }
 
 type IcuNode = mf.MessageFormatElement | mf.MessageFormatElement[]
@@ -112,12 +93,16 @@ function icuNodesToJsxExpression (icuNodes: mf.MessageFormatElement[], context: 
   return interpolateJsxFragment(jsxAst, icuNodes, context);
 }
 
-const buildNumberFormat = template.expression(`
-  React.useMemo(() => new Intl.NumberFormat(%%locale%%, %%options%%), []).format(%%value%%)
+const buildNumberFormatter = template.expression(`
+  React.useMemo(() => new Intl.NumberFormat(%%locale%%, %%options%%), [])
 `)
 
-const buildDateFormat = template.expression(`
-  React.useMemo(() => new Intl.DateTimeFormat(%%locale%%, %%options%%), []).format(%%value%%)
+const buildDateTimeFormatter = template.expression(`
+  React.useMemo(() => new Intl.DateTimeFormat(%%locale%%, %%options%%), [])
+`)
+
+const buildFormatterCall = template.expression(`
+  %%formatter%%.format(%%value%%)
 `)
 
 const buildPluralRules = template.expression(`
@@ -183,46 +168,28 @@ function icuNodesToJsExpression (icuNode: IcuNode, context: ComponentContext): t
       )
     );
   } else if (mf.isNumberElement(icuNode)) {
-    const argIdentifier = context.addArgument(icuNode.value);
-    return buildNumberFormat({
+    const value = context.addArgument(icuNode.value);
+    const formatter = context.addLocalConst(buildNumberFormatter({
       locale: context.getLocaleAsAst(),
-      options: context.getFormatOptionsAsAst('number', icuNode.style as string),
-      value: argIdentifier
-    })
+      options: context.getFormatOptionsAsAst('number', icuNode.style as string)
+    }));
+    return buildFormatterCall({ formatter, value });
   } else if (mf.isDateElement(icuNode)) {
-    const argIdentifier = context.addArgument(icuNode.value);
-    return buildDateFormat({
+    const value = context.addArgument(icuNode.value);
+    const formatter = context.addLocalConst(buildDateTimeFormatter({
       locale: context.getLocaleAsAst(),
-      options: context.getFormatOptionsAsAst('date', icuNode.style as string),
-      value: argIdentifier
-    })
+      options: context.getFormatOptionsAsAst('date', icuNode.style as string)
+    }));
+    return buildFormatterCall({ formatter, value });
   } else if (mf.isTimeElement(icuNode)) {
-    const argIdentifier = context.addArgument(icuNode.value);
-    return buildDateFormat({
+    const value = context.addArgument(icuNode.value);
+    const formatter = context.addLocalConst(buildDateTimeFormatter({
       locale: context.getLocaleAsAst(),
-      options: context.getFormatOptionsAsAst('time', icuNode.style as string),
-      value: argIdentifier
-    })
+      options: context.getFormatOptionsAsAst('time', icuNode.style as string)
+    }));
+    return buildFormatterCall({ formatter, value });
   } else {
     return t.nullLiteral()
-  }
-}
-
-function buildArgsAst (args: Map<string, Argument>) {
-  if (args.size <= 0) {
-    return [];
-  } else {
-    return [
-      t.objectPattern(Array.from(args.entries(), ([name, arg]) => {
-        const identifier = t.identifier(name);
-        return t.objectProperty(
-          identifier,
-          identifier,
-          false,
-          true
-        );
-      }))
-    ];
   }
 }
 
@@ -259,16 +226,31 @@ class ComponentContext {
   locale?: string
   formats: Formats
   args: Map<string, Argument>
+  _localConsts: Map<string, t.Expression>
+  _nextId: number
 
   constructor ({ locale, formats = {} }: ComponentContextInit) {
     this.locale = locale
     this.formats = mergeFormats(IntlMessageFormat.formats, formats)
     this.args = new Map()
+    this._localConsts = new Map()
+    this._nextId = 1;
+  }
+
+  _nextLocalUidentifierName () {
+    // TODO: we might want to be smarter than this:
+    return `__icur_local__${this._nextId++}`;
   }
 
   addArgument (name: string): t.Identifier {
     this.args.set(name, {});
     return t.identifier(name);
+  }
+
+  addLocalConst (init: t.Expression): t.Identifier {
+    const name = this._nextLocalUidentifierName()
+    this._localConsts.set(name, init);
+    return t.identifier(name)
   }
 
   getLocaleAsAst (): t.Expression {
@@ -284,6 +266,33 @@ class ComponentContext {
     } else {
       return t.identifier('undefined');
     }
+  }
+
+  buildArgsAst() {
+    if (this.args.size <= 0) {
+      return [];
+    } else {
+      return [
+        t.objectPattern(Array.from(this.args.entries(), ([name, arg]) => {
+          const identifier = t.identifier(name);
+          return t.objectProperty(
+            identifier,
+            identifier,
+            false,
+            true
+          );
+        }))
+      ];
+    }
+  }
+
+  buildConstsAst (): t.Statement[] {
+    return Array.from(this._localConsts.entries(), ([name, init]) => {
+      return t.variableDeclaration(
+        'const', [
+        t.variableDeclarator(t.identifier(name), init)
+      ])
+    })
   }
 }
 
@@ -302,8 +311,9 @@ export default function icuToReactComponent (componentName: string, icuStr: stri
   const returnValue = icuNodesToJsExpression(icuAst, context);
   const ast = t.functionDeclaration(
     t.identifier(componentName),
-    buildArgsAst(mergeMaps(new Map(), context.args)),
+    context.buildArgsAst(),
     t.blockStatement([
+      ...context.buildConstsAst(),
       t.returnStatement(returnValue)
     ])
   );
