@@ -18,14 +18,12 @@ interface Argument {
 }
 
 interface Fragment {
-  args: Map<string, Argument>
   ast: t.Expression
 }
 
-function createFragment ({ ast, args }: Partial<Fragment> = {}): Fragment {
+function createFragment ({ ast }: Partial<Fragment> = {}): Fragment {
   return {
-    ast: ast || t.nullLiteral(),
-    args: args || new Map()
+    ast: ast || t.nullLiteral()
   };
 }
 
@@ -45,10 +43,9 @@ function switchExpression (discriminant: t.Expression, cases: [string, t.Express
 
 type JSXFragmentChild = (t.JSXFragment | t.JSXText | t.JSXExpressionContainer | t.JSXSpreadChild | t.JSXElement)
 
-function interpolateJsxFragment (jsxFragment: t.JSXFragment, icuNodes: mf.MessageFormatElement[], context: Context) {
+function interpolateJsxFragment (jsxFragment: t.JSXFragment, icuNodes: mf.MessageFormatElement[], context: ComponentContext) {
   const fragment = interpolateJsxFragmentChildren(jsxFragment.children, icuNodes, context);
   return {
-    args: fragment.args,
     ast: t.jsxFragment(
       t.jsxOpeningFragment(),
       t.jsxClosingFragment(),
@@ -57,15 +54,13 @@ function interpolateJsxFragment (jsxFragment: t.JSXFragment, icuNodes: mf.Messag
   }
 }
 
-function interpolateJsxFragmentChildren (jsx: JSXFragmentChild[], icuNodes: mf.MessageFormatElement[], context: Context) {
+function interpolateJsxFragmentChildren (jsx: JSXFragmentChild[], icuNodes: mf.MessageFormatElement[], context: ComponentContext) {
   const ast: JSXFragmentChild[] = [];
-  const args = new Map()
 
   for (const child of jsx) {
     if (t.isJSXFragment(child)) {
       const fragment = interpolateJsxFragment(child, icuNodes, context);
       ast.push(fragment.ast);
-      mergeMaps(args, fragment.args);
     } else if (t.isJSXExpressionContainer(child)) {
       const { expression } = child
       if (!t.isNumericLiteral(expression)) {
@@ -75,17 +70,15 @@ function interpolateJsxFragmentChildren (jsx: JSXFragmentChild[], icuNodes: mf.M
       const icuNode = icuNodes[index];
       const fragment = toFragment(icuNode, context);
       ast.push(t.jsxExpressionContainer(fragment.ast));
-      mergeMaps(args, fragment.args);
     } else if (t.isJSXElement(child)) {
       const identifier = child.openingElement.name;
       if (!t.isJSXIdentifier(identifier)) {
         throw new Error('Invalid JSX element')
       }
 
-      args.set(identifier.name, {});
+      context.addArgument(identifier.name);
 
       const fragment = interpolateJsxFragmentChildren(child.children, icuNodes, context)
-      mergeMaps(args, fragment.args);
 
       const interpolatedChild = t.jsxElement(
         child.openingElement,
@@ -99,10 +92,10 @@ function interpolateJsxFragmentChildren (jsx: JSXFragmentChild[], icuNodes: mf.M
     }
   }
 
-  return { ast, args }
+  return { ast }
 }
 
-function toJsx (icuNodes: mf.MessageFormatElement[], context: Context): Fragment {
+function toJsx (icuNodes: mf.MessageFormatElement[], context: ComponentContext): Fragment {
   if (icuNodes.length <= 0) {
     return createFragment({ ast: t.nullLiteral() });
   }
@@ -144,7 +137,7 @@ function getFormatOptionsAst(formats: Formats, formatter: keyof Formats, argStyl
   }
 }
 
-function toFragment (icuNode: IcuNode, context: Context): Fragment {
+function toFragment (icuNode: IcuNode, context: ComponentContext): Fragment {
   if (Array.isArray(icuNode)) {
     return toJsx(icuNode, context)
   } else if (mf.isLiteralElement(icuNode)) {
@@ -152,15 +145,12 @@ function toFragment (icuNode: IcuNode, context: Context): Fragment {
       ast: t.stringLiteral(icuNode.value)
     });
   } else if (mf.isArgumentElement(icuNode)) {
-    const icuArgumentName = icuNode.value;
+    const argIdentifier = context.addArgument(icuNode.value);
     return createFragment({
-      args: new Map([
-        [icuArgumentName, {}]
-      ]),
-      ast: t.identifier(icuArgumentName)
+      ast: argIdentifier
     });
   } else if (mf.isSelectElement(icuNode)) {
-    const icuArgumentName = icuNode.value;
+    const argIdentifier = context.addArgument(icuNode.value);
     if (!icuNode.options.hasOwnProperty('other')) {
       throw new Error('U_DEFAULT_KEYWORD_MISSING');
     }
@@ -170,19 +160,14 @@ function toFragment (icuNode: IcuNode, context: Context): Fragment {
     }) as [string, Fragment][];
     const otherFragment = toFragment(other.value, context);
     return createFragment({
-      args: mergeMaps(
-        new Map([[icuArgumentName, {}]]),
-        ...casesFragments.map(fragment => fragment[1].args),
-        otherFragment.args,
-      ),
       ast: switchExpression(
-        t.identifier(icuArgumentName),
+        argIdentifier,
         casesFragments.map(([name, fragment]) => [name, fragment.ast]),
         otherFragment.ast
       )
     })
   } else if (mf.isPluralElement(icuNode)) {
-    const icuArgumentName = icuNode.value;
+    const argIdentifier = context.addArgument(icuNode.value);
     if (!icuNode.options.hasOwnProperty('other')) {
       throw new Error('U_DEFAULT_KEYWORD_MISSING');
     }
@@ -192,18 +177,13 @@ function toFragment (icuNode: IcuNode, context: Context): Fragment {
     }) as [string, Fragment][];
     const otherFragment = toFragment(other.value, context);
     return createFragment({
-      args: mergeMaps(
-        new Map([[icuArgumentName, {}]]),
-        ...casesFragments.map(fragment => fragment[1].args),
-        otherFragment.args,
-      ),
       ast: switchExpression(
         t.binaryExpression(
           '+',
           t.stringLiteral('='),
           t.binaryExpression(
             '-',
-            t.identifier(icuArgumentName),
+            argIdentifier,
             t.numericLiteral(icuNode.offset)
           )
         ),
@@ -214,7 +194,7 @@ function toFragment (icuNode: IcuNode, context: Context): Fragment {
             options: t.identifier('undefined'),
             value: t.binaryExpression(
               '-',
-              t.identifier(icuArgumentName),
+              argIdentifier,
               t.numericLiteral(icuNode.offset)
             )
           }),
@@ -224,39 +204,30 @@ function toFragment (icuNode: IcuNode, context: Context): Fragment {
       )
     })
   } else if (mf.isNumberElement(icuNode)) {
-    const icuArgumentName = icuNode.value;
+    const argIdentifier = context.addArgument(icuNode.value);
     return createFragment({
-      args: new Map([
-        [icuArgumentName, {}]
-      ]),
       ast: buildNumberFormat({
         locale: t.stringLiteral('en'),
         options: getFormatOptionsAst(context.formats, 'number', icuNode.style as string),
-        value: t.identifier(icuArgumentName)
+        value: argIdentifier
       })
     });
   } else if (mf.isDateElement(icuNode)) {
-    const icuArgumentName = icuNode.value;
+    const argIdentifier = context.addArgument(icuNode.value);
     return createFragment({
-      args: new Map([
-        [icuArgumentName, {}]
-      ]),
       ast: buildDateFormat({
         locale: t.stringLiteral('en'),
         options: getFormatOptionsAst(context.formats, 'date', icuNode.style as string),
-        value: t.identifier(icuArgumentName)
+        value: argIdentifier
       })
     });
   } else if (mf.isTimeElement(icuNode)) {
-    const icuArgumentName = icuNode.value;
+    const argIdentifier = context.addArgument(icuNode.value);
     return createFragment({
-      args: new Map([
-        [icuArgumentName, {}]
-      ]),
       ast: buildDateFormat({
         locale: t.stringLiteral('en'),
         options: getFormatOptionsAst(context.formats, 'time', icuNode.style as string),
-        value: t.identifier(icuArgumentName)
+        value: argIdentifier
       })
     });
   } else {
@@ -296,11 +267,6 @@ export interface Formats {
   time: FormatterStyles
 }
 
-interface Options {
-  locale?: string
-  formats?: Partial<Formats>
-}
-
 function mergeFormats (...formattersList: Partial<Formats>[]) {
   return {
     number: Object.assign({}, ...formattersList.map(formatters => formatters.number)),
@@ -309,30 +275,35 @@ function mergeFormats (...formattersList: Partial<Formats>[]) {
   };
 }
 
-interface Context {
-  locale?: string
-  formats: Formats
-}
-
-function createContext (options: Options): Context {
-  return {
-    locale: options.locale,
-    formats: mergeFormats(IntlMessageFormat.formats, options.formats || {})
-  }
+function createContext (options: ComponentContextInit): ComponentContext {
+  return new ComponentContext(options);
 }
 
 interface ComponentContextInit {
   locale?: string
-  formats?: Formats
+  formats?: Partial<Formats>
 }
 
 class ComponentContext {
   locale?: string
-  formats?: Formats
-  constructor ({ locale, formats }: ComponentContextInit) {
+  formats: Formats
+  args: Map<string, Argument>
+
+  constructor ({ locale, formats = {} }: ComponentContextInit) {
     this.locale = locale
-    this.formats = formats
+    this.formats = mergeFormats(IntlMessageFormat.formats, formats)
+    this.args = new Map()
   }
+
+  addArgument (name: string) {
+    this.args.set(name, {});
+    return t.identifier(name);
+  }
+}
+
+interface Options {
+  locale?: string
+  formats?: Partial<Formats>
 }
 
 export default function icuToReactComponent (componentName: string, icuStr: string, options: Options) {
@@ -340,18 +311,18 @@ export default function icuToReactComponent (componentName: string, icuStr: stri
     throw new Error(`Invalid component name "${componentName}"`);
   }
 
+  const context = createContext(options)
   const icuAst = mf.parse(icuStr);
-  const fragment = toFragment(icuAst, createContext(options));
+  const fragment = toFragment(icuAst, context);
   const ast = t.functionDeclaration(
     t.identifier(componentName),
-    buildArgsAst(fragment.args),
+    buildArgsAst(mergeMaps(new Map(), context.args)),
     t.blockStatement([
       t.returnStatement(fragment.ast)
     ])
   );
 
   return {
-    ast,
-    args: fragment.args
+    ast
   };
 };

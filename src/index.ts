@@ -11,7 +11,7 @@ function createExports (messages: Messages, options: IcurOptions): t.Statement[]
   return ([] as t.Statement[]).concat(
     ...Object.entries(messages)
       .map(([componentName, message]) => {
-        const { ast, args } = icuToReactComponent(componentName, message, options);
+        const { ast } = icuToReactComponent(componentName, message, options);
         return [
           t.exportNamedDeclaration(ast, [])
         ];
