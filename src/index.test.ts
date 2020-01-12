@@ -138,10 +138,26 @@ describe('icur', () => {
     const { withFragment } = createComponents({
       withFragment: '<>foo {bar}</> baz'
     });
-    const result2 = render(withFragment, {
+    const result = render(withFragment, {
       bar: 'quux'
     });
-    expect(result2).toBe('foo quux baz');
+    expect(result).toBe('foo quux baz');
+  });
+
+  it('can interpolate "React"', () => {
+    const { withReact } = createComponents({
+      withReact: 'foo {React} <A />baz'
+    });
+    const result = render(withReact, { React: 'bar', A: () => null });
+    expect(result).toBe('foo bar baz');
+  });
+
+  it('understands jsx with <React />', () => {
+    const { withReact } = createComponents({
+      withReact: 'foo <React /> bar'
+    });
+    const result = render(withReact, { React: () => 'quux' });
+    expect(result).toBe('foo quux bar');
   });
 
   it('understands nested jsx', () => {

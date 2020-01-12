@@ -3,9 +3,10 @@ import { IntlMessageFormat } from 'intl-messageformat';
 import template from "@babel/template";
 import * as t from '@babel/types';
 import * as babylon from '@babel/parser';
+import Scope from './scope';
 
 interface Argument {
-
+  localName?: string
 }
 
 type IcuNode = mf.MessageFormatElement | mf.MessageFormatElement[]
@@ -55,16 +56,17 @@ function interpolateJsxFragmentChildren (jsx: JSXFragmentChild[], icuNodes: mf.M
         throw new Error('Invalid JSX element')
       }
 
-      context.addArgument(identifier.name);
-
+      const localName = context.addArgument(identifier.name);
       const fragment = interpolateJsxFragmentChildren(child.children, icuNodes, context)
 
+      // TODO: arguments
       const interpolatedChild = t.jsxElement(
-        child.openingElement,
-        child.closingElement,
+        t.jsxOpeningElement(t.jsxIdentifier(localName.name), [], child.openingElement.selfClosing),
+        t.jsxClosingElement(t.jsxIdentifier(localName.name)),
         fragment,
         child.selfClosing
       )
+
       ast.push(interpolatedChild)
     } else {
       ast.push(child)
@@ -207,6 +209,7 @@ function createContext (options: ComponentContextInit): ComponentContext {
 interface ComponentContextInit {
   locale?: string
   formats?: Partial<Formats>
+  scope?: Scope
 }
 
 class ComponentContext {
@@ -215,10 +218,12 @@ class ComponentContext {
   args: Map<string, Argument>
   _localConsts: Map<string, t.Expression>
   _nextId: number
+  _scope: Scope
 
-  constructor ({ locale, formats = {} }: ComponentContextInit) {
+  constructor ({ locale, formats = {}, scope }: ComponentContextInit) {
     this.locale = locale
     this.formats = mergeFormats(IntlMessageFormat.formats, formats)
+    this._scope = new Scope(scope)
     this.args = new Map()
     this._localConsts = new Map()
     this._nextId = 1;
@@ -238,19 +243,25 @@ class ComponentContext {
   }
 
   addArgument (name: string): t.Identifier {
-    this.args.set(name, {});
-    return t.identifier(name);
+    const arg: Argument = {};
+    if (this._scope.hasBinding(name)) {
+      arg.localName = this._scope.generateUid(name);
+      this._scope.registerBinding(arg.localName);
+    }
+    this.args.set(name, arg);
+    return t.identifier(arg.localName || name);
   }
 
-  addLocalConst (init: t.Expression): t.Identifier {
-    const name = this._nextLocalUidentifierName()
-    this._localConsts.set(name, init);
-    return t.identifier(name)
+  _addLocalConst (name: string, init: t.Expression): t.Identifier {
+    const scopeName = this._scope.generateUid(name);
+    this._scope.registerBinding(scopeName);
+    this._localConsts.set(scopeName, init);
+    return t.identifier(scopeName)
   }
 
   addFormatter (type: keyof Formats, style: string): t.Identifier {
-    // TODO, cache based on type+style
-    return this.addLocalConst(buildFormatter({
+    // TODO: reuse formatters based on type+style?
+    return this._addLocalConst('formatter', buildFormatter({
       format: t.identifier(this._getFormatter(type)),
       locale: this.getLocaleAsAst(),
       options: this.getFormatOptionsAsAst(type, style)
@@ -278,12 +289,13 @@ class ComponentContext {
     } else {
       return [
         t.objectPattern(Array.from(this.args.entries(), ([name, arg]) => {
-          const identifier = t.identifier(name);
+          const key = t.identifier(name);
+          const value = arg.localName ? t.identifier(arg.localName) : key
           return t.objectProperty(
-            identifier,
-            identifier,
+            key,
+            value,
             false,
-            true
+            !arg.localName
           );
         }))
       ];
@@ -301,6 +313,7 @@ class ComponentContext {
 }
 
 interface Options {
+  scope?: Scope
   locale?: string
   formats?: Partial<Formats>
 }
