@@ -38,38 +38,38 @@ describe.skip('ported intl-messageformat tests', () => {
         'other {some other amount of points}}' +
       '.';
 
-    let msgFmt = null;
-
-    beforeAll(() => {
-      msgFmt = createComponents({ msgFmt: msg }, 'ar').msgFmt;
-    });
-
     it('should match zero', () => {
+      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
       const output = render(msgFmt, { numPeople: 0 });
       expect(output).toBe('I have zero points.');
     });
 
     it('should match one', () => {
+      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
       const output = render(msgFmt, { numPeople: 1 });
       expect(output).toBe('I have a point.');
     });
 
     it('should match two', () => {
+      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
       const output = render(msgFmt, { numPeople: 2 });
       expect(output).toBe('I have two points.');
     });
 
     it('should match few', () => {
+      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
       const output = render(msgFmt, { numPeople: 5 });
       expect(output).toBe('I have a few points.');
     });
 
     it('should match many', () => {
+      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
       const output = render(msgFmt, { numPeople: 20 });
       expect(output).toBe('I have lots of points.');
     });
 
     it('should match other', () => {
+      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
       const output = render(msgFmt, { numPeople: 100 });
       expect(output).toBe('I have some other amount of points.');
     });
@@ -124,25 +124,25 @@ describe.skip('ported intl-messageformat tests', () => {
     };
 
     it('should format message en-US simple with different objects', function () {
-      const { simpleEn } = createComponents({ simpleEn: simple.en }, 'en-US');
+      const { simpleEn } = createComponents({ simpleEn: simple.en }, { locale: 'en-US' });
       expect(render(simpleEn, maleObj)).toBe('Tony went to Paris.');
       expect(render(simpleEn, femaleObj)).toBe('Jenny went to Paris.');
     });
 
     it('should format message fr-FR simple with different objects', function () {
-      const { simpleFr } = createComponents({ simpleFr: simple.fr }, 'fr-FR');
+      const { simpleFr } = createComponents({ simpleFr: simple.fr }, { locale: 'fr-FR' });
       expect(render(simpleFr, maleObj)).toBe('Tony est allé à Paris.');
       expect(render(simpleFr, femaleObj)).toBe('Jenny est allée à Paris.');
     });
 
     it('should format message en-US complex with different objects', function () {
-      const { complexEn } = createComponents({ complexEn: complex.en }, 'en-US');
+      const { complexEn } = createComponents({ complexEn: complex.en }, { locale: 'en-US' });
       expect(render(complexEn, maleTravelers)).toBe('Lucas, Tony and Drew went to Paris.');
       expect(render(complexEn, femaleTravelers)).toBe('Monica went to Paris.');
     });
 
     it('should format message fr-FR complex with different objects', function () {
-      const { complexFr } = createComponents({ complexFr: complex.fr }, 'fr-FR');
+      const { complexFr } = createComponents({ complexFr: complex.fr }, { locale: 'fr-FR' });
       expect(render(complexFr, maleTravelers)).toBe('Lucas, Tony and Drew sont allés à Paris.');
       expect(render(complexFr, femaleTravelers)).toBe('Monica est allée à Paris.');
     });
@@ -165,7 +165,7 @@ describe.skip('ported intl-messageformat tests', () => {
     };
 
     it('should format a message with en-US locale', function () {
-      const { msgFmt } = createComponents({ msgFmt: messages.en }, 'en-US');
+      const { msgFmt } = createComponents({ msgFmt: messages.en }, { locale: 'en-US' });
       expect(render(msgFmt, { COMPANY_COUNT: 0 })).toBe('0 companies published new books.');
       expect(render(msgFmt, { COMPANY_COUNT: 1 })).toBe('One company published new books.');
       expect(render(msgFmt, { COMPANY_COUNT: 2 })).toBe('2 companies published new books.');
@@ -174,7 +174,7 @@ describe.skip('ported intl-messageformat tests', () => {
     });
 
     it('should format a message with ru-RU locale', function () {
-      const { msgFmt } = createComponents({ msgFmt: messages.ru }, 'ru-RU');
+      const { msgFmt } = createComponents({ msgFmt: messages.ru }, { locale: 'ru-RU' });
       expect(render(msgFmt, { COMPANY_COUNT: 0 })).toBe('0 компаний опубликовали новые книги.');
       expect(render(msgFmt, { COMPANY_COUNT: 1 })).toBe('Одна компания опубликовала новые книги.');
       expect(render(msgFmt, { COMPANY_COUNT: 2 })).toBe('2 компании опубликовали новые книги.');
@@ -188,7 +188,7 @@ describe.skip('ported intl-messageformat tests', () => {
     var msg = 'This is my {year, selectordinal, one{#st} two{#nd} few{#rd} other{#th}} birthday.';
 
     it('should use ordinal pluralization rules', function () {
-      const { msgFmt } = createComponents({ msgFmt: msg }, 'en');
+      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'en' });
       expect(render(msgFmt, { year: 1 })).toBe('This is my 1st birthday.');
       expect(render(msgFmt, { year: 2 })).toBe('This is my 2nd birthday.');
       expect(render(msgFmt, { year: 3 })).toBe('This is my 3rd birthday.');

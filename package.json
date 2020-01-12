@@ -21,6 +21,7 @@
     "@types/babylon": "^6.16.5",
     "@types/jest": "^24.0.25",
     "@types/react": "^16.9.17",
+    "@types/react-dom": "^16.9.4",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
     "intl-messageformat": "^7.8.2",
     "react-dom": "^16.12.0"

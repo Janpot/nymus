@@ -31,9 +31,9 @@ function createFragment ({ ast, args }: Partial<Fragment> = {}): Fragment {
 
 type IcuNode = mf.MessageFormatElement | mf.MessageFormatElement[]
 
-function switchExpression (discriminant: t.Expression, cases: [string, t.Expression][], alternate: t.Expression) {
+function switchExpression (discriminant: t.Expression, cases: [string, t.Expression][], alternate: t.Expression): t.Expression {
   if (cases.length <= 0) {
-    return alternate
+    return alternate;
   }
   const [[test, consequent], ...restCases] = cases;
   return t.conditionalExpression(
@@ -133,7 +133,7 @@ const buildPluralRules = template.expression(`
   React.useMemo(() => new Intl.PluralRules(%%locale%%, %%options%%), []).select(%%value%%)
 `)
 
-function getFormatOptionsAst(formats: Formatters, formatter: keyof Formatters, argStyle: string) {
+function getFormatOptionsAst(formats: Formats, formatter: keyof Formats, argStyle: string) {
   const format = formats[formatter][argStyle];
   if (format) {
     return template.expression(JSON.stringify(format), {
@@ -191,7 +191,6 @@ function toFragment (icuNode: IcuNode, context: Context): Fragment {
       return [name, toFragment(caseNode.value, context)];
     }) as [string, Fragment][];
     const otherFragment = toFragment(other.value, context);
-    console.log(icuNode)
     return createFragment({
       args: mergeMaps(
         new Map([[icuArgumentName, {}]]),
@@ -291,18 +290,18 @@ interface FormatterStyles {
   }
 }
 
-interface Formatters {
+export interface Formats {
   number: FormatterStyles
   date: FormatterStyles
   time: FormatterStyles
 }
 
 interface Options {
-  locale: string
-  formats?: Partial<Formatters>
+  locale?: string
+  formats?: Partial<Formats>
 }
 
-function mergeFormats (...formattersList: Partial<Formatters>[]) {
+function mergeFormats (...formattersList: Partial<Formats>[]) {
   return {
     number: Object.assign({}, ...formattersList.map(formatters => formatters.number)),
     date: Object.assign({}, ...formattersList.map(formatters => formatters.date)),
@@ -311,18 +310,32 @@ function mergeFormats (...formattersList: Partial<Formatters>[]) {
 }
 
 interface Context {
-  locale: string
-  formats: Formatters
+  locale?: string
+  formats: Formats
 }
 
-function createContext (options): Context {
+function createContext (options: Options): Context {
   return {
     locale: options.locale,
     formats: mergeFormats(IntlMessageFormat.formats, options.formats || {})
   }
 }
 
-export default function icuToReactComponent (componentName, icuStr, options: Options) {
+interface ComponentContextInit {
+  locale?: string
+  formats?: Formats
+}
+
+class ComponentContext {
+  locale?: string
+  formats?: Formats
+  constructor ({ locale, formats }: ComponentContextInit) {
+    this.locale = locale
+    this.formats = formats
+  }
+}
+
+export default function icuToReactComponent (componentName: string, icuStr: string, options: Options) {
   if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(componentName)) {
     throw new Error(`Invalid component name "${componentName}"`);
   }

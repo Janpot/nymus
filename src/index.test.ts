@@ -115,7 +115,7 @@ describe('icur', () => {
     // const result1 = render(withJsx, {});
     // expect(result1).toBe('foo');
     const result2 = render(withJsx, {
-      A: ({ children }) => React.createElement('span', { className: 'bar' }, children)
+      A: ({ children }: React.PropsWithChildren<{}>) => React.createElement('span', { className: 'bar' }, children)
     });
     expect(result2).toBe('<span class="bar">foo</span>');
   });
@@ -128,7 +128,7 @@ describe('icur', () => {
     // const result1 = render(withArgJsx, { bar: 'quux' });
     // expect(result1).toBe('foo quux baz');
     const result2 = render(withArgJsx, {
-      A: ({ children }) => React.createElement('span', { className: 'bla' }, children),
+      A: ({ children }: React.PropsWithChildren<{}>) => React.createElement('span', { className: 'bla' }, children),
       bar: 'quux'
     });
     expect(result2).toBe('<span class="bla">foo quux baz</span>');
@@ -149,8 +149,8 @@ describe('icur', () => {
       withNestedJsx: '<A>foo <B>bar</B> baz</A>'
     });
     const result1 = render(withNestedJsx, {
-      A: ({ children }) => children,
-      B: ({ children }) => children
+      A: ({ children }: React.PropsWithChildren<{}>) => children,
+      B: ({ children }: React.PropsWithChildren<{}>) => children
     });
     expect(result1).toBe('foo bar baz');
   });
@@ -206,7 +206,8 @@ describe('numbers/dates', () => {
   it('can format currencies', () => {
     const { msg } = createComponents({
       msg: 'It costs {amount, number, USD}.'
-    }, 'en-US', {
+    }, {
+      locale: 'en-US',
       formats: {
         number: {
           USD: {

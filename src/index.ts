@@ -1,13 +1,17 @@
 import * as t from '@babel/types';
 import generate from '@babel/generator';
 import template from "@babel/template";
-import icuToReactComponent from './icu-to-react-component';
+import icuToReactComponent, { Formats } from './icu-to-react-component';
 
-function createExports (messages, locale, formats) {
-  return [].concat(
+interface Messages {
+  [key: string]: string
+}
+
+function createExports (messages: Messages, options: IcurOptions): t.Statement[] {
+  return ([] as t.Statement[]).concat(
     ...Object.entries(messages)
       .map(([componentName, message]) => {
-        const { ast, args } = icuToReactComponent(componentName, message, { locale, formats });
+        const { ast, args } = icuToReactComponent(componentName, message, options);
         return [
           t.exportNamedDeclaration(ast, [])
         ];
@@ -15,10 +19,15 @@ function createExports (messages, locale, formats) {
   );
 }
 
-export default function createModule (messages, locale = 'en', { formats = {} } = {}) {
+export interface IcurOptions {
+  locale?: string
+  formats?: Partial<Formats>
+}
+
+export default function createModule (messages: Messages, options: IcurOptions = {}) {
   const program = t.program([
-    template.ast`import * as React from 'react';`,
-    ...createExports(messages, locale, formats)
+    template.ast`import * as React from 'react';` as t.Statement,
+    ...createExports(messages, options)
   ]);
   return {
     code: generate(program).code,

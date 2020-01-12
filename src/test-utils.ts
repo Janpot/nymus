@@ -1,29 +1,33 @@
-import icur from './index';
+import icur, { IcurOptions } from './index';
 import * as vm from 'vm';
 import * as babelCore from '@babel/core';
 import * as React from 'react';
 import * as ReactDOMServer from 'react-dom/server';
 import * as util from 'util';
 
-function importFrom (code) {
-  const cjs = babelCore.transform(code, {
+function importFrom (code: string) {
+  const { code: cjs } = babelCore.transformSync(code, {
     plugins: [
       '@babel/plugin-transform-modules-commonjs',
       '@babel/plugin-transform-react-jsx'
     ]
-  }).code;
+  }) || {};
+
+  if (!cjs) {
+    throw new Error(`Compilation result is empty for "${code}"`)
+  }
 
   const exports = {};
   vm.runInContext(cjs, vm.createContext({
     require,
     exports,
     // react logs errors in the console
-    console: Object.assign(console, {
+    console: {
       ...console,
-      error (msg, ...args) {
-        throw new Error(util.format(msg, ...args));
+      error (format: any, ...param: any[]) {
+        throw new Error(util.format(format, ...param));
       }
-    }),
+    },
     // pass through Date constructor for instanceOf check
     Date,
     Error
@@ -31,14 +35,16 @@ function importFrom (code) {
   return exports;
 }
 
+interface Messages {
+  [key: string]: string
+}
 
 type ComponentsOf<T> = {
   [K in keyof T]: React.ElementType
 }
 
-export function createComponents<T> (messages: T, locale?, formats = {}): ComponentsOf<T> {
-  const { code } = icur(messages, locale, formats);
-  console.log(code)
+export function createComponents<T extends Messages> (messages: T, options?: IcurOptions): ComponentsOf<T> {
+  const { code } = icur(messages, options);
   const components = importFrom(code) as ComponentsOf<T>;
   for (const component of Object.values(components)) {
     // create unique names to invalidate warning cache
@@ -50,6 +56,6 @@ export function createComponents<T> (messages: T, locale?, formats = {}): Compon
   return components;
 }
 
-export function render (elm, props = {}) {
+export function render (elm: React.ElementType, props = {}) {
   return ReactDOMServer.renderToStaticMarkup(React.createElement(elm, props));
 }
