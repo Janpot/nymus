@@ -93,12 +93,8 @@ function icuNodesToJsxExpression (icuNodes: mf.MessageFormatElement[], context: 
   return interpolateJsxFragment(jsxAst, icuNodes, context);
 }
 
-const buildNumberFormatter = template.expression(`
-  React.useMemo(() => new Intl.NumberFormat(%%locale%%, %%options%%), [])
-`)
-
-const buildDateTimeFormatter = template.expression(`
-  React.useMemo(() => new Intl.DateTimeFormat(%%locale%%, %%options%%), [])
+const buildFormatter = template.expression(`
+  React.useMemo(() => new Intl.%%format%%(%%locale%%, %%options%%), [])
 `)
 
 const buildFormatterCall = template.expression(`
@@ -169,24 +165,15 @@ function icuNodesToJsExpression (icuNode: IcuNode, context: ComponentContext): t
     );
   } else if (mf.isNumberElement(icuNode)) {
     const value = context.addArgument(icuNode.value);
-    const formatter = context.addLocalConst(buildNumberFormatter({
-      locale: context.getLocaleAsAst(),
-      options: context.getFormatOptionsAsAst('number', icuNode.style as string)
-    }));
+    const formatter = context.addFormatter('number', icuNode.style as string);
     return buildFormatterCall({ formatter, value });
   } else if (mf.isDateElement(icuNode)) {
     const value = context.addArgument(icuNode.value);
-    const formatter = context.addLocalConst(buildDateTimeFormatter({
-      locale: context.getLocaleAsAst(),
-      options: context.getFormatOptionsAsAst('date', icuNode.style as string)
-    }));
+    const formatter = context.addFormatter('date', icuNode.style as string);
     return buildFormatterCall({ formatter, value });
   } else if (mf.isTimeElement(icuNode)) {
     const value = context.addArgument(icuNode.value);
-    const formatter = context.addLocalConst(buildDateTimeFormatter({
-      locale: context.getLocaleAsAst(),
-      options: context.getFormatOptionsAsAst('time', icuNode.style as string)
-    }));
+    const formatter = context.addFormatter('time', icuNode.style as string);
     return buildFormatterCall({ formatter, value });
   } else {
     return t.nullLiteral()
@@ -242,6 +229,14 @@ class ComponentContext {
     return `__icur_local__${this._nextId++}`;
   }
 
+  _getFormatter (type: keyof Formats) {
+    switch (type) {
+      case 'number': return 'NumberFormat'
+      case 'date': return 'DateTimeFormat'
+      case 'time': return 'DateTimeFormat'
+    }
+  }
+
   addArgument (name: string): t.Identifier {
     this.args.set(name, {});
     return t.identifier(name);
@@ -251,6 +246,15 @@ class ComponentContext {
     const name = this._nextLocalUidentifierName()
     this._localConsts.set(name, init);
     return t.identifier(name)
+  }
+
+  addFormatter (type: keyof Formats, style: string): t.Identifier {
+    // TODO, cache based on type+style
+    return this.addLocalConst(buildFormatter({
+      format: t.identifier(this._getFormatter(type)),
+      locale: this.getLocaleAsAst(),
+      options: this.getFormatOptionsAsAst(type, style)
+    }));
   }
 
   getLocaleAsAst (): t.Expression {
