@@ -43,24 +43,22 @@ function switchExpression (discriminant: t.Expression, cases: [string, t.Express
 
 type JSXFragmentChild = (t.JSXFragment | t.JSXText | t.JSXExpressionContainer | t.JSXSpreadChild | t.JSXElement)
 
-function interpolateJsxFragment (jsxFragment: t.JSXFragment, icuNodes: mf.MessageFormatElement[], context: ComponentContext) {
+function interpolateJsxFragment (jsxFragment: t.JSXFragment, icuNodes: mf.MessageFormatElement[], context: ComponentContext): t.JSXFragment {
   const fragment = interpolateJsxFragmentChildren(jsxFragment.children, icuNodes, context);
-  return {
-    ast: t.jsxFragment(
-      t.jsxOpeningFragment(),
-      t.jsxClosingFragment(),
-      fragment.ast
-    )
-  }
+  return t.jsxFragment(
+    t.jsxOpeningFragment(),
+    t.jsxClosingFragment(),
+    fragment
+  )
 }
 
-function interpolateJsxFragmentChildren (jsx: JSXFragmentChild[], icuNodes: mf.MessageFormatElement[], context: ComponentContext) {
+function interpolateJsxFragmentChildren (jsx: JSXFragmentChild[], icuNodes: mf.MessageFormatElement[], context: ComponentContext): JSXFragmentChild[] {
   const ast: JSXFragmentChild[] = [];
 
   for (const child of jsx) {
     if (t.isJSXFragment(child)) {
       const fragment = interpolateJsxFragment(child, icuNodes, context);
-      ast.push(fragment.ast);
+      ast.push(fragment);
     } else if (t.isJSXExpressionContainer(child)) {
       const { expression } = child
       if (!t.isNumericLiteral(expression)) {
@@ -68,8 +66,8 @@ function interpolateJsxFragmentChildren (jsx: JSXFragmentChild[], icuNodes: mf.M
       }
       const index = expression.value;
       const icuNode = icuNodes[index];
-      const fragment = toFragment(icuNode, context);
-      ast.push(t.jsxExpressionContainer(fragment.ast));
+      const fragment = icuNodesToJsExpression(icuNode, context);
+      ast.push(t.jsxExpressionContainer(fragment));
     } else if (t.isJSXElement(child)) {
       const identifier = child.openingElement.name;
       if (!t.isJSXIdentifier(identifier)) {
@@ -83,7 +81,7 @@ function interpolateJsxFragmentChildren (jsx: JSXFragmentChild[], icuNodes: mf.M
       const interpolatedChild = t.jsxElement(
         child.openingElement,
         child.closingElement,
-        fragment.ast,
+        fragment,
         child.selfClosing
       )
       ast.push(interpolatedChild)
@@ -92,12 +90,12 @@ function interpolateJsxFragmentChildren (jsx: JSXFragmentChild[], icuNodes: mf.M
     }
   }
 
-  return { ast }
+  return ast
 }
 
-function toJsx (icuNodes: mf.MessageFormatElement[], context: ComponentContext): Fragment {
+function icuNodesToJsxExpression (icuNodes: mf.MessageFormatElement[], context: ComponentContext): t.Expression {
   if (icuNodes.length <= 0) {
-    return createFragment({ ast: t.nullLiteral() });
+    return t.nullLiteral();
   }
 
   const jsxContent = icuNodes.map((icuNode, i) => {
@@ -111,7 +109,7 @@ function toJsx (icuNodes: mf.MessageFormatElement[], context: ComponentContext):
     plugins: ['jsx']
   }) as t.JSXFragment;
 
-  return createFragment(interpolateJsxFragment(jsxAst, icuNodes, context));
+  return interpolateJsxFragment(jsxAst, icuNodes, context);
 }
 
 const buildNumberFormat = template.expression(`
@@ -137,103 +135,87 @@ function getFormatOptionsAst(formats: Formats, formatter: keyof Formats, argStyl
   }
 }
 
-function toFragment (icuNode: IcuNode, context: ComponentContext): Fragment {
+function icuNodesToJsExpression (icuNode: IcuNode, context: ComponentContext): t.Expression {
   if (Array.isArray(icuNode)) {
-    return toJsx(icuNode, context)
+    return icuNodesToJsxExpression(icuNode, context)
   } else if (mf.isLiteralElement(icuNode)) {
-    return createFragment({
-      ast: t.stringLiteral(icuNode.value)
-    });
+    return t.stringLiteral(icuNode.value);
   } else if (mf.isArgumentElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
-    return createFragment({
-      ast: argIdentifier
-    });
+    return argIdentifier;
   } else if (mf.isSelectElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
     if (!icuNode.options.hasOwnProperty('other')) {
       throw new Error('U_DEFAULT_KEYWORD_MISSING');
     }
     const { other, ...options } = icuNode.options;
-    const casesFragments = Object.entries(options).map(([name, caseNode]) => {
-      return [name, toFragment(caseNode.value, context)];
-    }) as [string, Fragment][];
-    const otherFragment = toFragment(other.value, context);
-    return createFragment({
-      ast: switchExpression(
-        argIdentifier,
-        casesFragments.map(([name, fragment]) => [name, fragment.ast]),
-        otherFragment.ast
-      )
-    })
+    const cases = Object.entries(options).map(([name, caseNode]) => {
+      return [name, icuNodesToJsExpression(caseNode.value, context)];
+    }) as [string, t.Expression][];
+    const otherFragment = icuNodesToJsExpression(other.value, context);
+    return switchExpression(
+      argIdentifier,
+      cases,
+      otherFragment
+    );
   } else if (mf.isPluralElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
     if (!icuNode.options.hasOwnProperty('other')) {
       throw new Error('U_DEFAULT_KEYWORD_MISSING');
     }
     const { other, ...options } = icuNode.options;
-    const casesFragments = Object.entries(options).map(([name, caseNode]) => {
-      return [name, toFragment(caseNode.value, context)];
-    }) as [string, Fragment][];
-    const otherFragment = toFragment(other.value, context);
-    return createFragment({
-      ast: switchExpression(
+    const cases = Object.entries(options).map(([name, caseNode]) => {
+      return [name, icuNodesToJsExpression(caseNode.value, context)];
+    }) as [string, t.Expression][];
+    const otherFragment = icuNodesToJsExpression(other.value, context);
+    return switchExpression(
+      t.binaryExpression(
+        '+',
+        t.stringLiteral('='),
         t.binaryExpression(
-          '+',
-          t.stringLiteral('='),
-          t.binaryExpression(
+          '-',
+          argIdentifier,
+          t.numericLiteral(icuNode.offset)
+        )
+      ),
+      cases,
+      switchExpression(
+        buildPluralRules({
+          locale: t.identifier('undefined'),
+          options: t.identifier('undefined'),
+          value: t.binaryExpression(
             '-',
             argIdentifier,
             t.numericLiteral(icuNode.offset)
           )
-        ),
-        casesFragments.map(([name, fragment]) => [name, fragment.ast]),
-        switchExpression(
-          buildPluralRules({
-            locale: t.identifier('undefined'),
-            options: t.identifier('undefined'),
-            value: t.binaryExpression(
-              '-',
-              argIdentifier,
-              t.numericLiteral(icuNode.offset)
-            )
-          }),
-          casesFragments.map(([name, fragment]) => [name, fragment.ast]),
-          otherFragment.ast
-        )
+        }),
+        cases,
+        otherFragment
       )
-    })
+    );
   } else if (mf.isNumberElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
-    return createFragment({
-      ast: buildNumberFormat({
-        locale: t.stringLiteral('en'),
-        options: getFormatOptionsAst(context.formats, 'number', icuNode.style as string),
-        value: argIdentifier
-      })
-    });
+    return buildNumberFormat({
+      locale: t.stringLiteral('en'),
+      options: getFormatOptionsAst(context.formats, 'number', icuNode.style as string),
+      value: argIdentifier
+    })
   } else if (mf.isDateElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
-    return createFragment({
-      ast: buildDateFormat({
-        locale: t.stringLiteral('en'),
-        options: getFormatOptionsAst(context.formats, 'date', icuNode.style as string),
-        value: argIdentifier
-      })
-    });
+    return buildDateFormat({
+      locale: t.stringLiteral('en'),
+      options: getFormatOptionsAst(context.formats, 'date', icuNode.style as string),
+      value: argIdentifier
+    })
   } else if (mf.isTimeElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
-    return createFragment({
-      ast: buildDateFormat({
-        locale: t.stringLiteral('en'),
-        options: getFormatOptionsAst(context.formats, 'time', icuNode.style as string),
-        value: argIdentifier
-      })
-    });
+    return buildDateFormat({
+      locale: t.stringLiteral('en'),
+      options: getFormatOptionsAst(context.formats, 'time', icuNode.style as string),
+      value: argIdentifier
+    })
   } else {
-    return createFragment({
-      ast: t.nullLiteral()
-    });
+    return t.nullLiteral()
   }
 }
 
@@ -313,16 +295,17 @@ export default function icuToReactComponent (componentName: string, icuStr: stri
 
   const context = createContext(options)
   const icuAst = mf.parse(icuStr);
-  const fragment = toFragment(icuAst, context);
+  const returnValue = icuNodesToJsExpression(icuAst, context);
   const ast = t.functionDeclaration(
     t.identifier(componentName),
     buildArgsAst(mergeMaps(new Map(), context.args)),
     t.blockStatement([
-      t.returnStatement(fragment.ast)
+      t.returnStatement(returnValue)
     ])
   );
 
   return {
-    ast
+    ast,
+    args: context.args
   };
 };
