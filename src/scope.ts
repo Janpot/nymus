@@ -2,25 +2,30 @@ import * as t from '@babel/types';
 
 interface Binding {}
 
-const CONTEXT_VARIABLES = new Set(['arguments', 'undefined', 'Infinity', 'NaN']);
+const CONTEXT_VARIABLES = new Set([
+  'arguments',
+  'undefined',
+  'Infinity',
+  'NaN'
+]);
 
 export default class Scope {
-  _parent?: Scope
-  _bindings: Map<string, Binding>
+  _parent?: Scope;
+  _bindings: Map<string, Binding>;
 
   constructor(parent?: Scope) {
     this._parent = parent;
     this._bindings = new Map();
   }
 
-  registerBinding (name: string): void {
+  registerBinding(name: string): void {
     if (this.hasOwnBinding(name)) {
       throw new Error(`Binding "${name}" already exists`);
     }
     this._bindings.set(name, {});
   }
 
-  hasBinding (name: string): boolean {
+  hasBinding(name: string): boolean {
     return (
       CONTEXT_VARIABLES.has(name) ||
       this.hasOwnBinding(name) ||
@@ -29,21 +34,22 @@ export default class Scope {
     );
   }
 
-  hasOwnBinding (name: string): boolean {
+  hasOwnBinding(name: string): boolean {
     return this._bindings.has(name);
   }
 
-  generateUid (name: string = 'tmp'): string {
+  generateUid(name: string = 'tmp'): string {
     // remove leading and trailing underscores
-    const idBase = t.toIdentifier(name).replace(/^_+/, '').replace(/_+$/, '');
+    const idBase = t
+      .toIdentifier(name)
+      .replace(/^_+/, '')
+      .replace(/_+$/, '');
     let uid;
     let i = 0;
     do {
       uid = `_${idBase}${i > 0 ? `_${i}` : ''}`;
       i++;
-    } while (
-      this.hasBinding(uid)
-    );
+    } while (this.hasBinding(uid));
     return uid;
   }
 }

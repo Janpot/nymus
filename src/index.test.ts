@@ -4,7 +4,7 @@ import { createComponents, render } from './test-utils';
 import * as React from 'react';
 
 describe('icur', () => {
-  it('doesn\'t allow invalid component names', () => {
+  it("doesn't allow invalid component names", () => {
     expect(() => {
       createComponents({ $hello: '' });
     }).toThrow(/Invalid component name/);
@@ -86,8 +86,7 @@ describe('icur', () => {
 
   it('can nest select expressions', () => {
     const { nestedSelect } = createComponents({
-      nestedSelect:
-        `a{x, select,
+      nestedSelect: `a{x, select,
           a1 {b{y, select,
             a11 {g}
             a12 {h}
@@ -115,7 +114,8 @@ describe('icur', () => {
     // const result1 = render(withJsx, {});
     // expect(result1).toBe('foo');
     const result2 = render(withJsx, {
-      A: ({ children }: React.PropsWithChildren<{}>) => React.createElement('span', { className: 'bar' }, children)
+      A: ({ children }: React.PropsWithChildren<{}>) =>
+        React.createElement('span', { className: 'bar' }, children)
     });
     expect(result2).toBe('<span class="bar">foo</span>');
   });
@@ -128,7 +128,8 @@ describe('icur', () => {
     // const result1 = render(withArgJsx, { bar: 'quux' });
     // expect(result1).toBe('foo quux baz');
     const result2 = render(withArgJsx, {
-      A: ({ children }: React.PropsWithChildren<{}>) => React.createElement('span', { className: 'bla' }, children),
+      A: ({ children }: React.PropsWithChildren<{}>) =>
+        React.createElement('span', { className: 'bla' }, children),
       bar: 'quux'
     });
     expect(result2).toBe('<span class="bla">foo quux baz</span>');
@@ -194,19 +195,22 @@ describe('icur', () => {
     const result = render(msg1, { b: msg2Elm, d: msg3Elm });
     expect(result).toBe('a f c g e');
   });
-})
+});
 
 describe('numbers/dates', () => {
   it('can format numbers and dates', () => {
     const { msg } = createComponents({
-      msg: 'At {theDate, time, medium} on {theDate, date, medium}, there was {text} on planet {planet, number, decimal}.'
+      msg:
+        'At {theDate, time, medium} on {theDate, date, medium}, there was {text} on planet {planet, number, decimal}.'
     });
     const result = render(msg, {
       theDate: new Date(1507216343344),
       text: 'a disturbance in the Force',
       planet: 7
     });
-    expect(result).toBe('At 5:12:23 PM on Oct 5, 2017, there was a disturbance in the Force on planet 7.');
+    expect(result).toBe(
+      'At 5:12:23 PM on Oct 5, 2017, there was a disturbance in the Force on planet 7.'
+    );
   });
 
   it('can format percentages', () => {
@@ -220,19 +224,22 @@ describe('numbers/dates', () => {
   });
 
   it('can format currencies', () => {
-    const { msg } = createComponents({
-      msg: 'It costs {amount, number, USD}.'
-    }, {
-      locale: 'en-US',
-      formats: {
-        number: {
-          USD: {
-            style: 'currency',
-            currency: 'USD'
+    const { msg } = createComponents(
+      {
+        msg: 'It costs {amount, number, USD}.'
+      },
+      {
+        locale: 'en-US',
+        formats: {
+          number: {
+            USD: {
+              style: 'currency',
+              currency: 'USD'
+            }
           }
         }
       }
-    });
+    );
     const result = render(msg, {
       amount: 123.456
     });
@@ -286,29 +293,39 @@ describe('numbers/dates', () => {
       }).toThrow(/Incompatible types for "x"/);
     });
 
-    it('doesn\'t error on compatible select/number types', () => {
-      const { msg } = createComponents({ msg: '{x, number} {x, select, 1 {y} 2 {z}}' });
+    it("doesn't error on compatible select/number types", () => {
+      const { msg } = createComponents({
+        msg: '{x, number} {x, select, 1 {y} 2 {z}}'
+      });
       expect(render(msg, { x: '1' })).toBe('1 y');
       expect(render(msg, { x: 2 })).toBe('2 z');
     });
 
     it('errors on incompatible select/number types (string)', () => {
-      const { msg } = createComponents({ msg: '{x, number} {x, select, 1 {y} 2 {z}}' });
+      const { msg } = createComponents({
+        msg: '{x, number} {x, select, 1 {y} 2 {z}}'
+      });
       expect(() => {
         render(msg, { x: 'hello' });
       }).toThrow(/Failed prop type/);
     });
 
     it('errors on incompatible select/number types (out of bounds)', () => {
-      const { msg } = createComponents({ msg: '{x, number} {x, select, 1 {y} 2 {z}}' });
+      const { msg } = createComponents({
+        msg: '{x, number} {x, select, 1 {y} 2 {z}}'
+      });
       expect(() => {
         render(msg, { x: 3 });
       }).toThrow(/Failed prop type/);
     });
 
     it('renders dates', () => {
-      const { msg } = createComponents({ msg: '{x, date, short} {x, time, short}' });
-      expect(render(msg, { x: new Date(1507376462024) })).toBe('10/7/17 1:41 PM');
+      const { msg } = createComponents({
+        msg: '{x, date, short} {x, time, short}'
+      });
+      expect(render(msg, { x: new Date(1507376462024) })).toBe(
+        '10/7/17 1:41 PM'
+      );
     });
 
     it('errors on wrong date type', () => {
