@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rm -rf ./dist && tsc",
     "test": "jest",
-    "prettier": "prettier --single-quote --write \"**/*.{js,jsx,ts,tsx}\""
+    "prettier": "prettier --write --single-quote \"**/*.{js,ts,jsx,tsx,json,yml,md}\""
   },
   "keywords": [],
   "author": "",
