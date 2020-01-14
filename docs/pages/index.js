@@ -2,6 +2,50 @@ import React from 'react';
 import Head from 'next/head';
 import Nav from '../components/nav';
 
+
+/*
+interface HookResult<T, U> {
+  load: (args: T) => Promise<void>;
+  value?: U;
+  loading: boolean;
+  error?: Error;
+}
+
+function createLoader<T, U>(loadFunction: (args: T) => Promise<U>) {
+  return function useLoader(): HookResult<T, U> {
+    const [value, setValue] = React.useState<U>();
+    const [loading, setLoading] = React.useState<boolean>(false);
+    const [error, setError] = React.useState<Error>();
+
+    const load = React.useCallback(
+      async (args: T) => {
+        try {
+          setLoading(true);
+          const fetchesult = await loadFunction(args);
+          setError(undefined);
+          setValue(fetchesult);
+        } catch (err) {
+          setError(err);
+        } finally {
+          setLoading(false);
+        }
+      },
+      [loadFunction]
+    );
+
+    return React.useMemo(
+      () => ({
+        load,
+        value,
+        loading,
+        error
+      }),
+      [load, value, loading, error]
+    );
+  };
+}
+ */
+
 const Home = () => (
   <div>
     <Head>
