@@ -3,8 +3,6 @@
 import { createComponents, render } from './test-utils';
 import * as React from 'react';
 
-// beforeEach(() => jest.resetModules());
-
 describe('icur', () => {
   it("doesn't allow invalid component names", () => {
     expect(() => {

@@ -3,7 +3,6 @@ import * as vm from 'vm';
 import * as babelCore from '@babel/core';
 import * as React from 'react';
 import * as ReactDOMServer from 'react-dom/server';
-import * as util from 'util';
 
 function importFrom(code: string) {
   const { code: cjs } =
@@ -18,25 +17,13 @@ function importFrom(code: string) {
     throw new Error(`Compilation result is empty for "${code}"`);
   }
 
-  const exports = {};
-  vm.runInContext(
-    cjs,
-    vm.createContext({
-      require,
-      exports,
-      // react logs errors in the console
-      console: {
-        ...console,
-        error(format: any, ...param: any[]) {
-          throw new Error(util.format(format, ...param));
-        }
-      },
-      // pass through Date constructor for instanceOf check
-      Date,
-      Error
-    })
-  );
-  return exports;
+  const exports = {}
+  vm.runInThisContext(`
+    (require, exports) => {
+      ${cjs}
+    }
+  `)(require, exports);
+  return exports
 }
 
 interface Messages {
