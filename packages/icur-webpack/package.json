@@ -2,7 +2,7 @@
   "name": "@icur/webpack",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "dist/webpack.js",
   "scripts": {
     "build": "rm -rf ./dist && tsc",
     "test": "jest"

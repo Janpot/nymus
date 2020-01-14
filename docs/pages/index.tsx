@@ -2,7 +2,6 @@ import React from 'react';
 import Head from 'next/head';
 import Nav from '../components/nav';
 
-
 /*
 interface HookResult<T, U> {
   load: (args: T) => Promise<void>;

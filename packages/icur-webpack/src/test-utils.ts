@@ -17,13 +17,13 @@ function importFrom(code: string) {
     throw new Error(`Compilation result is empty for "${code}"`);
   }
 
-  const exports = {}
+  const exports = {};
   vm.runInThisContext(`
     (require, exports) => {
       ${cjs}
     }
   `)(require, exports);
-  return exports
+  return exports;
 }
 
 interface Messages {
