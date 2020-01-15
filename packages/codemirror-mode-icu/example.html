@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css"/>
+    <link rel="stylesheet" href="./mode.css"/>
+    <style>
+      .wrap {
+        position: relative;
+        height: 100%;
+        background: #eee;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+
+      .CodeMirror {
+        height: 100%;
+        border: 1px solid #eee;
+      }
+
+      html, body {
+        margin: 0;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <textarea id="code" name="code">Hello there  mr. {name}, how are you?
+
+Quote '{' to escape '}' or Don''t
+
+{ gender, select,
+  female {{
+    count, plural,
+       =0 {Ela não tem nenhum Pokémon}
+      one {Ela tem só um Pokémon}
+    other {Ela tem # Pokémon}
+  }}
+  other {{
+    count, plural,
+       =0 {Ele não tem nenhum Pokémon}
+      one {Ele tem só um Pokémon}
+    other {Ele tem # Pokémon}
+  }}
+}
+
+Trainers: { count, number }
+
+Caught on { catchDate, date, short }
+
+{ trainers, plural, offset:1
+   =0 {The gym is empty}
+   =1 {You are alone here}
+  one {You and # trainer}
+other {You and # trainers} }</textarea>
+    </div>
+    <!-- <script src="../../../CodeMirror/lib/codemirror.js"></script> -->
+    <script src="node_modules/codemirror/lib/codemirror.js"></script>
+    <script src="node_modules/codemirror/addon/mode/overlay.js"></script>
+    <script src="./mode.js"></script>
+    <script>
+
+      CodeMirror.defineMode('visible-whitespace', (config, { restrictTo = null }) => {
+        return {
+          flattenSpans: false,
+
+          token (stream, state) {
+            const c = stream.next();
+            const { type } = stream.baseToken();
+
+            if (restrictTo && !restrictTo.includes(type)) {
+              return null;
+            }
+
+            const tokens = [];
+
+            if (c === ' ') {
+              tokens.push('visible-space');
+            } else if (c === '\t') {
+              tokens.push('visible-tab');
+            }
+
+            if (stream.eol()) {
+              state.prevLineBaseToken = type;
+              tokens.push('visible-eol');
+            }
+
+            if (tokens.length <= 0) {
+              stream.eatWhile(/[^ \t]/);
+              if (stream.eol()) {
+                stream.backUp(1);
+              }
+              return null;
+            }
+
+            return tokens.join(' ');
+          },
+
+          blankLine (state) {
+            return 'line-cm-visible-eol';
+          }
+        };
+      });
+
+      /* global CodeMirror */
+      var myCodeMirror = CodeMirror.fromTextArea(document.getElementById('code'), {
+        value: 'function myScript(){return 100;}\n',
+        mode: { name: 'icu', showInvisible: false },
+        lineNumbers: true
+      });
+
+      myCodeMirror.addOverlay({ name: 'visible-whitespace', restrictTo: ['string', 'string-2'] });
+    </script>
+  </body>
+</html>

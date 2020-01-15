@@ -1,0 +1,36 @@
+.cm-visible-space::before,
+.cm-visible-space::before {
+  content: '·';
+}
+
+.cm-visible-tab::before,
+.cm-visible-tab::before {
+  content: '↦';
+}
+
+.cm-visible-space,
+.cm-visible-space,
+.cm-visible-tab ,
+.cm-visible-tab {
+  position: relative;
+}
+
+.cm-visible-space::before,
+.cm-visible-space::before,
+.cm-visible-tab::before ,
+.cm-visible-tab::before {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  line-height: 1em;
+  opacity: 0.3;
+}
+
+.cm-visible-eol:last-child::after,
+.cm-visible-eol:last-child::after {
+  position: absolute;
+  opacity: 0.3;
+  content: '¬'
+}
+

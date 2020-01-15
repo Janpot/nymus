@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/webpack.js",
+  "types": "dist/webpack.d.ts",
   "scripts": {
     "build": "rm -rf ./dist && tsc",
     "test": "jest"

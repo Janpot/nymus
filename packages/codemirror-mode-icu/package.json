@@ -1,0 +1,33 @@
+{
+  "name": "codemirror-mode-icu",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "npm run mocha",
+    "build": "rm -rf dist && tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/codemirror": "0.0.75",
+    "browserify": "^14.4.0",
+    "browserify-shim": "^3.8.14",
+    "chai": "^4.1.2",
+    "codemirror": "^5.50.2",
+    "mocha": "^4.0.1",
+    "typescript": "^3.7.4",
+    "watchify": "^3.9.0"
+  },
+  "dependencies": {},
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "browserify-shim": {
+    "codemirror": "global:CodeMirror"
+  }
+}
