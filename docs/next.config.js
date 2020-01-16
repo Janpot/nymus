@@ -1,5 +1,5 @@
 module.exports = {
-  experimental: {
-    css: true
+  typescript: {
+    ignoreDevErrors: true
   }
 };

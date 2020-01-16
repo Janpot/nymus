@@ -5,11 +5,11 @@ import dynamic from 'next/dynamic';
 
 import icur from '@icur/core';
 
-const IcuEditor = dynamic(() => import('../components/IcuEditor'), {
+const IcuEditor = dynamic(() => import('../src/components/IcuEditor'), {
   ssr: false
 });
 
-const Highlighter = dynamic(() => import('../components/Highlighter'), {
+const Highlighter = dynamic(() => import('../src/components/Highlighter'), {
   ssr: false
 });
 

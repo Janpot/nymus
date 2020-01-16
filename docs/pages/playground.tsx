@@ -1,7 +1,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 
-const Playground = dynamic(() => import('../components/Playground'), {
+const Playground = dynamic(() => import('../src/components/Playground'), {
   ssr: false
 });
 

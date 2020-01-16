@@ -1,7 +1,7 @@
 import * as React from 'react';
 import IcuEditor from './IcuEditor';
-import Highlighter from '../components/Highlighter';
-import icur from '@icur/core';
+import Highlighter from './Highlighter';
+import icur, { formatError } from '@icur/core';
 import { format } from 'prettier/standalone';
 import parserBabylon from 'prettier/parser-babylon';
 import { makeStyles } from '@material-ui/core/styles';
@@ -22,6 +22,13 @@ const useStyles = makeStyles(theme => ({
 
 const SAMPLE = `Hello there  mr. {name}, how are you?`;
 
+function commentLines(lines: string) {
+  return lines
+    .split('\n')
+    .map(line => `// ${line}`)
+    .join('\n');
+}
+
 export default function Playground() {
   const classes = useStyles();
   const [value, setValue] = React.useState(SAMPLE);
@@ -34,8 +41,7 @@ export default function Playground() {
       });
       return formatted;
     } catch (err) {
-      console.error(err);
-      return '// compiled code will be shown here...';
+      return commentLines(formatError(value, err));
     }
   }, [value]);
   return (
