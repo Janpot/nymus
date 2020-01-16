@@ -3,10 +3,19 @@ import Head from 'next/head';
 
 import dynamic from 'next/dynamic';
 
+import icur from '@icur/core';
+
 const IcuEditor = dynamic(() => import('../components/IcuEditor'), {
   ssr: false
 });
 
+const Highlighter = dynamic(() => import('../components/Highlighter'), {
+  ssr: false
+});
+
+const SAMPLE = `Hello there  mr. {name}, how are you?`;
+
+/*
 const SAMPLE = `
 Hello there  mr. {name}, how are you?
 
@@ -36,7 +45,7 @@ Caught on { catchDate, date, short }
    =1 {You are alone here}
   one {You and # trainer}
 other {You and # trainers} }
-`;
+`; */
 
 /*
 interface HookResult<T, U> {
@@ -83,6 +92,14 @@ function createLoader<T, U>(loadFunction: (args: T) => Promise<U>) {
 
 function Home() {
   const [value, setValue] = React.useState(SAMPLE);
+  const result: string = React.useMemo(() => {
+    try {
+      const { code } = icur({ Component: value });
+      return code;
+    } catch (err) {
+      return result;
+    }
+  }, [value]);
   return (
     <div>
       <Head>
@@ -91,6 +108,7 @@ function Home() {
       </Head>
 
       <IcuEditor value={value} onChange={setValue} />
+      <Highlighter value={result} />
       <style jsx>{`
         .hero {
           width: 100%;

@@ -8,7 +8,11 @@ const mode = getMode({}, { name: 'icu', showInvisible: false });
 
 type TokenResultArray = (string | null)[][];
 
-function pushToken(resultTokens: TokenResultArray, token: string | null, current: string) {
+function pushToken(
+  resultTokens: TokenResultArray,
+  token: string | null,
+  current: string
+) {
   if (resultTokens.length <= 0) {
     resultTokens.push([current, token]);
   } else {
@@ -36,7 +40,12 @@ function testMode(mode: Mode<any>, str: string) {
   return resultTokens;
 }
 
-function defineTest(name: string, mode: Mode<any>, input: (string[] | string)[], itFn = it) {
+function defineTest(
+  name: string,
+  mode: Mode<any>,
+  input: (string[] | string)[],
+  itFn = it
+) {
   itFn(name, () => {
     const langStr = input
       .map(token => {

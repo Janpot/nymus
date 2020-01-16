@@ -8,13 +8,19 @@
     "start": "next start"
   },
   "dependencies": {
+    "@icur/core": "1.0.0",
+    "@material-ui/core": "^4.8.3",
     "@types/react": "^16.9.17",
     "@types/react-dom": "^16.9.4",
     "codemirror": "^5.50.2",
     "codemirror-mode-icu": "0.1.0",
     "next": "9.1.7",
+    "prettier": "^1.19.1",
     "react": "16.12.0",
     "react-codemirror2": "^6.0.0",
     "react-dom": "16.12.0"
+  },
+  "devDependencies": {
+    "@types/prettier": "^1.19.0"
   }
 }
