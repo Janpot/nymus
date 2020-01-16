@@ -303,7 +303,7 @@ class ComponentContext {
   addFormatter(type: keyof Formats, style: string): t.Identifier {
     // TODO: reuse formatters based on type+style?
     return this._addLocalConst(
-      'formatter',
+      type,
       buildFormatter({
         format: t.identifier(this._getFormatter(type)),
         locale: this.getLocaleAsAst(),
