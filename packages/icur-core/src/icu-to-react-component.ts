@@ -91,10 +91,23 @@ function interpolateJsxFragmentChildren(
             if (t.isJSXSpreadAttribute(attribute)) {
               throw new Error('JSX spread is not supported');
             }
-            if (!t.isStringLiteral(attribute.value)) {
+            if (t.isStringLiteral(attribute.value)) {
+              return attribute;
+            } else if (t.isJSXExpressionContainer(attribute.value)) {
+              const { expression } = attribute.value;
+              if (!t.isNumericLiteral(expression)) {
+                throw new Error('invalid AST');
+              }
+              const index = expression.value;
+              const icuNode = icuNodes[index];
+              const fragment = icuNodesToJsExpression(icuNode, context);
+              return t.jsxAttribute(
+                attribute.name,
+                t.jsxExpressionContainer(fragment)
+              );
+            } else {
               throw new Error('Invalid JSX attribute');
             }
-            return t.jsxAttribute(attribute.name, attribute.value);
           }),
           child.openingElement.selfClosing
         ),
