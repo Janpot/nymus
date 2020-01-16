@@ -135,6 +135,27 @@ describe('icur', () => {
     expect(result2).toBe('<span class="bla">foo quux baz</span>');
   });
 
+  it('can handle jsx attributes', () => {
+    const { withFragment } = createComponents({
+      withFragment: '<Comp prop="bar">foo</Comp>'
+    });
+    const result = render(withFragment, {
+      Comp: ({ children, prop }) => `${children} ${prop}`
+    });
+    expect(result).toBe('foo bar');
+  });
+
+  it.skip('can handle jsx attributes with interpollation', () => {
+    const { withFragment } = createComponents({
+      withFragment: '<Comp prop="bar {attr} quux">foo</Comp>'
+    });
+    const result = render(withFragment, {
+      Comp: ({ children, prop }) => `${children} ${prop}`,
+      attr: 'Baz'
+    });
+    expect(result).toBe('foo bar baz quux');
+  });
+
   it('understands jsx with fragments', () => {
     const { withFragment } = createComponents({
       withFragment: '<>foo {bar}</> baz'

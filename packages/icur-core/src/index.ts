@@ -25,11 +25,12 @@ interface Position {
   column: number;
 }
 
-function formatErrorMessage (err: Error & { location?: Location }) {
+function formatErrorMessage(err: Error & { location?: Location }) {
   if (!err.location) {
     return err.message;
   }
-  return `${err.message.replace(/\.$/, '')} (${err.location.start.line}:${err.location.start.column - 1})`;
+  return `${err.message.replace(/\.$/, '')} (${err.location.start.line}:${err
+    .location.start.column - 1})`;
 }
 
 export function formatError(

@@ -84,11 +84,18 @@ function interpolateJsxFragmentChildren(
         context
       );
 
-      // TODO: arguments
       const interpolatedChild = t.jsxElement(
         t.jsxOpeningElement(
           t.jsxIdentifier(localName.name),
-          [],
+          child.openingElement.attributes.map(attribute => {
+            if (t.isJSXSpreadAttribute(attribute)) {
+              throw new Error('JSX spread is not supported');
+            }
+            if (!t.isStringLiteral(attribute.value)) {
+              throw new Error('Invalid JSX attribute');
+            }
+            return t.jsxAttribute(attribute.name, attribute.value);
+          }),
           child.openingElement.selfClosing
         ),
         t.jsxClosingElement(t.jsxIdentifier(localName.name)),
