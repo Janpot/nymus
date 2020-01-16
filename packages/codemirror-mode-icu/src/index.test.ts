@@ -1,14 +1,14 @@
-/* eslint-env mocha */
+/* eslint-env jest */
 
-const { assert } = require('chai');
-const CodeMirror = require('codemirror/addon/runmode/runmode.node');
-const { StringStream } = CodeMirror;
-require('codemirror/addon/mode/overlay.js');
-require('..');
+import { Mode, defineMode, getMode, StringStream } from 'codemirror';
+import modeFactory from './index';
 
-const mode = CodeMirror.getMode({}, { name: 'icu', showInvisible: false });
+defineMode('icu', modeFactory);
+const mode = getMode({}, { name: 'icu', showInvisible: false });
 
-function pushToken(resultTokens, token, current) {
+type TokenResultArray = (string | null)[][];
+
+function pushToken(resultTokens: TokenResultArray, token: string | null, current: string) {
   if (resultTokens.length <= 0) {
     resultTokens.push([current, token]);
   } else {
@@ -21,15 +21,14 @@ function pushToken(resultTokens, token, current) {
   }
 }
 
-function testMode(mode, str) {
-  const state = mode.startState();
+function testMode(mode: Mode<any>, str: string) {
+  const state = mode.startState!();
   const lines = str.split('/n');
-  const resultTokens = [];
+  const resultTokens: TokenResultArray = [];
   for (let lineNr = 0; lineNr < lines.length; lineNr++) {
-    const context = { lines, line: lineNr };
-    const stream = new StringStream(lines[lineNr], 2, context);
+    const stream = new StringStream(lines[lineNr]);
     while (!stream.eol()) {
-      const token = mode.token(stream, state);
+      const token = mode.token!(stream, state);
       pushToken(resultTokens, token, stream.current());
       stream.start = stream.pos;
     }
@@ -37,7 +36,7 @@ function testMode(mode, str) {
   return resultTokens;
 }
 
-function defineTest(name, mode, input, itFn = it) {
+function defineTest(name: string, mode: Mode<any>, input: (string[] | string)[], itFn = it) {
   itFn(name, () => {
     const langStr = input
       .map(token => {
@@ -48,7 +47,7 @@ function defineTest(name, mode, input, itFn = it) {
       return typeof token === 'string' ? [token, null] : token;
     });
     const gotTokens = testMode(mode, langStr);
-    assert.deepEqual(gotTokens, expectedTokens);
+    expect(gotTokens).toEqual(expectedTokens);
   });
 }
 
@@ -97,7 +96,7 @@ defineTest('no placeholder detection in top level string', mode, [
 defineTest('ignore top level closing brace', mode, [['ab}c', 'string']]);
 
 describe('escaped sequences', () => {
-  function apostropheTests(mode) {
+  function apostropheTests(mode: Mode<any>) {
     defineTest('accepts "Don\'\'t"', mode, [
       ['Don', 'string'],
       ["''", 'string-2'],
@@ -115,11 +114,11 @@ describe('escaped sequences', () => {
     ]);
   }
 
-  const doubleOptionalMode = CodeMirror.getMode(
+  const doubleOptionalMode = getMode(
     {},
     { name: 'icu', apostropheMode: 'DOUBLE_OPTIONAL', showInvisible: false }
   );
-  const doubleRequiredMode = CodeMirror.getMode(
+  const doubleRequiredMode = getMode(
     {},
     { name: 'icu', apostropheMode: 'DOUBLE_REQUIRED', showInvisible: false }
   );

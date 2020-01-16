@@ -5,21 +5,19 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "npm run mocha",
-    "build": "rm -rf dist && tsc"
+    "build": "rm -rf dist && tsc",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "@types/codemirror": "0.0.75",
-    "browserify": "^14.4.0",
-    "browserify-shim": "^3.8.14",
-    "chai": "^4.1.2",
+    "@types/jest": "^24.9.0",
+    "babel-jest": "^24.9.0",
     "codemirror": "^5.50.2",
-    "mocha": "^4.0.1",
-    "typescript": "^3.7.4",
-    "watchify": "^3.9.0"
+    "jest": "^24.9.0",
+    "typescript": "^3.7.4"
   },
   "dependencies": {},
   "browserify": {
