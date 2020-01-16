@@ -39,7 +39,6 @@ export function createComponents<T extends Messages>(
   options?: IcurOptions
 ): ComponentsOf<T> {
   const { code } = icur(messages, options);
-  console.log(code);
   const components = importFrom(code) as ComponentsOf<T>;
   for (const component of Object.values(components)) {
     // create unique names to invalidate warning cache
