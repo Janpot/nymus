@@ -60,16 +60,11 @@ function interpolateJsxFragmentChildren(
 ): JSXFragmentChild[] {
   const ast: JSXFragmentChild[] = [];
 
-  // let icuIndex = 0;
   for (const child of jsx) {
     if (t.isJSXFragment(child)) {
       const fragment = interpolateJsxFragment(child, icuNodes, context);
       ast.push(fragment);
     } else if (t.isJSXExpressionContainer(child)) {
-      const { expression } = child;
-      if (!t.isNumericLiteral(expression)) {
-        throw new Error('invalid AST');
-      }
       const icuNode = icuNodes[icuIndex];
       icuIndex++;
       const fragment = icuNodesToJsExpression(icuNode, context);
@@ -89,10 +84,6 @@ function interpolateJsxFragmentChildren(
         if (t.isStringLiteral(attribute.value)) {
           interpollatedAttributes.push(attribute);
         } else if (t.isJSXExpressionContainer(attribute.value)) {
-          const { expression } = attribute.value;
-          if (!t.isNumericLiteral(expression)) {
-            throw new Error('invalid AST');
-          }
           const icuNode = icuNodes[icuIndex];
           icuIndex++;
           const fragment = icuNodesToJsExpression(icuNode, context);
@@ -142,8 +133,15 @@ function icuNodesToJsxExpression(
 
   const jsxContent = icuNodes
     .map((icuNode, i) => {
+      if (mf.isLiteralElement(icuNode)) {
+        return icuNode.value;
+      }
       // replace anything that is not a literal with an expression container placeholder
-      return mf.isLiteralElement(icuNode) ? icuNode.value : `{${i}}`;
+      // of the same length to preserve location
+      const lines = icuNode.location!.end.line - icuNode.location!.start.line;
+      return `{${'_' +
+        '\n'.repeat(lines) +
+        ' '.repeat(icuNode.location!.end.column)}}`;
     })
     .join('');
 
@@ -403,7 +401,9 @@ export default function icuToReactComponent(
   }
 
   const context = createContext(options);
-  const icuAst = mf.parse(icuStr);
+  const icuAst = mf.parse(icuStr, {
+    captureLocation: true
+  });
   const returnValue = icuNodesToJsExpression(icuAst, context);
   const ast = t.functionDeclaration(
     t.identifier(componentName),
