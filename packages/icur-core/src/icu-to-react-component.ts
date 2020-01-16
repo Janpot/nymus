@@ -42,7 +42,8 @@ function interpolateJsxFragment(
   const fragment = interpolateJsxFragmentChildren(
     jsxFragment.children,
     icuNodes,
-    context
+    context,
+    0
   );
   return t.jsxFragment(
     t.jsxOpeningFragment(),
@@ -54,10 +55,12 @@ function interpolateJsxFragment(
 function interpolateJsxFragmentChildren(
   jsx: JSXFragmentChild[],
   icuNodes: mf.MessageFormatElement[],
-  context: ComponentContext
+  context: ComponentContext,
+  icuIndex: number
 ): JSXFragmentChild[] {
   const ast: JSXFragmentChild[] = [];
 
+  // let icuIndex = 0;
   for (const child of jsx) {
     if (t.isJSXFragment(child)) {
       const fragment = interpolateJsxFragment(child, icuNodes, context);
@@ -67,8 +70,8 @@ function interpolateJsxFragmentChildren(
       if (!t.isNumericLiteral(expression)) {
         throw new Error('invalid AST');
       }
-      const index = expression.value;
-      const icuNode = icuNodes[index];
+      const icuNode = icuNodes[icuIndex];
+      icuIndex++;
       const fragment = icuNodesToJsExpression(icuNode, context);
       ast.push(t.jsxExpressionContainer(fragment));
     } else if (t.isJSXElement(child)) {
@@ -77,38 +80,42 @@ function interpolateJsxFragmentChildren(
         throw new Error('Invalid JSX element');
       }
 
+      const interpollatedAttributes = [];
+
+      for (const attribute of child.openingElement.attributes) {
+        if (t.isJSXSpreadAttribute(attribute)) {
+          throw new Error('JSX spread is not supported');
+        }
+        if (t.isStringLiteral(attribute.value)) {
+          interpollatedAttributes.push(attribute);
+        } else if (t.isJSXExpressionContainer(attribute.value)) {
+          const { expression } = attribute.value;
+          if (!t.isNumericLiteral(expression)) {
+            throw new Error('invalid AST');
+          }
+          const icuNode = icuNodes[icuIndex];
+          icuIndex++;
+          const fragment = icuNodesToJsExpression(icuNode, context);
+          interpollatedAttributes.push(
+            t.jsxAttribute(attribute.name, t.jsxExpressionContainer(fragment))
+          );
+        } else {
+          throw new Error('Invalid JSX attribute');
+        }
+      }
+
       const localName = context.addArgument(identifier.name);
       const fragment = interpolateJsxFragmentChildren(
         child.children,
         icuNodes,
-        context
+        context,
+        icuIndex
       );
 
       const interpolatedChild = t.jsxElement(
         t.jsxOpeningElement(
           t.jsxIdentifier(localName.name),
-          child.openingElement.attributes.map(attribute => {
-            if (t.isJSXSpreadAttribute(attribute)) {
-              throw new Error('JSX spread is not supported');
-            }
-            if (t.isStringLiteral(attribute.value)) {
-              return attribute;
-            } else if (t.isJSXExpressionContainer(attribute.value)) {
-              const { expression } = attribute.value;
-              if (!t.isNumericLiteral(expression)) {
-                throw new Error('invalid AST');
-              }
-              const index = expression.value;
-              const icuNode = icuNodes[index];
-              const fragment = icuNodesToJsExpression(icuNode, context);
-              return t.jsxAttribute(
-                attribute.name,
-                t.jsxExpressionContainer(fragment)
-              );
-            } else {
-              throw new Error('Invalid JSX attribute');
-            }
-          }),
+          interpollatedAttributes,
           child.openingElement.selfClosing
         ),
         t.jsxClosingElement(t.jsxIdentifier(localName.name)),
@@ -146,7 +153,11 @@ function icuNodesToJsxExpression(
     plugins: ['jsx']
   }) as t.JSXFragment;
 
-  return interpolateJsxFragment(jsxAst, icuNodes, context);
+  const interpollatedIcuNodes = icuNodes.filter(
+    node => !mf.isLiteralElement(node)
+  );
+
+  return interpolateJsxFragment(jsxAst, interpollatedIcuNodes, context);
 }
 
 const buildFormatter = template.expression(`

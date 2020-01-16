@@ -156,6 +156,18 @@ describe('icur', () => {
     expect(result).toBe('foo bar');
   });
 
+  it('can handle jsx attributes with interpollation and children', () => {
+    const { withFragment } = createComponents({
+      withFragment: '<Comp prop={attr1}>{attr2}</Comp>'
+    });
+    const result = render(withFragment, {
+      Comp: ({ children, prop }) => `${children} ${prop}`,
+      attr1: 'bar',
+      attr2: 'foo'
+    });
+    expect(result).toBe('foo bar');
+  });
+
   it('understands jsx with fragments', () => {
     const { withFragment } = createComponents({
       withFragment: '<>foo {bar}</> baz'
