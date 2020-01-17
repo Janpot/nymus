@@ -5,12 +5,6 @@ import * as React from 'react';
 import { formatError } from './index';
 
 describe('icur', () => {
-  it("doesn't allow invalid component names", () => {
-    expect(() => {
-      createComponents({ $hello: '' });
-    }).toThrow(/Invalid component name/);
-  });
-
   it('creates empty component', () => {
     const { empty } = createComponents({ empty: '' });
     const result = render(empty);
@@ -65,6 +59,12 @@ describe('icur', () => {
       b: ['x', React.createElement('span', { key: 'key' }, 'y'), 'z']
     });
     expect(result).toBe('a x<span>y</span>z c');
+  });
+
+  it("Doesn't fail on React named component", () => {
+    const { React } = createComponents({ React: 'react' });
+    const result = render(React);
+    expect(result).toBe('react');
   });
 
   it('do select expressions', () => {
@@ -198,7 +198,7 @@ describe('icur', () => {
   });
 });
 
-function errorSnapshotTest(message) {
+function errorSnapshotTest(message: string) {
   it('error snapshot ', () => {
     expect.assertions(1);
     try {

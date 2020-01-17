@@ -387,7 +387,6 @@ interface Options {
   scope?: Scope;
   locale?: string;
   formats?: Partial<Formats>;
-  jsx?: boolean;
 }
 
 export default function icuToReactComponent(
@@ -395,16 +394,12 @@ export default function icuToReactComponent(
   icuStr: string,
   options: Options
 ) {
-  if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(componentName)) {
-    throw new Error(`Invalid component name "${componentName}"`);
-  }
-
   const context = createContext(options);
   const icuAst = mf.parse(icuStr, {
     captureLocation: true
   });
   const returnValue = icuNodesToJsExpression(icuAst, context);
-  const ast = t.functionDeclaration(
+  const ast = t.functionExpression(
     t.identifier(componentName),
     context.buildArgsAst(),
     t.blockStatement([
