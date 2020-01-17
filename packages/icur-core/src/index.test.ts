@@ -2,6 +2,7 @@
 
 import { createComponents, render } from './test-utils';
 import * as React from 'react';
+import { formatError } from './index';
 
 describe('icur', () => {
   it("doesn't allow invalid component names", () => {
@@ -135,39 +136,6 @@ describe('icur', () => {
     expect(result2).toBe('<span class="bla">foo quux baz</span>');
   });
 
-  it('can handle jsx attributes', () => {
-    const { withFragment } = createComponents({
-      withFragment: '<Comp prop="bar">foo</Comp>'
-    });
-    const result = render(withFragment, {
-      Comp: ({ children, prop }) => `${children} ${prop}`
-    });
-    expect(result).toBe('foo bar');
-  });
-
-  it('can handle jsx attributes with interpollation', () => {
-    const { withFragment } = createComponents({
-      withFragment: '<Comp prop={attr}>foo</Comp>'
-    });
-    const result = render(withFragment, {
-      Comp: ({ children, prop }) => `${children} ${prop}`,
-      attr: 'bar'
-    });
-    expect(result).toBe('foo bar');
-  });
-
-  it('can handle jsx attributes with interpollation and children', () => {
-    const { withFragment } = createComponents({
-      withFragment: '<Comp prop={attr1}>{attr2}</Comp>'
-    });
-    const result = render(withFragment, {
-      Comp: ({ children, prop }) => `${children} ${prop}`,
-      attr1: 'bar',
-      attr2: 'foo'
-    });
-    expect(result).toBe('foo bar');
-  });
-
   it('understands jsx with fragments', () => {
     const { withFragment } = createComponents({
       withFragment: '<>foo {bar}</> baz'
@@ -228,6 +196,25 @@ describe('icur', () => {
     const result = render(msg1, { b: msg2Elm, d: msg3Elm });
     expect(result).toBe('a f c g e');
   });
+});
+
+function errorSnapshotTest(message) {
+  it('error snapshot ', () => {
+    expect.assertions(1);
+    try {
+      createComponents({ message });
+    } catch (err) {
+      const formatted = formatError(message, err);
+      expect(formatted).toMatchSnapshot();
+    }
+  });
+}
+
+describe('error formatting', () => {
+  errorSnapshotTest('unclosed {argument message');
+  errorSnapshotTest('<Comp prop="bar">foo</Comp>');
+  errorSnapshotTest(`
+  <A.B>foo</A.B>`);
 });
 
 describe('numbers/dates', () => {

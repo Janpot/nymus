@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`error formatting error snapshot  1`] = `
+"> 1 | unclosed {argument message
+    |                    ^ Expected \\",\\" but \\"m\\" found."
+`;
+
+exports[`error formatting error snapshot  2`] = `
+"> 1 | <Comp prop=\\"bar\\">foo</Comp>
+    |        ^^^^^^^^^^ JSX attributes are not allowed"
+`;
+
+exports[`error formatting error snapshot  3`] = `
+"  1 | 
+> 2 |   <A.B>foo</A.B>
+    |   ^^^ Invalid JSX element"
+`;

@@ -4,6 +4,7 @@ import template from '@babel/template';
 import * as t from '@babel/types';
 import * as babylon from '@babel/parser';
 import Scope from './scope';
+import IcurError from './IcurError';
 
 interface Argument {
   localName?: string;
@@ -72,27 +73,16 @@ function interpolateJsxFragmentChildren(
     } else if (t.isJSXElement(child)) {
       const identifier = child.openingElement.name;
       if (!t.isJSXIdentifier(identifier)) {
-        throw new Error('Invalid JSX element');
+        throw new IcurError(
+          'Invalid JSX element',
+          child.openingElement.name.loc
+        );
       }
-
-      const interpollatedAttributes = [];
-
-      for (const attribute of child.openingElement.attributes) {
-        if (t.isJSXSpreadAttribute(attribute)) {
-          throw new Error('JSX spread is not supported');
-        }
-        if (t.isStringLiteral(attribute.value)) {
-          interpollatedAttributes.push(attribute);
-        } else if (t.isJSXExpressionContainer(attribute.value)) {
-          const icuNode = icuNodes[icuIndex];
-          icuIndex++;
-          const fragment = icuNodesToJsExpression(icuNode, context);
-          interpollatedAttributes.push(
-            t.jsxAttribute(attribute.name, t.jsxExpressionContainer(fragment))
-          );
-        } else {
-          throw new Error('Invalid JSX attribute');
-        }
+      if (child.openingElement.attributes.length > 0) {
+        throw new IcurError(
+          'JSX attributes are not allowed',
+          child.openingElement.attributes[0].loc
+        );
       }
 
       const localName = context.addArgument(identifier.name);
@@ -106,7 +96,7 @@ function interpolateJsxFragmentChildren(
       const interpolatedChild = t.jsxElement(
         t.jsxOpeningElement(
           t.jsxIdentifier(localName.name),
-          interpollatedAttributes,
+          [],
           child.openingElement.selfClosing
         ),
         t.jsxClosingElement(t.jsxIdentifier(localName.name)),

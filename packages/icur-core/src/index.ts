@@ -25,28 +25,19 @@ interface Position {
   column: number;
 }
 
-function formatErrorMessage(err: Error & { location?: Location }) {
-  if (!err.location) {
-    return err.message;
-  }
-  return `${err.message.replace(/\.$/, '')} (${err.location.start.line}:${err
-    .location.start.column - 1})`;
-}
-
 export function formatError(
   input: string,
   err: Error & { location?: Location; loc?: Position },
   options?: BabelCodeFrameOptions
 ): string {
-  const location = err.location || (err.loc && { start: err.loc });
+  const location =
+    err.location || (err.loc && { start: err.loc, end: err.loc });
   if (!location) {
     return err.message;
   }
-  return [
-    formatErrorMessage(err),
-    '',
-    codeFrameColumns(input, location, options)
-  ].join('\n');
+  return codeFrameColumns(input, location, {
+    message: err.message
+  });
 }
 
 export default function createModule(
