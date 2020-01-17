@@ -213,8 +213,12 @@ function errorSnapshotTest(message) {
 describe('error formatting', () => {
   errorSnapshotTest('unclosed {argument message');
   errorSnapshotTest('<Comp prop="bar">foo</Comp>');
+  errorSnapshotTest('<A.B>foo</A.B>');
   errorSnapshotTest(`
-  <A.B>foo</A.B>`);
+    {gender, select,
+      male {He}
+    }
+  `);
 });
 
 describe('numbers/dates', () => {

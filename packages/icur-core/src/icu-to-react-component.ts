@@ -129,9 +129,11 @@ function icuNodesToJsxExpression(
       // replace anything that is not a literal with an expression container placeholder
       // of the same length to preserve location
       const lines = icuNode.location!.end.line - icuNode.location!.start.line;
-      return `{${'_' +
-        '\n'.repeat(lines) +
-        ' '.repeat(icuNode.location!.end.column)}}`;
+      const columns =
+        lines > 0
+          ? icuNode.location!.end.column
+          : icuNode.location!.end.column - icuNode.location!.start.column;
+      return `{${'_' + '\n'.repeat(lines) + ' '.repeat(columns)}}`;
     })
     .join('');
 
@@ -174,7 +176,10 @@ function icuNodesToJsExpression(
   } else if (mf.isSelectElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
     if (!icuNode.options.hasOwnProperty('other')) {
-      throw new Error('U_DEFAULT_KEYWORD_MISSING');
+      throw new IcurError(
+        'A select element requires an "other"',
+        icuNode.location || null
+      );
     }
     const { other, ...options } = icuNode.options;
     const cases = Object.entries(options).map(([name, caseNode]) => {
@@ -185,7 +190,10 @@ function icuNodesToJsExpression(
   } else if (mf.isPluralElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
     if (!icuNode.options.hasOwnProperty('other')) {
-      throw new Error('U_DEFAULT_KEYWORD_MISSING');
+      throw new IcurError(
+        'A plural element requires an "other"',
+        icuNode.location || null
+      );
     }
     const { other, ...options } = icuNode.options;
     const cases = Object.entries(options).map(([name, caseNode]) => {
@@ -379,6 +387,7 @@ interface Options {
   scope?: Scope;
   locale?: string;
   formats?: Partial<Formats>;
+  jsx?: boolean;
 }
 
 export default function icuToReactComponent(

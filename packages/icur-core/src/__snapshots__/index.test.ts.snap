@@ -11,7 +11,17 @@ exports[`error formatting error snapshot  2`] = `
 `;
 
 exports[`error formatting error snapshot  3`] = `
-"  1 | 
-> 2 |   <A.B>foo</A.B>
+"> 1 | <A.B>foo</A.B>
     |   ^^^ Invalid JSX element"
+`;
+
+exports[`error formatting error snapshot  4`] = `
+"  1 | 
+> 2 |     {gender, select,
+    |     ^^^^^^^^^^^^^^^^
+> 3 |       male {He}
+    | ^^^^^^^^^^^^^^^
+> 4 |     }
+    | ^^^^^^ A select element requires an \\"other\\"
+  5 |   "
 `;
