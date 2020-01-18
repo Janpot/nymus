@@ -1,20 +1,20 @@
 import * as t from '@babel/types';
 
-type Literal =
+type Json =
   | string
   | number
   | boolean
   | null
-  | Literal[]
-  | { [key: string]: Literal };
+  | Json[]
+  | { [key: string]: Json };
 
-export function buildLiteralAst(value: Literal): t.Expression {
+export function buildJsonAst(value: Json): t.Expression {
   if (typeof value === 'string') {
     return t.stringLiteral(value);
   } else if (typeof value === 'number') {
     return t.numericLiteral(value);
   } else if (Array.isArray(value)) {
-    return t.arrayExpression(value.map(buildLiteralAst));
+    return t.arrayExpression(value.map(buildJsonAst));
   } else if (value === null) {
     return t.nullLiteral();
   } else if (typeof value === 'object') {
@@ -22,7 +22,7 @@ export function buildLiteralAst(value: Literal): t.Expression {
       Object.entries(value).map(([propKey, propValue]) => {
         return t.objectProperty(
           t.identifier(propKey),
-          buildLiteralAst(propValue)
+          buildJsonAst(propValue)
         );
       })
     );
