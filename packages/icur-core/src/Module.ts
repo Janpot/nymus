@@ -2,8 +2,9 @@ import * as t from '@babel/types';
 import template from '@babel/template';
 import Scope from './scope';
 import { IcurOptions } from '.';
-import icuToReactComponent, { Formats } from './icu-to-react-component';
 import IntlMessageFormat from 'intl-messageformat';
+import icuToReactComponent, { Formats } from './icu-to-react-component';
+import { buildLiteralAst } from './astUtils';
 
 const buildFormatter = template.expression(`
   new Intl.%%format%%(%%locale%%, %%options%%)
@@ -106,11 +107,7 @@ export default class Module {
   _getFormatOptionsAsAst(type: keyof Formats, style: string): t.Expression {
     const format = this.formats[type][style];
     if (format) {
-      return t.objectExpression(
-        Object.entries(format).map(([key, value]) => {
-          return t.objectProperty(t.identifier(key), t.stringLiteral(value));
-        })
-      );
+      return buildLiteralAst(format);
     } else {
       return t.identifier('undefined');
     }
