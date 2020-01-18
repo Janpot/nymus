@@ -315,8 +315,7 @@ class ComponentContext {
   addArgument(name: string): t.Identifier {
     const arg: Argument = {};
     if (this._scope.hasBinding(name)) {
-      arg.localName = this._scope.generateUid(name);
-      this._scope.registerBinding(arg.localName);
+      arg.localName = this._scope.createUniqueBinding(name);
     }
     this.args.set(name, arg);
     return t.identifier(arg.localName || name);
@@ -331,8 +330,7 @@ class ComponentContext {
   }
 
   addLocal(name: string, init: t.Expression): t.Identifier {
-    const localName = this._scope.generateUid(name);
-    this._scope.registerBinding(localName);
+    const localName = this._scope.createUniqueBinding(name);
     this._localConsts.set(localName, init);
     return t.identifier(localName);
   }

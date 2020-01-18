@@ -1,4 +1,4 @@
-import * as t from '@babel/types';
+import { toIdentifier } from '@babel/types';
 
 interface Binding {}
 
@@ -18,11 +18,12 @@ export default class Scope {
     this._bindings = new Map();
   }
 
-  registerBinding(name: string): void {
+  createBinding(name: string): string {
     if (this.hasOwnBinding(name)) {
       throw new Error(`Binding "${name}" already exists`);
     }
     this._bindings.set(name, {});
+    return name;
   }
 
   hasBinding(name: string): boolean {
@@ -40,8 +41,7 @@ export default class Scope {
 
   generateUid(name: string = 'tmp'): string {
     // remove leading and trailing underscores
-    const idBase = t
-      .toIdentifier(name)
+    const idBase = toIdentifier(name)
       .replace(/^_+/, '')
       .replace(/_+$/, '');
     let uid;
@@ -51,5 +51,10 @@ export default class Scope {
       i++;
     } while (this.hasBinding(uid));
     return uid;
+  }
+
+  createUniqueBinding(name: string): string {
+    const uniqueName = this.generateUid(name);
+    return this.createBinding(uniqueName);
   }
 }

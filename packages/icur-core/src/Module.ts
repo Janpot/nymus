@@ -57,7 +57,7 @@ export default class Module {
 
   constructor(options: IcurOptions) {
     this.scope = new Scope();
-    this.scope.registerBinding('React');
+    this.scope.createBinding('React');
     this.exports = new Map();
     this.formatters = new Map();
     this.locale = options.locale;
@@ -75,8 +75,7 @@ export default class Module {
       return t.identifier(formatter.localName);
     }
 
-    const localName = this.scope.generateUid(`${type}_${style}`);
-    this.scope.registerBinding(localName);
+    const localName = this.scope.createUniqueBinding(`${type}_${style}`);
     this.formatters.set(formatterKey, { localName, type, style });
 
     return t.identifier(localName);
@@ -90,9 +89,8 @@ export default class Module {
     }
 
     const localName = this.scope.hasBinding(componentName)
-      ? this.scope.generateUid(componentName)
-      : componentName;
-    this.scope.registerBinding(localName);
+      ? this.scope.createUniqueBinding(componentName)
+      : this.scope.createBinding(componentName);
 
     const { ast } = icuToReactComponent(localName, message, this);
 
