@@ -27,7 +27,7 @@ interface Position {
 export function formatError(
   input: string,
   err: Error & { location?: Location; loc?: Position },
-  options?: BabelCodeFrameOptions
+  options: Omit<BabelCodeFrameOptions, 'message'> = {}
 ): string {
   const location =
     err.location || (err.loc && { start: err.loc, end: err.loc });
@@ -35,6 +35,7 @@ export function formatError(
     return err.message;
   }
   return codeFrameColumns(input, location, {
+    ...options,
     message: err.message
   });
 }
