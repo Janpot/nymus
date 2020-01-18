@@ -1,7 +1,7 @@
 import * as React from 'react';
 import IcuEditor from './IcuEditor';
 import Highlighter from './Highlighter';
-import icur, { formatError } from '@icur/core';
+import icur, { formatError } from 'icur';
 import { format } from 'prettier/standalone';
 import parserBabylon from 'prettier/parser-babylon';
 import { makeStyles } from '@material-ui/core/styles';
