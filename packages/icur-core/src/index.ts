@@ -1,8 +1,10 @@
 import * as t from '@babel/types';
-import generate from '@babel/generator';
+import * as babel from '@babel/core';
 import { Formats } from './icu-to-react-component';
 import { codeFrameColumns, BabelCodeFrameOptions } from '@babel/code-frame';
 import Module from './Module';
+import TsPlugin from '@babel/plugin-transform-typescript';
+import * as ts from 'typescript';
 
 interface Messages {
   [key: string]: string;
@@ -11,6 +13,9 @@ interface Messages {
 export interface IcurOptions {
   locale?: string;
   formats?: Partial<Formats>;
+  ast?: boolean;
+  typescript?: boolean;
+  typings?: boolean;
 }
 
 interface Location {
@@ -51,10 +56,52 @@ export default function createModule(
     module.addMessage(componentName, message);
   }
 
-  const program = t.program(module.buildModuleAst());
+  const tsAst = t.program(module.buildModuleAst());
+
+  let typings: string | undefined;
+
+  if (!options.typescript && options.typings) {
+    const { code } = babel.transformFromAstSync(tsAst) || {};
+    if (!code) {
+      throw new Error('Failed to generate code');
+    }
+    const host = ts.createCompilerHost({});
+
+    const readFile = host.readFile;
+    host.readFile = (filename: string) => {
+      return filename === 'messages.ts' ? code : readFile(filename);
+    };
+
+    host.writeFile = (fileName: string, contents: string) => {
+      typings = contents;
+    };
+
+    const program = ts.createProgram(
+      ['messages.ts'],
+      {
+        noResolve: true,
+        types: [],
+        emitDeclarationOnly: true,
+        declaration: true
+      },
+      host
+    );
+    program.emit();
+  }
+
+  const { code, ast } =
+    babel.transformFromAstSync(tsAst, undefined, {
+      ast: options.ast,
+      plugins: [...(options.typescript ? [] : [TsPlugin])]
+    }) || {};
+
+  if (!code) {
+    throw new Error('Failed to generate code');
+  }
 
   return {
-    code: generate(program).code,
-    ast: program
+    code,
+    ast,
+    typings
   };
 }

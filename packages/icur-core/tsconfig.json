@@ -8,6 +8,7 @@
     "module": "commonjs",
     "outDir": "dist",
     "rootDir": "src",
-    "declaration": true
+    "declaration": true,
+    "typeRoots": ["src/types"]
   }
 }

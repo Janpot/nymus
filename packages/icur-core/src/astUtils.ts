@@ -1,12 +1,6 @@
 import * as t from '@babel/types';
 
-type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | Json[]
-  | { [key: string]: Json };
+type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 
 export function buildJsonAst(value: Json): t.Expression {
   if (typeof value === 'string') {
@@ -20,10 +14,7 @@ export function buildJsonAst(value: Json): t.Expression {
   } else if (typeof value === 'object') {
     return t.objectExpression(
       Object.entries(value).map(([propKey, propValue]) => {
-        return t.objectProperty(
-          t.identifier(propKey),
-          buildJsonAst(propValue)
-        );
+        return t.objectProperty(t.identifier(propKey), buildJsonAst(propValue));
       })
     );
   }

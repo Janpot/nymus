@@ -326,15 +326,17 @@ class ComponentContext {
     if (this.args.size <= 0) {
       return [];
     } else {
-      return [
-        t.objectPattern(
-          Array.from(this.args.entries(), ([name, arg]) => {
-            const key = t.identifier(name);
-            const value = arg.localName ? t.identifier(arg.localName) : key;
-            return t.objectProperty(key, value, false, !arg.localName);
-          })
-        )
-      ];
+      const argsObjectPattern = t.objectPattern(
+        Array.from(this.args.entries(), ([name, arg]) => {
+          const key = t.identifier(name);
+          const value = arg.localName ? t.identifier(arg.localName) : key;
+          return t.objectProperty(key, value, false, !arg.localName);
+        })
+      );
+      argsObjectPattern.typeAnnotation = t.tsTypeAnnotation(
+        t.tsTypeLiteral([])
+      );
+      return [argsObjectPattern];
     }
   }
 
