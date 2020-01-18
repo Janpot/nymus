@@ -1,10 +1,10 @@
 import * as mf from 'intl-messageformat-parser';
-import { IntlMessageFormat } from 'intl-messageformat';
 import template from '@babel/template';
 import * as t from '@babel/types';
 import * as babylon from '@babel/parser';
 import Scope from './scope';
 import IcurError from './IcurError';
+import Module from './Module';
 
 interface Argument {
   localName?: string;
@@ -150,10 +150,6 @@ function icuNodesToJsxExpression(
   return interpolateJsxFragment(jsxAst, interpollatedIcuNodes, context);
 }
 
-const buildFormatter = template.expression(`
-  React.useMemo(() => new Intl.%%format%%(%%locale%%, %%options%%), [])
-`);
-
 const buildFormatterCall = template.expression(`
   %%formatter%%.format(%%value%%)
 `);
@@ -223,15 +219,15 @@ function icuNodesToJsExpression(
     );
   } else if (mf.isNumberElement(icuNode)) {
     const value = context.addArgument(icuNode.value);
-    const formatter = context.addFormatter('number', icuNode.style as string);
+    const formatter = context.useFormatter('number', icuNode.style as string);
     return buildFormatterCall({ formatter, value });
   } else if (mf.isDateElement(icuNode)) {
     const value = context.addArgument(icuNode.value);
-    const formatter = context.addFormatter('date', icuNode.style as string);
+    const formatter = context.useFormatter('date', icuNode.style as string);
     return buildFormatterCall({ formatter, value });
   } else if (mf.isTimeElement(icuNode)) {
     const value = context.addArgument(icuNode.value);
-    const formatter = context.addFormatter('time', icuNode.style as string);
+    const formatter = context.useFormatter('time', icuNode.style as string);
     return buildFormatterCall({ formatter, value });
   } else {
     return t.nullLiteral();
@@ -250,64 +246,29 @@ export interface Formats {
   time: FormatterStyles;
 }
 
-function mergeFormats(...formattersList: Partial<Formats>[]) {
-  return {
-    number: Object.assign(
-      {},
-      ...formattersList.map(formatters => formatters.number)
-    ),
-    date: Object.assign(
-      {},
-      ...formattersList.map(formatters => formatters.date)
-    ),
-    time: Object.assign(
-      {},
-      ...formattersList.map(formatters => formatters.time)
-    )
-  };
-}
-
-function createContext(options: ComponentContextInit): ComponentContext {
-  return new ComponentContext(options);
-}
-
-interface ComponentContextInit {
-  locale?: string;
-  formats?: Partial<Formats>;
-  scope?: Scope;
+function createContext(module: Module): ComponentContext {
+  return new ComponentContext(module);
 }
 
 class ComponentContext {
-  locale?: string;
-  formats: Formats;
+  _module: Module;
   args: Map<string, Argument>;
   _localConsts: Map<string, t.Expression>;
-  _nextId: number;
   _scope: Scope;
 
-  constructor({ locale, formats = {}, scope }: ComponentContextInit) {
-    this.locale = locale;
-    this.formats = mergeFormats(IntlMessageFormat.formats, formats);
-    this._scope = new Scope(scope);
+  constructor(module: Module) {
+    this._module = module;
+    this._scope = new Scope(module.scope);
     this.args = new Map();
     this._localConsts = new Map();
-    this._nextId = 1;
   }
 
-  _nextLocalUidentifierName() {
-    // TODO: we might want to be smarter than this:
-    return `__icur_local__${this._nextId++}`;
+  get locale() {
+    return this._module.locale;
   }
 
-  _getFormatter(type: keyof Formats) {
-    switch (type) {
-      case 'number':
-        return 'NumberFormat';
-      case 'date':
-        return 'DateTimeFormat';
-      case 'time':
-        return 'DateTimeFormat';
-    }
+  get formats() {
+    return this._module.formats;
   }
 
   addArgument(name: string): t.Identifier {
@@ -320,42 +281,8 @@ class ComponentContext {
     return t.identifier(arg.localName || name);
   }
 
-  _addLocalConst(name: string, init: t.Expression): t.Identifier {
-    const scopeName = this._scope.generateUid(name);
-    this._scope.registerBinding(scopeName);
-    this._localConsts.set(scopeName, init);
-    return t.identifier(scopeName);
-  }
-
-  addFormatter(type: keyof Formats, style: string): t.Identifier {
-    // TODO: reuse formatters based on type+style?
-    return this._addLocalConst(
-      type,
-      buildFormatter({
-        format: t.identifier(this._getFormatter(type)),
-        locale: this.getLocaleAsAst(),
-        options: this.getFormatOptionsAsAst(type, style)
-      })
-    );
-  }
-
-  getLocaleAsAst(): t.Expression {
-    return this.locale
-      ? t.stringLiteral(this.locale)
-      : t.identifier('undefined');
-  }
-
-  getFormatOptionsAsAst(type: keyof Formats, style: string): t.Expression {
-    const format = this.formats[type][style];
-    if (format) {
-      return t.objectExpression(
-        Object.entries(format).map(([key, value]) => {
-          return t.objectProperty(t.identifier(key), t.stringLiteral(value));
-        })
-      );
-    } else {
-      return t.identifier('undefined');
-    }
+  useFormatter(type: keyof Formats, style: string): t.Identifier {
+    return this._module.useFormatter(type, style);
   }
 
   buildArgsAst() {
@@ -383,18 +310,12 @@ class ComponentContext {
   }
 }
 
-interface Options {
-  scope?: Scope;
-  locale?: string;
-  formats?: Partial<Formats>;
-}
-
 export default function icuToReactComponent(
   componentName: string,
   icuStr: string,
-  options: Options
+  module: Module
 ) {
-  const context = createContext(options);
+  const context = createContext(module);
   const icuAst = mf.parse(icuStr, {
     captureLocation: true
   });

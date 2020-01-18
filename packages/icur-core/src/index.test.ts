@@ -247,6 +247,17 @@ describe('numbers/dates', () => {
     expect(result).toBe('Score: 65%.');
   });
 
+  it('can reuse formatters', () => {
+    const { msg } = createComponents({
+      msg: 'Score: {score, number, percent}, Maximum: {max, number, percent}.'
+    });
+    const result = render(msg, {
+      score: 0.6549,
+      max: 0.9436
+    });
+    expect(result).toBe('Score: 65%, Maximum: 94%.');
+  });
+
   it('can format currencies', () => {
     const { msg } = createComponents(
       {
