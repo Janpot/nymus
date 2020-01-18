@@ -2,7 +2,7 @@
 
 import { createComponents, render } from './test-utils';
 
-describe.skip('ported intl-messageformat tests', () => {
+describe('ported intl-messageformat tests', () => {
   describe('using a string pattern', () => {
     it('should properly replace direct arguments in the string', () => {
       const { mf } = createComponents({ mf: 'My name is {FIRST} {LAST}.' });

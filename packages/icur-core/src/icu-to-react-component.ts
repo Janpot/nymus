@@ -155,7 +155,11 @@ const buildFormatterCall = template.expression(`
 `);
 
 const buildPluralRules = template.expression(`
-  React.useMemo(() => new Intl.PluralRules(%%locale%%, %%options%%), []).select(%%value%%)
+  React.useMemo(() => new Intl.PluralRules(%%locale%%, %%options%%), [])
+`);
+
+const buildPluralRulesCall = template.expression(`
+  %%formatter%%.select(%%value%%)
 `);
 
 function icuNodesToJsExpression(
@@ -185,6 +189,12 @@ function icuNodesToJsExpression(
     return switchExpression(argIdentifier, cases, otherFragment);
   } else if (mf.isPluralElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
+    const formatter = context.useFormatter('number', 'decimal');
+    const formatted = context.addLocal(
+      'formatted',
+      buildFormatterCall({ formatter, value: argIdentifier })
+    );
+    context.enterPlural(formatted);
     if (!icuNode.options.hasOwnProperty('other')) {
       throw new IcurError(
         'A plural element requires an "other"',
@@ -196,27 +206,42 @@ function icuNodesToJsExpression(
       return [name, icuNodesToJsExpression(caseNode.value, context)];
     }) as [string, t.Expression][];
     const otherFragment = icuNodesToJsExpression(other.value, context);
-    return switchExpression(
-      t.binaryExpression(
-        '+',
-        t.stringLiteral('='),
-        t.binaryExpression('-', argIdentifier, t.numericLiteral(icuNode.offset))
-      ),
-      cases,
-      switchExpression(
-        buildPluralRules({
-          locale: t.identifier('undefined'),
-          options: t.identifier('undefined'),
-          value: t.binaryExpression(
-            '-',
-            argIdentifier,
-            t.numericLiteral(icuNode.offset)
+    const pluralRules = context.addLocal(
+      'plural',
+      buildPluralRules({
+        locale: context.getLocaleAsAst(),
+        options: t.objectExpression([
+          t.objectProperty(
+            t.identifier('type'),
+            icuNode.pluralType
+              ? t.stringLiteral(icuNode.pluralType)
+              : t.identifier('undefined')
           )
-        }),
-        cases,
-        otherFragment
-      )
+        ])
+      })
     );
+    const withOffset = context.addLocal(
+      'withOffset',
+      t.binaryExpression('-', argIdentifier, t.numericLiteral(icuNode.offset))
+    );
+    const exact = context.addLocal(
+      'exact',
+      t.binaryExpression('+', t.stringLiteral('='), withOffset)
+    );
+    const localized = context.addLocal(
+      'localized',
+      buildPluralRulesCall({
+        formatter: pluralRules,
+        value: withOffset
+      })
+    );
+    const ast = switchExpression(
+      exact,
+      cases,
+      switchExpression(localized, cases, otherFragment)
+    );
+    context.exitPlural();
+    return ast;
   } else if (mf.isNumberElement(icuNode)) {
     const value = context.addArgument(icuNode.value);
     const formatter = context.useFormatter('number', icuNode.style as string);
@@ -229,8 +254,10 @@ function icuNodesToJsExpression(
     const value = context.addArgument(icuNode.value);
     const formatter = context.useFormatter('time', icuNode.style as string);
     return buildFormatterCall({ formatter, value });
+  } else if (mf.isPoundElement(icuNode)) {
+    return context.getPound();
   } else {
-    return t.nullLiteral();
+    throw new Error(`Unknown AST node type`);
   }
 }
 
@@ -255,12 +282,26 @@ class ComponentContext {
   args: Map<string, Argument>;
   _localConsts: Map<string, t.Expression>;
   _scope: Scope;
+  _poundStack: t.Identifier[];
 
   constructor(module: Module) {
     this._module = module;
     this._scope = new Scope(module.scope);
     this.args = new Map();
     this._localConsts = new Map();
+    this._poundStack = [];
+  }
+
+  enterPlural(identifier: t.Identifier) {
+    this._poundStack.unshift(identifier);
+  }
+
+  exitPlural() {
+    this._poundStack.shift();
+  }
+
+  getPound() {
+    return this._poundStack[0];
   }
 
   get locale() {
@@ -283,6 +324,17 @@ class ComponentContext {
 
   useFormatter(type: keyof Formats, style: string): t.Identifier {
     return this._module.useFormatter(type, style);
+  }
+
+  getLocaleAsAst() {
+    return this._module.getLocaleAsAst();
+  }
+
+  addLocal(name: string, init: t.Expression): t.Identifier {
+    const localName = this._scope.generateUid(name);
+    this._scope.registerBinding(localName);
+    this._localConsts.set(localName, init);
+    return t.identifier(localName);
   }
 
   buildArgsAst() {
