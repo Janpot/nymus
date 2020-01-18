@@ -154,10 +154,6 @@ const buildFormatterCall = template.expression(`
   %%formatter%%.format(%%value%%)
 `);
 
-const buildPluralRules = template.expression(`
-  React.useMemo(() => new Intl.PluralRules(%%locale%%, %%options%%), [])
-`);
-
 const buildPluralRulesCall = template.expression(`
   %%formatter%%.select(%%value%%)
 `);
@@ -206,20 +202,7 @@ function icuNodesToJsExpression(
       return [name, icuNodesToJsExpression(caseNode.value, context)];
     }) as [string, t.Expression][];
     const otherFragment = icuNodesToJsExpression(other.value, context);
-    const pluralRules = context.addLocal(
-      'plural',
-      buildPluralRules({
-        locale: context.getLocaleAsAst(),
-        options: t.objectExpression([
-          t.objectProperty(
-            t.identifier('type'),
-            icuNode.pluralType
-              ? t.stringLiteral(icuNode.pluralType)
-              : t.identifier('undefined')
-          )
-        ])
-      })
-    );
+    const pluralRules = context.usePlural(icuNode.pluralType);
     const withOffset = context.addLocal(
       'withOffset',
       t.binaryExpression('-', argIdentifier, t.numericLiteral(icuNode.offset))
@@ -323,6 +306,10 @@ class ComponentContext {
 
   useFormatter(type: keyof Formats, style: string): t.Identifier {
     return this._module.useFormatter(type, style);
+  }
+
+  usePlural(type?: 'ordinal' | 'cardinal'): t.Identifier {
+    return this._module.usePlural(type);
   }
 
   getLocaleAsAst() {

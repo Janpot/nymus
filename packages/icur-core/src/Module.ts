@@ -49,18 +49,25 @@ interface Formatter {
   style: string;
 }
 
+interface SharedConst {
+  localName: string;
+  init: t.Expression;
+}
+
 export default class Module {
-  scope: Scope;
-  exports: Map<string, Export>;
-  formatters: Map<string, Formatter>;
-  locale?: string;
-  formats: Formats;
+  readonly scope: Scope;
+  readonly exports: Map<string, Export>;
+  readonly formatters: Map<string, Formatter>;
+  readonly _sharedConsts: Map<string, SharedConst>;
+  readonly locale?: string;
+  readonly formats: Formats;
 
   constructor(options: IcurOptions) {
     this.scope = new Scope();
     this.scope.createBinding('React');
     this.exports = new Map();
     this.formatters = new Map();
+    this._sharedConsts = new Map();
     this.locale = options.locale;
     this.formats = mergeFormats(
       IntlMessageFormat.formats,
@@ -68,18 +75,43 @@ export default class Module {
     );
   }
 
-  useFormatter(type: keyof Formats, style: string): t.Identifier {
-    const formatterKey = JSON.stringify([type, style]);
-
-    const formatter = this.formatters.get(formatterKey);
-    if (formatter) {
-      return t.identifier(formatter.localName);
+  _useSharedConst(
+    key: string,
+    name: string,
+    build: () => t.Expression
+  ): t.Identifier {
+    const sharedConst = this._sharedConsts.get(key);
+    if (sharedConst) {
+      return t.identifier(sharedConst.localName);
     }
 
-    const localName = this.scope.createUniqueBinding(`${type}_${style}`);
-    this.formatters.set(formatterKey, { localName, type, style });
-
+    const localName = this.scope.createUniqueBinding(name);
+    this._sharedConsts.set(key, { localName, init: build() });
     return t.identifier(localName);
+  }
+
+  useFormatter(type: keyof Formats, style: string): t.Identifier {
+    const sharedKey = JSON.stringify(['formatter', type, style]);
+
+    return this._useSharedConst(sharedKey, `f_${type}_${style}`, () => {
+      return buildFormatter({
+        format: t.identifier(getIntlFormatter(type)),
+        locale: this.getLocaleAsAst(),
+        options: this._getFormatOptionsAsAst(type, style)
+      });
+    });
+  }
+
+  usePlural(type?: 'ordinal' | 'cardinal'): t.Identifier {
+    const sharedKey = JSON.stringify(['plural', type]);
+
+    return this._useSharedConst(sharedKey, `p_${type}`, () => {
+      return buildFormatter({
+        format: t.identifier('PluralRules'),
+        locale: this.getLocaleAsAst(),
+        options: type ? buildLiteralAst({ type }) : t.identifier('undefined')
+      });
+    });
   }
 
   addMessage(componentName: string, message: string) {
@@ -106,32 +138,22 @@ export default class Module {
 
   _getFormatOptionsAsAst(type: keyof Formats, style: string): t.Expression {
     const format = this.formats[type][style];
-    if (format) {
-      return buildLiteralAst(format);
-    } else {
-      return t.identifier('undefined');
-    }
+    return format ? buildLiteralAst(format) : t.identifier('undefined');
   }
 
-  _buildFormatterAst(formatter: Formatter): t.Statement {
+  _buildSharedConstAst(sharedConst: SharedConst): t.Statement {
     return t.variableDeclaration('const', [
       t.variableDeclarator(
-        t.identifier(formatter.localName),
-        buildFormatter({
-          format: t.identifier(getIntlFormatter(formatter.type)),
-          locale: this.getLocaleAsAst(),
-          options: this._getFormatOptionsAsAst(formatter.type, formatter.style)
-        })
+        t.identifier(sharedConst.localName),
+        sharedConst.init
       )
     ]);
   }
 
   buildModuleAst() {
     const formatterDeclarations = Array.from(
-      this.formatters.values(),
-      formatter => {
-        return this._buildFormatterAst(formatter);
-      }
+      this._sharedConsts.values(),
+      sharedConst => this._buildSharedConstAst(sharedConst)
     );
     const componentDeclarations: t.Statement[] = [];
     const exportSpecifiers: t.ExportSpecifier[] = [];
