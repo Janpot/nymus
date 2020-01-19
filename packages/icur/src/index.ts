@@ -15,7 +15,7 @@ export interface IcurOptions {
   formats?: Partial<Formats>;
   ast?: boolean;
   typescript?: boolean;
-  typings?: boolean;
+  declarations?: boolean;
 }
 
 interface Location {
@@ -58,9 +58,9 @@ export default function createModule(
 
   const tsAst = t.program(module.buildModuleAst());
 
-  let typings: string | undefined;
+  let declarations: string | undefined;
 
-  if (!options.typescript && options.typings) {
+  if (!options.typescript && options.declarations) {
     const { code } = babel.transformFromAstSync(tsAst) || {};
     if (!code) {
       throw new Error('Failed to generate code');
@@ -73,7 +73,7 @@ export default function createModule(
     };
 
     host.writeFile = (fileName: string, contents: string) => {
-      typings = contents;
+      declarations = contents;
     };
 
     const program = ts.createProgram(
@@ -102,6 +102,6 @@ export default function createModule(
   return {
     code,
     ast,
-    typings
+    declarations
   };
 }
