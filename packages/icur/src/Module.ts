@@ -61,6 +61,7 @@ export default class Module {
   readonly _sharedConsts: Map<string, SharedConst>;
   readonly locale?: string;
   readonly formats: Formats;
+  readonly react: boolean;
 
   constructor(options: IcurOptions) {
     this.scope = new Scope();
@@ -69,6 +70,7 @@ export default class Module {
     this.formatters = new Map();
     this._sharedConsts = new Map();
     this.locale = options.locale;
+    this.react = options.react || false;
     this.formats = mergeFormats(
       IntlMessageFormat.formats,
       options.formats || {}

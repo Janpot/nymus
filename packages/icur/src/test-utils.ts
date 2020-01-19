@@ -39,7 +39,7 @@ export async function createComponents<T extends Messages>(
   options?: IcurOptions
 ): Promise<ComponentsOf<T>> {
   const { code } = await icur(messages, options);
-  console.log(code);
+  // console.log(code);
   const components = importFrom(code) as ComponentsOf<T>;
   for (const component of Object.values(components)) {
     // create unique names to invalidate warning cache
@@ -53,6 +53,29 @@ export async function createComponents<T extends Messages>(
   return components;
 }
 
-export function render(elm: React.ElementType, props = {}) {
+export async function createReactComponent(
+  message: string,
+  options?: IcurOptions
+): Promise<React.ElementType> {
+  const { Component } = await createComponents({ Component: message }, options);
+  return Component;
+}
+
+export function renderReact(elm: React.ElementType, props = {}) {
   return ReactDOMServer.renderToStaticMarkup(React.createElement(elm, props));
+}
+
+export async function renderMessageWithReact(
+  message: string,
+  options: IcurOptions,
+  props: any
+) {
+  const { element } = await createComponents(
+    { element: message },
+    {
+      ...options,
+      react: true
+    }
+  );
+  return renderReact(element, props);
 }

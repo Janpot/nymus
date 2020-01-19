@@ -358,7 +358,9 @@ export default function icuToReactComponent(
   const icuAst = mf.parse(icuStr, {
     captureLocation: true
   });
-  const returnValue = icuNodesToJsExpression(icuAst, context);
+  const returnValue = module.react
+    ? icuNodesToJsxExpression(icuAst, context)
+    : icuNodesToJsExpression(icuAst, context);
   const ast = t.functionExpression(
     t.identifier(componentName),
     context.buildArgsAst(),

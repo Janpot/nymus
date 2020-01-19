@@ -14,6 +14,7 @@ export interface IcurOptions {
   locale?: string;
   formats?: Partial<Formats>;
   ast?: boolean;
+  react?: boolean;
   typescript?: boolean;
   declarations?: boolean;
 }

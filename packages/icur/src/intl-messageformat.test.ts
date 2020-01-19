@@ -1,26 +1,24 @@
 /* eslint-env jest */
 
-import { createComponents, render } from './test-utils';
+import { createReactComponent, renderReact } from './test-utils';
 
 describe('ported intl-messageformat tests', () => {
   describe('using a string pattern', () => {
     it('should properly replace direct arguments in the string', async () => {
-      const { mf } = await createComponents({
-        mf: 'My name is {FIRST} {LAST}.'
-      });
-      const output = render(mf, { FIRST: 'Anthony', LAST: 'Pipkin' });
+      const mf = await createReactComponent('My name is {FIRST} {LAST}.');
+      const output = renderReact(mf, { FIRST: 'Anthony', LAST: 'Pipkin' });
       expect(output).toBe('My name is Anthony Pipkin.');
     });
 
     it('should not ignore zero values', async () => {
-      const { mf } = await createComponents({ mf: 'I am {age} years old.' });
-      const output = render(mf, { age: 0 });
+      const mf = await createReactComponent('I am {age} years old.');
+      const output = renderReact(mf, { age: 0 });
       expect(output).toBe('I am 0 years old.');
     });
 
     it('should ignore false, null, and undefined', async () => {
-      const { mf } = await createComponents({ mf: '{a}{b}{c}' });
-      const output = render(mf, {
+      const mf = await createReactComponent('{a}{b}{c}');
+      const output = renderReact(mf, {
         a: false,
         b: null,
         c: undefined
@@ -42,56 +40,38 @@ describe('ported intl-messageformat tests', () => {
       '.';
 
     it('should match zero', async () => {
-      const { msgFmt } = await createComponents(
-        { msgFmt: msg },
-        { locale: 'ar' }
-      );
-      const output = render(msgFmt, { numPeople: 0 });
+      const msgFmt = await createReactComponent(msg, { locale: 'ar' });
+      const output = renderReact(msgFmt, { numPeople: 0 });
       expect(output).toBe('I have zero points.');
     });
 
     it('should match one', async () => {
-      const { msgFmt } = await createComponents(
-        { msgFmt: msg },
-        { locale: 'ar' }
-      );
-      const output = render(msgFmt, { numPeople: 1 });
+      const msgFmt = await createReactComponent(msg, { locale: 'ar' });
+      const output = renderReact(msgFmt, { numPeople: 1 });
       expect(output).toBe('I have a point.');
     });
 
     it('should match two', async () => {
-      const { msgFmt } = await createComponents(
-        { msgFmt: msg },
-        { locale: 'ar' }
-      );
-      const output = render(msgFmt, { numPeople: 2 });
+      const msgFmt = await createReactComponent(msg, { locale: 'ar' });
+      const output = renderReact(msgFmt, { numPeople: 2 });
       expect(output).toBe('I have two points.');
     });
 
     it('should match few', async () => {
-      const { msgFmt } = await createComponents(
-        { msgFmt: msg },
-        { locale: 'ar' }
-      );
-      const output = render(msgFmt, { numPeople: 5 });
+      const msgFmt = await createReactComponent(msg, { locale: 'ar' });
+      const output = renderReact(msgFmt, { numPeople: 5 });
       expect(output).toBe('I have a few points.');
     });
 
     it('should match many', async () => {
-      const { msgFmt } = await createComponents(
-        { msgFmt: msg },
-        { locale: 'ar' }
-      );
-      const output = render(msgFmt, { numPeople: 20 });
+      const msgFmt = await createReactComponent(msg, { locale: 'ar' });
+      const output = renderReact(msgFmt, { numPeople: 20 });
       expect(output).toBe('I have lots of points.');
     });
 
     it('should match other', async () => {
-      const { msgFmt } = await createComponents(
-        { msgFmt: msg },
-        { locale: 'ar' }
-      );
-      const output = render(msgFmt, { numPeople: 100 });
+      const msgFmt = await createReactComponent(msg, { locale: 'ar' });
+      const output = renderReact(msgFmt, { numPeople: 100 });
       expect(output).toBe('I have some other amount of points.');
     });
   });
@@ -147,43 +127,41 @@ describe('ported intl-messageformat tests', () => {
     };
 
     it('should format message en-US simple with different objects', async () => {
-      const { simpleEn } = await createComponents(
-        { simpleEn: simple.en },
-        { locale: 'en-US' }
-      );
-      expect(render(simpleEn, maleObj)).toBe('Tony went to Paris.');
-      expect(render(simpleEn, femaleObj)).toBe('Jenny went to Paris.');
+      const simpleEn = await createReactComponent(simple.en, {
+        locale: 'en-US'
+      });
+      expect(renderReact(simpleEn, maleObj)).toBe('Tony went to Paris.');
+      expect(renderReact(simpleEn, femaleObj)).toBe('Jenny went to Paris.');
     });
 
     it('should format message fr-FR simple with different objects', async () => {
-      const { simpleFr } = await createComponents(
-        { simpleFr: simple.fr },
-        { locale: 'fr-FR' }
-      );
-      expect(render(simpleFr, maleObj)).toBe('Tony est allé à Paris.');
-      expect(render(simpleFr, femaleObj)).toBe('Jenny est allée à Paris.');
+      const simpleFr = await createReactComponent(simple.fr, {
+        locale: 'fr-FR'
+      });
+      expect(renderReact(simpleFr, maleObj)).toBe('Tony est allé à Paris.');
+      expect(renderReact(simpleFr, femaleObj)).toBe('Jenny est allée à Paris.');
     });
 
     it('should format message en-US complex with different objects', async () => {
-      const { complexEn } = await createComponents(
-        { complexEn: complex.en },
-        { locale: 'en-US' }
-      );
-      expect(render(complexEn, maleTravelers)).toBe(
+      const complexEn = await createReactComponent(complex.en, {
+        locale: 'en-US'
+      });
+      expect(renderReact(complexEn, maleTravelers)).toBe(
         'Lucas, Tony and Drew went to Paris.'
       );
-      expect(render(complexEn, femaleTravelers)).toBe('Monica went to Paris.');
+      expect(renderReact(complexEn, femaleTravelers)).toBe(
+        'Monica went to Paris.'
+      );
     });
 
     it('should format message fr-FR complex with different objects', async () => {
-      const { complexFr } = await createComponents(
-        { complexFr: complex.fr },
-        { locale: 'fr-FR' }
-      );
-      expect(render(complexFr, maleTravelers)).toBe(
+      const complexFr = await createReactComponent(complex.fr, {
+        locale: 'fr-FR'
+      });
+      expect(renderReact(complexFr, maleTravelers)).toBe(
         'Lucas, Tony and Drew sont allés à Paris.'
       );
-      expect(render(complexFr, femaleTravelers)).toBe(
+      expect(renderReact(complexFr, femaleTravelers)).toBe(
         'Monica est allée à Paris.'
       );
     });
@@ -208,48 +186,46 @@ describe('ported intl-messageformat tests', () => {
     };
 
     it('should format a message with en-US locale', async () => {
-      const { msgFmt } = await createComponents(
-        { msgFmt: messages.en },
-        { locale: 'en-US' }
-      );
-      expect(render(msgFmt, { COMPANY_COUNT: 0 })).toBe(
+      const msgFmt = await createReactComponent(messages.en, {
+        locale: 'en-US'
+      });
+      expect(renderReact(msgFmt, { COMPANY_COUNT: 0 })).toBe(
         '0 companies published new books.'
       );
-      expect(render(msgFmt, { COMPANY_COUNT: 1 })).toBe(
+      expect(renderReact(msgFmt, { COMPANY_COUNT: 1 })).toBe(
         'One company published new books.'
       );
-      expect(render(msgFmt, { COMPANY_COUNT: 2 })).toBe(
+      expect(renderReact(msgFmt, { COMPANY_COUNT: 2 })).toBe(
         '2 companies published new books.'
       );
-      expect(render(msgFmt, { COMPANY_COUNT: 5 })).toBe(
+      expect(renderReact(msgFmt, { COMPANY_COUNT: 5 })).toBe(
         '5 companies published new books.'
       );
-      expect(render(msgFmt, { COMPANY_COUNT: 10 })).toBe(
+      expect(renderReact(msgFmt, { COMPANY_COUNT: 10 })).toBe(
         '10 companies published new books.'
       );
     });
 
     it('should format a message with ru-RU locale', async () => {
-      const { msgFmt } = await createComponents(
-        { msgFmt: messages.ru },
-        { locale: 'ru-RU' }
-      );
-      expect(render(msgFmt, { COMPANY_COUNT: 0 })).toBe(
+      const msgFmt = await createReactComponent(messages.ru, {
+        locale: 'ru-RU'
+      });
+      expect(renderReact(msgFmt, { COMPANY_COUNT: 0 })).toBe(
         '0 компаний опубликовали новые книги.'
       );
-      expect(render(msgFmt, { COMPANY_COUNT: 1 })).toBe(
+      expect(renderReact(msgFmt, { COMPANY_COUNT: 1 })).toBe(
         'Одна компания опубликовала новые книги.'
       );
-      expect(render(msgFmt, { COMPANY_COUNT: 2 })).toBe(
+      expect(renderReact(msgFmt, { COMPANY_COUNT: 2 })).toBe(
         '2 компании опубликовали новые книги.'
       );
-      expect(render(msgFmt, { COMPANY_COUNT: 5 })).toBe(
+      expect(renderReact(msgFmt, { COMPANY_COUNT: 5 })).toBe(
         '5 компаний опубликовали новые книги.'
       );
-      expect(render(msgFmt, { COMPANY_COUNT: 10 })).toBe(
+      expect(renderReact(msgFmt, { COMPANY_COUNT: 10 })).toBe(
         '10 компаний опубликовали новые книги.'
       );
-      expect(render(msgFmt, { COMPANY_COUNT: 21 })).toBe(
+      expect(renderReact(msgFmt, { COMPANY_COUNT: 21 })).toBe(
         '21 компания опубликовала новые книги.'
       );
     });
@@ -260,20 +236,27 @@ describe('ported intl-messageformat tests', () => {
       'This is my {year, selectordinal, one{#st} two{#nd} few{#rd} other{#th}} birthday.';
 
     it('should use ordinal pluralization rules', async () => {
-      const { msgFmt } = await createComponents(
-        { msgFmt: msg },
-        { locale: 'en' }
+      const msgFmt = await createReactComponent(msg, { locale: 'en' });
+      expect(renderReact(msgFmt, { year: 1 })).toBe('This is my 1st birthday.');
+      expect(renderReact(msgFmt, { year: 2 })).toBe('This is my 2nd birthday.');
+      expect(renderReact(msgFmt, { year: 3 })).toBe('This is my 3rd birthday.');
+      expect(renderReact(msgFmt, { year: 4 })).toBe('This is my 4th birthday.');
+      expect(renderReact(msgFmt, { year: 11 })).toBe(
+        'This is my 11th birthday.'
       );
-      expect(render(msgFmt, { year: 1 })).toBe('This is my 1st birthday.');
-      expect(render(msgFmt, { year: 2 })).toBe('This is my 2nd birthday.');
-      expect(render(msgFmt, { year: 3 })).toBe('This is my 3rd birthday.');
-      expect(render(msgFmt, { year: 4 })).toBe('This is my 4th birthday.');
-      expect(render(msgFmt, { year: 11 })).toBe('This is my 11th birthday.');
-      expect(render(msgFmt, { year: 21 })).toBe('This is my 21st birthday.');
-      expect(render(msgFmt, { year: 22 })).toBe('This is my 22nd birthday.');
-      expect(render(msgFmt, { year: 33 })).toBe('This is my 33rd birthday.');
-      expect(render(msgFmt, { year: 44 })).toBe('This is my 44th birthday.');
-      expect(render(msgFmt, { year: 1024 })).toBe(
+      expect(renderReact(msgFmt, { year: 21 })).toBe(
+        'This is my 21st birthday.'
+      );
+      expect(renderReact(msgFmt, { year: 22 })).toBe(
+        'This is my 22nd birthday.'
+      );
+      expect(renderReact(msgFmt, { year: 33 })).toBe(
+        'This is my 33rd birthday.'
+      );
+      expect(renderReact(msgFmt, { year: 44 })).toBe(
+        'This is my 44th birthday.'
+      );
+      expect(renderReact(msgFmt, { year: 1024 })).toBe(
         'This is my 1,024th birthday.'
       );
     });
