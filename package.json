@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prettier": "prettier --write --single-quote \"**/*.{js,ts,jsx,tsx,json,yml,md}\""
+    "prettier": "prettier --write \"**/*.{js,ts,jsx,tsx,json,yml,md}\""
   },
   "license": "MIT",
   "devDependencies": {
