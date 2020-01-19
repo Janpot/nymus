@@ -35,20 +35,26 @@ type JSXFragmentChild =
   | t.JSXSpreadChild
   | t.JSXElement;
 
+function buildReactElementAst(element: t.Expression, children: t.Expression[]) {
+  return t.callExpression(
+    t.memberExpression(t.identifier('React'), t.identifier('createElement')),
+    [element, t.nullLiteral(), ...children]
+  );
+}
+
 function interpolateJsxFragment(
   jsxFragment: t.JSXFragment,
   icuNodes: mf.MessageFormatElement[],
   context: ComponentContext
-): t.JSXFragment {
+): t.Expression {
   const fragment = interpolateJsxFragmentChildren(
     jsxFragment.children,
     icuNodes,
     context,
     0
   );
-  return t.jsxFragment(
-    t.jsxOpeningFragment(),
-    t.jsxClosingFragment(),
+  return buildReactElementAst(
+    t.memberExpression(t.identifier('React'), t.identifier('Fragment')),
     fragment
   );
 }
@@ -58,18 +64,17 @@ function interpolateJsxFragmentChildren(
   icuNodes: mf.MessageFormatElement[],
   context: ComponentContext,
   icuIndex: number
-): JSXFragmentChild[] {
-  const ast: JSXFragmentChild[] = [];
+): t.Expression[] {
+  const ast: t.Expression[] = [];
 
   for (const child of jsx) {
     if (t.isJSXFragment(child)) {
-      const fragment = interpolateJsxFragment(child, icuNodes, context);
-      ast.push(fragment);
+      throw new IcurError('Fragments are not allowed', child.loc);
     } else if (t.isJSXExpressionContainer(child)) {
       const icuNode = icuNodes[icuIndex];
       icuIndex++;
       const fragment = icuNodesToJsExpression(icuNode, context);
-      ast.push(t.jsxExpressionContainer(fragment));
+      ast.push(fragment);
     } else if (t.isJSXElement(child)) {
       const identifier = child.openingElement.name;
       if (!t.isJSXIdentifier(identifier)) {
@@ -93,20 +98,11 @@ function interpolateJsxFragmentChildren(
         icuIndex
       );
 
-      const interpolatedChild = t.jsxElement(
-        t.jsxOpeningElement(
-          t.jsxIdentifier(localName.name),
-          [],
-          child.openingElement.selfClosing
-        ),
-        t.jsxClosingElement(t.jsxIdentifier(localName.name)),
-        fragment,
-        child.selfClosing
-      );
+      const interpolatedChild = buildReactElementAst(localName, fragment);
 
       ast.push(interpolatedChild);
-    } else {
-      ast.push(child);
+    } else if (t.isJSXText(child)) {
+      ast.push(t.stringLiteral(child.value));
     }
   }
 
@@ -163,7 +159,23 @@ function icuNodesToJsExpression(
   context: ComponentContext
 ): t.Expression {
   if (Array.isArray(icuNode)) {
-    return icuNodesToJsxExpression(icuNode, context);
+    if (context.react) {
+      return icuNodesToJsxExpression(icuNode, context);
+    } else {
+      if (icuNode.length <= 0) {
+        return t.stringLiteral('');
+      } else if (icuNode.length <= 1) {
+        return icuNodesToJsExpression(icuNode[0], context);
+      } else {
+        const rest = icuNode.slice(0, -1);
+        const last = icuNode[icuNode.length - 1];
+        return t.binaryExpression(
+          '+',
+          icuNodesToJsExpression(rest, context),
+          icuNodesToJsExpression(last, context)
+        );
+      }
+    }
   } else if (mf.isLiteralElement(icuNode)) {
     return t.stringLiteral(icuNode.value);
   } else if (mf.isArgumentElement(icuNode)) {
@@ -293,6 +305,10 @@ class ComponentContext {
 
   get formats() {
     return this._module.formats;
+  }
+
+  get react() {
+    return this._module.react;
   }
 
   addArgument(name: string): t.Identifier {

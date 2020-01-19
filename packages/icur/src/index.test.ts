@@ -16,11 +16,11 @@ type TestFunction = (
 ) => void | Promise<void>;
 
 function sharedTest(name: string, testFn: TestFunction) {
-  it('creates empty component [react]', async () => {
+  it(`${name} [react]`, async () => {
     await testFn(createReactComponent, renderReact);
   });
 
-  it.skip('creates empty component [string]', async () => {
+  it(`${name} [string]`, async () => {
     await testFn(createStringComponent, renderString);
   });
 }
@@ -55,12 +55,6 @@ describe('shared', () => {
       expect(result).toBe('1 1');
     }
   );
-
-  sharedTest('can interpolate "React"', async (createComponent, render) => {
-    const withReact = await createComponent('foo {React} <A />baz');
-    const result = render(withReact, { React: 'bar', A: () => null });
-    expect(result).toBe('foo bar baz');
-  });
 
   sharedTest(
     "Doesn't fail on React named component",
@@ -185,6 +179,7 @@ describe('error formatting', () => {
       male {He}
     }
   `);
+  errorSnapshotTest('<>foo {bar}</> baz');
 });
 
 describe('with jsx', () => {
@@ -235,18 +230,16 @@ describe('with jsx', () => {
     expect(result).toBe('a x<span>y</span>z c');
   });
 
-  it('understands jsx with fragments', async () => {
-    const withFragment = await createReactComponent('<>foo {bar}</> baz');
-    const result = renderReact(withFragment, {
-      bar: 'quux'
-    });
-    expect(result).toBe('foo quux baz');
-  });
-
   it('understands jsx with <React />', async () => {
     const withReact = await createReactComponent('foo <React /> bar');
     const result = renderReact(withReact, { React: () => 'quux' });
     expect(result).toBe('foo quux bar');
+  });
+
+  it('can interpolate "React"', async () => {
+    const withReact = await createReactComponent('foo {React} <A />baz');
+    const result = renderReact(withReact, { React: 'bar', A: () => null });
+    expect(result).toBe('foo bar baz');
   });
 
   it('understands nested jsx', async () => {
