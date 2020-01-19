@@ -55,22 +55,24 @@ interface SharedConst {
 }
 
 export default class Module {
+  readonly react: boolean;
   readonly scope: Scope;
   readonly exports: Map<string, Export>;
   readonly formatters: Map<string, Formatter>;
   readonly _sharedConsts: Map<string, SharedConst>;
   readonly locale?: string;
   readonly formats: Formats;
-  readonly react: boolean;
 
   constructor(options: IcurOptions) {
+    this.react = options.react || false;
     this.scope = new Scope();
-    this.scope.createBinding('React');
+    if (this.react) {
+      this.scope.createBinding('React');
+    }
     this.exports = new Map();
     this.formatters = new Map();
     this._sharedConsts = new Map();
     this.locale = options.locale;
-    this.react = options.react || false;
     this.formats = mergeFormats(
       IntlMessageFormat.formats,
       options.formats || {}
@@ -170,7 +172,9 @@ export default class Module {
       );
     }
     return [
-      template.ast`import * as React from 'react';` as t.Statement,
+      ...(this.react
+        ? [template.ast`import * as React from 'react';` as t.Statement]
+        : []),
       ...formatterDeclarations,
       ...componentDeclarations,
       t.exportNamedDeclaration(null, exportSpecifiers)

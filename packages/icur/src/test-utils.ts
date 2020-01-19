@@ -18,11 +18,17 @@ function importFrom(code: string, options: IcurOptions) {
   }
 
   const exports = {};
+  const requireFn = (moduleId: string) => {
+    if (moduleId === 'react' && !options.react) {
+      throw new Error('importing react is not allowed');
+    }
+    return require(moduleId);
+  };
   vm.runInThisContext(`
     (require, exports) => {
       ${cjs}
     }
-  `)(require, exports);
+  `)(requireFn, exports);
   return exports;
 }
 

@@ -35,6 +35,9 @@ type JSXFragmentChild =
   | t.JSXSpreadChild
   | t.JSXElement;
 
+/**
+ * Build an AST for the expression: `React.createElement(element, null, ...children)`
+ */
 function buildReactElementAst(element: t.Expression, children: t.Expression[]) {
   return t.callExpression(
     t.memberExpression(t.identifier('React'), t.identifier('createElement')),
