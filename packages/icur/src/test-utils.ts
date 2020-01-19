@@ -34,12 +34,12 @@ type ComponentsOf<T> = {
   [K in keyof T]: React.ElementType;
 };
 
-export function createComponents<T extends Messages>(
+export async function createComponents<T extends Messages>(
   messages: T,
   options?: IcurOptions
-): ComponentsOf<T> {
-  const { code } = icur(messages, options);
-  // console.log(code);
+): Promise<ComponentsOf<T>> {
+  const { code } = await icur(messages, options);
+  console.log(code);
   const components = importFrom(code) as ComponentsOf<T>;
   for (const component of Object.values(components)) {
     // create unique names to invalidate warning cache

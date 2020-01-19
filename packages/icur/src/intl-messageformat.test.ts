@@ -4,20 +4,22 @@ import { createComponents, render } from './test-utils';
 
 describe('ported intl-messageformat tests', () => {
   describe('using a string pattern', () => {
-    it('should properly replace direct arguments in the string', () => {
-      const { mf } = createComponents({ mf: 'My name is {FIRST} {LAST}.' });
+    it('should properly replace direct arguments in the string', async () => {
+      const { mf } = await createComponents({
+        mf: 'My name is {FIRST} {LAST}.'
+      });
       const output = render(mf, { FIRST: 'Anthony', LAST: 'Pipkin' });
       expect(output).toBe('My name is Anthony Pipkin.');
     });
 
-    it('should not ignore zero values', () => {
-      const { mf } = createComponents({ mf: 'I am {age} years old.' });
+    it('should not ignore zero values', async () => {
+      const { mf } = await createComponents({ mf: 'I am {age} years old.' });
       const output = render(mf, { age: 0 });
       expect(output).toBe('I am 0 years old.');
     });
 
-    it('should ignore false, null, and undefined', () => {
-      const { mf } = createComponents({ mf: '{a}{b}{c}' });
+    it('should ignore false, null, and undefined', async () => {
+      const { mf } = await createComponents({ mf: '{a}{b}{c}' });
       const output = render(mf, {
         a: false,
         b: null,
@@ -39,44 +41,62 @@ describe('ported intl-messageformat tests', () => {
       'other {some other amount of points}}' +
       '.';
 
-    it('should match zero', () => {
-      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
+    it('should match zero', async () => {
+      const { msgFmt } = await createComponents(
+        { msgFmt: msg },
+        { locale: 'ar' }
+      );
       const output = render(msgFmt, { numPeople: 0 });
       expect(output).toBe('I have zero points.');
     });
 
-    it('should match one', () => {
-      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
+    it('should match one', async () => {
+      const { msgFmt } = await createComponents(
+        { msgFmt: msg },
+        { locale: 'ar' }
+      );
       const output = render(msgFmt, { numPeople: 1 });
       expect(output).toBe('I have a point.');
     });
 
-    it('should match two', () => {
-      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
+    it('should match two', async () => {
+      const { msgFmt } = await createComponents(
+        { msgFmt: msg },
+        { locale: 'ar' }
+      );
       const output = render(msgFmt, { numPeople: 2 });
       expect(output).toBe('I have two points.');
     });
 
-    it('should match few', () => {
-      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
+    it('should match few', async () => {
+      const { msgFmt } = await createComponents(
+        { msgFmt: msg },
+        { locale: 'ar' }
+      );
       const output = render(msgFmt, { numPeople: 5 });
       expect(output).toBe('I have a few points.');
     });
 
-    it('should match many', () => {
-      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
+    it('should match many', async () => {
+      const { msgFmt } = await createComponents(
+        { msgFmt: msg },
+        { locale: 'ar' }
+      );
       const output = render(msgFmt, { numPeople: 20 });
       expect(output).toBe('I have lots of points.');
     });
 
-    it('should match other', () => {
-      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'ar' });
+    it('should match other', async () => {
+      const { msgFmt } = await createComponents(
+        { msgFmt: msg },
+        { locale: 'ar' }
+      );
       const output = render(msgFmt, { numPeople: 100 });
       expect(output).toBe('I have some other amount of points.');
     });
   });
 
-  describe('with plural and select', function() {
+  describe('with plural and select', () => {
     var simple = {
       en: '{NAME} went to {CITY}.',
       fr:
@@ -126,8 +146,8 @@ describe('ported intl-messageformat tests', () => {
       CITY: 'Paris'
     };
 
-    it('should format message en-US simple with different objects', function() {
-      const { simpleEn } = createComponents(
+    it('should format message en-US simple with different objects', async () => {
+      const { simpleEn } = await createComponents(
         { simpleEn: simple.en },
         { locale: 'en-US' }
       );
@@ -135,8 +155,8 @@ describe('ported intl-messageformat tests', () => {
       expect(render(simpleEn, femaleObj)).toBe('Jenny went to Paris.');
     });
 
-    it('should format message fr-FR simple with different objects', function() {
-      const { simpleFr } = createComponents(
+    it('should format message fr-FR simple with different objects', async () => {
+      const { simpleFr } = await createComponents(
         { simpleFr: simple.fr },
         { locale: 'fr-FR' }
       );
@@ -144,8 +164,8 @@ describe('ported intl-messageformat tests', () => {
       expect(render(simpleFr, femaleObj)).toBe('Jenny est allée à Paris.');
     });
 
-    it('should format message en-US complex with different objects', function() {
-      const { complexEn } = createComponents(
+    it('should format message en-US complex with different objects', async () => {
+      const { complexEn } = await createComponents(
         { complexEn: complex.en },
         { locale: 'en-US' }
       );
@@ -155,8 +175,8 @@ describe('ported intl-messageformat tests', () => {
       expect(render(complexEn, femaleTravelers)).toBe('Monica went to Paris.');
     });
 
-    it('should format message fr-FR complex with different objects', function() {
-      const { complexFr } = createComponents(
+    it('should format message fr-FR complex with different objects', async () => {
+      const { complexFr } = await createComponents(
         { complexFr: complex.fr },
         { locale: 'fr-FR' }
       );
@@ -169,7 +189,7 @@ describe('ported intl-messageformat tests', () => {
     });
   });
 
-  describe('and change the locale with different counts', function() {
+  describe('and change the locale with different counts', () => {
     const messages = {
       en:
         '{COMPANY_COUNT, plural, ' +
@@ -187,8 +207,8 @@ describe('ported intl-messageformat tests', () => {
         ' новые книги.'
     };
 
-    it('should format a message with en-US locale', function() {
-      const { msgFmt } = createComponents(
+    it('should format a message with en-US locale', async () => {
+      const { msgFmt } = await createComponents(
         { msgFmt: messages.en },
         { locale: 'en-US' }
       );
@@ -209,8 +229,8 @@ describe('ported intl-messageformat tests', () => {
       );
     });
 
-    it('should format a message with ru-RU locale', function() {
-      const { msgFmt } = createComponents(
+    it('should format a message with ru-RU locale', async () => {
+      const { msgFmt } = await createComponents(
         { msgFmt: messages.ru },
         { locale: 'ru-RU' }
       );
@@ -235,12 +255,15 @@ describe('ported intl-messageformat tests', () => {
     });
   });
 
-  describe('selectordinal arguments', function() {
+  describe('selectordinal arguments', () => {
     var msg =
       'This is my {year, selectordinal, one{#st} two{#nd} few{#rd} other{#th}} birthday.';
 
-    it('should use ordinal pluralization rules', function() {
-      const { msgFmt } = createComponents({ msgFmt: msg }, { locale: 'en' });
+    it('should use ordinal pluralization rules', async () => {
+      const { msgFmt } = await createComponents(
+        { msgFmt: msg },
+        { locale: 'en' }
+      );
       expect(render(msgFmt, { year: 1 })).toBe('This is my 1st birthday.');
       expect(render(msgFmt, { year: 2 })).toBe('This is my 2nd birthday.');
       expect(render(msgFmt, { year: 3 })).toBe('This is my 3rd birthday.');

@@ -45,7 +45,7 @@ export function formatError(
   });
 }
 
-export default function createModule(
+export default async function createModule(
   messages: Messages,
   options: IcurOptions = {}
 ) {
@@ -90,10 +90,10 @@ export default function createModule(
   }
 
   const { code, ast } =
-    babel.transformFromAstSync(tsAst, undefined, {
+    (await babel.transformFromAstAsync(tsAst, undefined, {
       ast: options.ast,
       plugins: [...(options.typescript ? [] : [TsPlugin])]
-    }) || {};
+    })) || {};
 
   if (!code) {
     throw new Error('Failed to generate code');

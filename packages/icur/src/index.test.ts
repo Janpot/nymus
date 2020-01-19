@@ -5,44 +5,44 @@ import * as React from 'react';
 import { formatError } from './index';
 
 describe('icur', () => {
-  it('creates empty component', () => {
-    const { empty } = createComponents({ empty: '' });
+  it('creates empty component', async () => {
+    const { empty } = await createComponents({ empty: '' });
     const result = render(empty);
     expect(result).toBe('');
   });
 
-  it('creates simple text component', () => {
-    const { simpleString } = createComponents({ simpleString: 'x' });
+  it('creates simple text component', async () => {
+    const { simpleString } = await createComponents({ simpleString: 'x' });
     const result = render(simpleString);
     expect(result).toBe('x');
   });
 
-  it('handles special characters', () => {
-    const { htmlSpecialChars } = createComponents({
+  it('handles special characters', async () => {
+    const { htmlSpecialChars } = await createComponents({
       htmlSpecialChars: 'Hel\'lo Wo"rld!'
     });
     const result = render(htmlSpecialChars);
     expect(result).toBe('Hel&#x27;lo Wo&quot;rld!');
   });
 
-  it('handles ICU arguments', () => {
-    const { withArguments } = createComponents({
+  it('handles ICU arguments', async () => {
+    const { withArguments } = await createComponents({
       withArguments: 'x {a} y {b} z'
     });
     const result = render(withArguments, { a: '1', b: '2' });
     expect(result).toBe('x 1 y 2 z');
   });
 
-  it('handles twice defined ICU arguments', () => {
-    const { argsTwice } = createComponents({
+  it('handles twice defined ICU arguments', async () => {
+    const { argsTwice } = await createComponents({
       argsTwice: '{a} {a}'
     });
     const result = render(argsTwice, { a: '1' });
     expect(result).toBe('1 1');
   });
 
-  it('can interpolate components', () => {
-    const { interpolate } = createComponents({
+  it('can interpolate components', async () => {
+    const { interpolate } = await createComponents({
       interpolate: 'a {b} c'
     });
     const result = render(interpolate, {
@@ -51,8 +51,8 @@ describe('icur', () => {
     expect(result).toBe('a <span>x</span> c');
   });
 
-  it('can interpolate arrays', () => {
-    const { interpolate } = createComponents({
+  it('can interpolate arrays', async () => {
+    const { interpolate } = await createComponents({
       interpolate: 'a {b} c'
     });
     const result = render(interpolate, {
@@ -61,14 +61,14 @@ describe('icur', () => {
     expect(result).toBe('a x<span>y</span>z c');
   });
 
-  it("Doesn't fail on React named component", () => {
-    const { React } = createComponents({ React: 'react' });
+  it("Doesn't fail on React named component", async () => {
+    const { React } = await createComponents({ React: 'react' });
     const result = render(React);
     expect(result).toBe('react');
   });
 
-  it('do select expressions', () => {
-    const { withSelect } = createComponents({
+  it('do select expressions', async () => {
+    const { withSelect } = await createComponents({
       withSelect: '{gender, select, male{He} female{She} other{They}}'
     });
     const maleResult = render(withSelect, {
@@ -85,8 +85,8 @@ describe('icur', () => {
     expect(otherResult).toBe('They');
   });
 
-  it('can nest select expressions', () => {
-    const { nestedSelect } = createComponents({
+  it('can nest select expressions', async () => {
+    const { nestedSelect } = await createComponents({
       nestedSelect: `a{x, select,
           a1 {b{y, select,
             a11 {g}
@@ -107,8 +107,8 @@ describe('icur', () => {
     expect(render(nestedSelect, { x: 'a2', z: 'a22' })).toBe('acjef');
   });
 
-  it('understands jsx', () => {
-    const { withJsx } = createComponents({
+  it('understands jsx', async () => {
+    const { withJsx } = await createComponents({
       withJsx: '<A>foo</A>'
     });
     // TODO: will this be supported?
@@ -121,8 +121,8 @@ describe('icur', () => {
     expect(result2).toBe('<span class="bar">foo</span>');
   });
 
-  it('understands jsx with argument', () => {
-    const { withArgJsx } = createComponents({
+  it('understands jsx with argument', async () => {
+    const { withArgJsx } = await createComponents({
       withArgJsx: '<A>foo {bar} baz</A>'
     });
     // TODO: will this be supported?
@@ -136,8 +136,8 @@ describe('icur', () => {
     expect(result2).toBe('<span class="bla">foo quux baz</span>');
   });
 
-  it('understands jsx with fragments', () => {
-    const { withFragment } = createComponents({
+  it('understands jsx with fragments', async () => {
+    const { withFragment } = await createComponents({
       withFragment: '<>foo {bar}</> baz'
     });
     const result = render(withFragment, {
@@ -146,24 +146,24 @@ describe('icur', () => {
     expect(result).toBe('foo quux baz');
   });
 
-  it('can interpolate "React"', () => {
-    const { withReact } = createComponents({
+  it('can interpolate "React"', async () => {
+    const { withReact } = await createComponents({
       withReact: 'foo {React} <A />baz'
     });
     const result = render(withReact, { React: 'bar', A: () => null });
     expect(result).toBe('foo bar baz');
   });
 
-  it('understands jsx with <React />', () => {
-    const { withReact } = createComponents({
+  it('understands jsx with <React />', async () => {
+    const { withReact } = await createComponents({
       withReact: 'foo <React /> bar'
     });
     const result = render(withReact, { React: () => 'quux' });
     expect(result).toBe('foo quux bar');
   });
 
-  it('understands nested jsx', () => {
-    const { withNestedJsx } = createComponents({
+  it('understands nested jsx', async () => {
+    const { withNestedJsx } = await createComponents({
       withNestedJsx: '<A>foo <B>bar</B> baz</A>'
     });
     const result1 = render(withNestedJsx, {
@@ -173,20 +173,20 @@ describe('icur', () => {
     expect(result1).toBe('foo bar baz');
   });
 
-  it('understands self closing jsx', () => {
-    const { selfClosing } = createComponents({ selfClosing: 'a<B/>c' });
+  it('understands self closing jsx', async () => {
+    const { selfClosing } = await createComponents({ selfClosing: 'a<B/>c' });
     const result = render(selfClosing, { B: () => 'b' });
     expect(result).toBe('abc');
   });
 
-  it('can interpolate void elements', () => {
-    const { selfClosing } = createComponents({ selfClosing: '<A/>' });
+  it('can interpolate void elements', async () => {
+    const { selfClosing } = await createComponents({ selfClosing: '<A/>' });
     const result = render(selfClosing, { A: 'br' });
     expect(result).toBe('<br/>');
   });
 
-  it('can interpolate with components', () => {
-    const { msg1, msg2, msg3 } = createComponents({
+  it('can interpolate with components', async () => {
+    const { msg1, msg2, msg3 } = await createComponents({
       msg1: 'a {b} c {d} e',
       msg2: 'f',
       msg3: 'g'
@@ -199,10 +199,10 @@ describe('icur', () => {
 });
 
 function errorSnapshotTest(message: string) {
-  it('error snapshot ', () => {
+  it('error snapshot ', async () => {
     expect.assertions(1);
     try {
-      createComponents({ message });
+      await createComponents({ message });
     } catch (err) {
       const formatted = formatError(message, err);
       expect(formatted).toMatchSnapshot();
@@ -222,8 +222,8 @@ describe('error formatting', () => {
 });
 
 describe('numbers/dates', () => {
-  it('can format numbers and dates', () => {
-    const { msg } = createComponents({
+  it('can format numbers and dates', async () => {
+    const { msg } = await createComponents({
       msg:
         'At {theDate, time, medium} on {theDate, date, medium}, there was {text} on planet {planet, number, decimal}.'
     });
@@ -237,8 +237,8 @@ describe('numbers/dates', () => {
     );
   });
 
-  it('can format percentages', () => {
-    const { msg } = createComponents({
+  it('can format percentages', async () => {
+    const { msg } = await createComponents({
       msg: 'Score: {percentage, number, percent}.'
     });
     const result = render(msg, {
@@ -247,8 +247,8 @@ describe('numbers/dates', () => {
     expect(result).toBe('Score: 65%.');
   });
 
-  it('can reuse formatters', () => {
-    const { msg } = createComponents({
+  it('can reuse formatters', async () => {
+    const { msg } = await createComponents({
       msg: 'Score: {score, number, percent}, Maximum: {max, number, percent}.'
     });
     const result = render(msg, {
@@ -258,8 +258,8 @@ describe('numbers/dates', () => {
     expect(result).toBe('Score: 65%, Maximum: 94%.');
   });
 
-  it('can format currencies', () => {
-    const { msg } = createComponents(
+  it('can format currencies', async () => {
+    const { msg } = await createComponents(
       {
         msg: 'It costs {amount, number, USD}.'
       },
