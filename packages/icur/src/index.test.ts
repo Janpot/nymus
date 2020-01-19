@@ -1,66 +1,96 @@
 /* eslint-env jest */
 
-import { createReactComponent, renderReact } from './test-utils';
+import {
+  createReactComponent,
+  renderReact,
+  createStringComponent,
+  renderString
+} from './test-utils';
 import * as React from 'react';
 import { formatError } from './index';
+import { IcurOptions } from '../dist';
+
+type TestFunction = (
+  createComponent: (msg: string, options?: IcurOptions) => Promise<any>,
+  render: (component: any, props?: any) => string
+) => void | Promise<void>;
+
+function sharedTest(name: string, testFn: TestFunction) {
+  it('creates empty component [react]', async () => {
+    await testFn(createReactComponent, renderReact);
+  });
+
+  it.skip('creates empty component [string]', async () => {
+    await testFn(createStringComponent, renderString);
+  });
+}
 
 describe('shared', () => {
-  it('creates empty component', async () => {
-    const empty = await createReactComponent('');
-    const result = renderReact(empty);
+  sharedTest('creates empty component', async (createComponent, render) => {
+    const empty = await createComponent('');
+    const result = render(empty);
     expect(result).toBe('');
   });
 
-  it('creates simple text component', async () => {
-    const simpleString = await createReactComponent('x');
-    const result = renderReact(simpleString);
-    expect(result).toBe('x');
-  });
+  sharedTest(
+    'creates simple text component',
+    async (createComponent, render) => {
+      const simpleString = await createComponent('x');
+      const result = render(simpleString);
+      expect(result).toBe('x');
+    }
+  );
 
-  it('handles ICU arguments', async () => {
-    const withArguments = await createReactComponent('x {a} y {b} z');
-    const result = renderReact(withArguments, { a: '1', b: '2' });
+  sharedTest('handles ICU arguments', async (createComponent, render) => {
+    const withArguments = await createComponent('x {a} y {b} z');
+    const result = render(withArguments, { a: '1', b: '2' });
     expect(result).toBe('x 1 y 2 z');
   });
 
-  it('handles twice defined ICU arguments', async () => {
-    const argsTwice = await createReactComponent('{a} {a}');
-    const result = renderReact(argsTwice, { a: '1' });
-    expect(result).toBe('1 1');
-  });
+  sharedTest(
+    'handles twice defined ICU arguments',
+    async (createComponent, render) => {
+      const argsTwice = await createComponent('{a} {a}');
+      const result = render(argsTwice, { a: '1' });
+      expect(result).toBe('1 1');
+    }
+  );
 
-  it('can interpolate "React"', async () => {
-    const withReact = await createReactComponent('foo {React} <A />baz');
-    const result = renderReact(withReact, { React: 'bar', A: () => null });
+  sharedTest('can interpolate "React"', async (createComponent, render) => {
+    const withReact = await createComponent('foo {React} <A />baz');
+    const result = render(withReact, { React: 'bar', A: () => null });
     expect(result).toBe('foo bar baz');
   });
 
-  it("Doesn't fail on React named component", async () => {
-    const React = await createReactComponent('react');
-    const result = renderReact(React);
-    expect(result).toBe('react');
-  });
+  sharedTest(
+    "Doesn't fail on React named component",
+    async (createComponent, render) => {
+      const React = await createComponent('react');
+      const result = render(React);
+      expect(result).toBe('react');
+    }
+  );
 
-  it('do select expressions', async () => {
-    const withSelect = await createReactComponent(
+  sharedTest('do select expressions', async (createComponent, render) => {
+    const withSelect = await createComponent(
       '{gender, select, male{He} female{She} other{They}}'
     );
-    const maleResult = renderReact(withSelect, {
+    const maleResult = render(withSelect, {
       gender: 'male'
     });
     expect(maleResult).toBe('He');
-    const femaleResult = renderReact(withSelect, {
+    const femaleResult = render(withSelect, {
       gender: 'female'
     });
     expect(femaleResult).toBe('She');
-    const otherResult = renderReact(withSelect, {
+    const otherResult = render(withSelect, {
       gender: 'whatever'
     });
     expect(otherResult).toBe('They');
   });
 
-  it('can nest select expressions', async () => {
-    const nestedSelect = await createReactComponent(`a{x, select,
+  sharedTest('can nest select expressions', async (createComponent, render) => {
+    const nestedSelect = await createComponent(`a{x, select,
           a1 {b{y, select,
             a11 {g}
             a12 {h}
@@ -73,49 +103,50 @@ describe('shared', () => {
           }e}
           other {}
         }f`);
-    expect(renderReact(nestedSelect, { x: 'a1', y: 'a11' })).toBe('abgdf');
-    expect(renderReact(nestedSelect, { x: 'a1', y: 'a12' })).toBe('abhdf');
-    expect(renderReact(nestedSelect, { x: 'a2', z: 'a21' })).toBe('acief');
-    expect(renderReact(nestedSelect, { x: 'a2', z: 'a22' })).toBe('acjef');
+    expect(render(nestedSelect, { x: 'a1', y: 'a11' })).toBe('abgdf');
+    expect(render(nestedSelect, { x: 'a1', y: 'a12' })).toBe('abhdf');
+    expect(render(nestedSelect, { x: 'a2', z: 'a21' })).toBe('acief');
+    expect(render(nestedSelect, { x: 'a2', z: 'a22' })).toBe('acjef');
   });
 
-  it('can format numbers and dates', async () => {
-    const msg = await createReactComponent(
-      'At {theDate, time, medium} on {theDate, date, medium}, there was {text} on planet {planet, number, decimal}.'
-    );
-    const result = renderReact(msg, {
-      theDate: new Date(1507216343344),
-      text: 'a disturbance in the Force',
-      planet: 7
-    });
-    expect(result).toBe(
-      'At 5:12:23 PM on Oct 5, 2017, there was a disturbance in the Force on planet 7.'
-    );
-  });
+  sharedTest(
+    'can format numbers and dates',
+    async (createComponent, render) => {
+      const msg = await createComponent(
+        'At {theDate, time, medium} on {theDate, date, medium}, there was {text} on planet {planet, number, decimal}.'
+      );
+      const result = render(msg, {
+        theDate: new Date(1507216343344),
+        text: 'a disturbance in the Force',
+        planet: 7
+      });
+      expect(result).toBe(
+        'At 5:12:23 PM on Oct 5, 2017, there was a disturbance in the Force on planet 7.'
+      );
+    }
+  );
 
-  it('can format percentages', async () => {
-    const msg = await createReactComponent(
-      'Score: {percentage, number, percent}.'
-    );
-    const result = renderReact(msg, {
+  sharedTest('can format percentages', async (createComponent, render) => {
+    const msg = await createComponent('Score: {percentage, number, percent}.');
+    const result = render(msg, {
       percentage: 0.6549
     });
     expect(result).toBe('Score: 65%.');
   });
 
-  it('can reuse formatters', async () => {
-    const msg = await createReactComponent(
+  sharedTest('can reuse formatters', async (createComponent, render) => {
+    const msg = await createComponent(
       'Score: {score, number, percent}, Maximum: {max, number, percent}.'
     );
-    const result = renderReact(msg, {
+    const result = render(msg, {
       score: 0.6549,
       max: 0.9436
     });
     expect(result).toBe('Score: 65%, Maximum: 94%.');
   });
 
-  it('can format currencies', async () => {
-    const msg = await createReactComponent('It costs {amount, number, USD}.', {
+  sharedTest('can format currencies', async (createComponent, render) => {
+    const msg = await createComponent('It costs {amount, number, USD}.', {
       locale: 'en-US',
       formats: {
         number: {
@@ -126,7 +157,7 @@ describe('shared', () => {
         }
       }
     });
-    const result = renderReact(msg, {
+    const result = render(msg, {
       amount: 123.456
     });
     expect(result).toBe('It costs $123.46.');
