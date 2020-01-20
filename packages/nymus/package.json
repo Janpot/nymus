@@ -1,7 +1,7 @@
 {
   "name": "nymus",
   "version": "0.1.0",
-  "description": "",
+  "description": "Transform ICU messages into React components.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
