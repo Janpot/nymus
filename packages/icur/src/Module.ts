@@ -1,14 +1,9 @@
 import * as t from '@babel/types';
-import template from '@babel/template';
 import Scope from './scope';
 import { IcurOptions } from '.';
 import IntlMessageFormat from 'intl-messageformat';
 import icuToReactComponent, { Formats } from './icu-to-react-component';
 import * as astUtil from './astUtil';
-
-const buildFormatter = template.expression(`
-  new Intl.%%format%%(%%locale%%, %%options%%)
-`);
 
 function getIntlFormatter(type: keyof Formats): string {
   switch (type) {
@@ -94,15 +89,24 @@ export default class Module {
     return t.identifier(localName);
   }
 
+  buildFormatterAst(constructor: string, options?: astUtil.Json) {
+    return t.newExpression(
+      t.memberExpression(t.identifier('Intl'), t.identifier(constructor)),
+      [
+        this.locale ? t.stringLiteral(this.locale) : t.identifier('undefined'),
+        options ? astUtil.buildJson(options) : t.identifier('undefined')
+      ]
+    );
+  }
+
   useFormatter(type: keyof Formats, style: string): t.Identifier {
     const sharedKey = JSON.stringify(['formatter', type, style]);
 
     return this._useSharedConst(sharedKey, `f_${type}_${style}`, () => {
-      return buildFormatter({
-        format: t.identifier(getIntlFormatter(type)),
-        locale: this.getLocaleAsAst(),
-        options: this._getFormatOptionsAsAst(type, style)
-      });
+      return this.buildFormatterAst(
+        getIntlFormatter(type),
+        this.formats[type][style]
+      );
     });
   }
 
@@ -110,11 +114,7 @@ export default class Module {
     const sharedKey = JSON.stringify(['plural', type]);
 
     return this._useSharedConst(sharedKey, `p_${type}`, () => {
-      return buildFormatter({
-        format: t.identifier('PluralRules'),
-        locale: this.getLocaleAsAst(),
-        options: type ? astUtil.buildJson({ type }) : t.identifier('undefined')
-      });
+      return this.buildFormatterAst('PluralRules', type ? { type } : undefined);
     });
   }
 
@@ -132,12 +132,6 @@ export default class Module {
     const { ast } = icuToReactComponent(localName, message, this);
 
     this.exports.set(componentName, { localName, ast });
-  }
-
-  getLocaleAsAst(): t.Expression {
-    return this.locale
-      ? t.stringLiteral(this.locale)
-      : t.identifier('undefined');
   }
 
   _getFormatOptionsAsAst(type: keyof Formats, style: string): t.Expression {
@@ -173,7 +167,12 @@ export default class Module {
     }
     return [
       ...(this.react
-        ? [template.ast`import * as React from 'react';` as t.Statement]
+        ? [
+            t.importDeclaration(
+              [t.importNamespaceSpecifier(t.identifier('React'))],
+              t.stringLiteral('react')
+            )
+          ]
         : []),
       ...formatterDeclarations,
       ...componentDeclarations,

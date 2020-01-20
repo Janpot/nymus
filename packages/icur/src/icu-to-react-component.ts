@@ -1,5 +1,4 @@
 import * as mf from 'intl-messageformat-parser';
-import template from '@babel/template';
 import * as t from '@babel/types';
 import * as babylon from '@babel/parser';
 import Scope from './scope';
@@ -124,13 +123,19 @@ function icuNodesToJsxExpression(
   return interpolateJsxFragment(jsxAst, interpollatedIcuNodes, context);
 }
 
-const buildFormatterCall = template.expression(`
-  %%formatter%%.format(%%value%%)
-`);
+function buildFormatterCall(formatter: t.Identifier, value: t.Identifier) {
+  return t.callExpression(
+    t.memberExpression(formatter, t.identifier('format')),
+    [value]
+  );
+}
 
-const buildPluralRulesCall = template.expression(`
-  %%formatter%%.select(%%value%%)
-`);
+function buildPluralRulesCall(formatter: t.Identifier, value: t.Identifier) {
+  return t.callExpression(
+    t.memberExpression(formatter, t.identifier('select')),
+    [value]
+  );
+}
 
 function icuNodesToJsExpression(
   icuNode: IcuNode,
@@ -179,7 +184,7 @@ function icuNodesToJsExpression(
     const formatter = context.useFormatter('number', 'decimal');
     const formatted = context.addLocal(
       'formatted',
-      buildFormatterCall({ formatter, value: argIdentifier })
+      buildFormatterCall(formatter, argIdentifier)
     );
     context.enterPlural(formatted);
     if (!icuNode.options.hasOwnProperty('other')) {
@@ -201,10 +206,7 @@ function icuNodesToJsExpression(
     );
     const localized = context.addLocal(
       'localized',
-      buildPluralRulesCall({
-        formatter: pluralRules,
-        value: withOffset
-      })
+      buildPluralRulesCall(pluralRules, withOffset)
     );
     const cases = Object.entries(options).map(([name, caseNode]) => {
       const test = name.startsWith('=')
@@ -218,15 +220,15 @@ function icuNodesToJsExpression(
   } else if (mf.isNumberElement(icuNode)) {
     const value = context.addArgument(icuNode.value);
     const formatter = context.useFormatter('number', icuNode.style as string);
-    return buildFormatterCall({ formatter, value });
+    return buildFormatterCall(formatter, value);
   } else if (mf.isDateElement(icuNode)) {
     const value = context.addArgument(icuNode.value);
     const formatter = context.useFormatter('date', icuNode.style as string);
-    return buildFormatterCall({ formatter, value });
+    return buildFormatterCall(formatter, value);
   } else if (mf.isTimeElement(icuNode)) {
     const value = context.addArgument(icuNode.value);
     const formatter = context.useFormatter('time', icuNode.style as string);
-    return buildFormatterCall({ formatter, value });
+    return buildFormatterCall(formatter, value);
   } else if (mf.isPoundElement(icuNode)) {
     return context.getPound();
   } else {
@@ -304,10 +306,6 @@ class ComponentContext {
 
   usePlural(type?: 'ordinal' | 'cardinal'): t.Identifier {
     return this._module.usePlural(type);
-  }
-
-  getLocaleAsAst() {
-    return this._module.getLocaleAsAst();
   }
 
   addLocal(name: string, init: t.Expression): t.Identifier {

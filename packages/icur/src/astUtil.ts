@@ -1,6 +1,12 @@
 import * as t from '@babel/types';
 
-type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | Json[]
+  | { [key: string]: Json };
 
 /**
  * Build an AST for a literal JSON value
