@@ -28,10 +28,6 @@ const { argv } = yargs
     description: 'Emit type declarations (.d.ts)',
     alias: 'd'
   })
-  .option('react', {
-    type: 'boolean',
-    description: 'Compile to react components'
-  })
   .option('output-dir', {
     type: 'string',
     description: 'The directory where transformed files should be stored',
@@ -79,6 +75,7 @@ async function main() {
   await Promise.all(
     resolvedFiles.map(async resolvedFile => {
       const { code, declarations } = await transformFile(resolvedFile, {
+        react: true,
         declarations: argv.declarations
       });
       const outputDirectory = getOutputDirectory(resolvedFile);
