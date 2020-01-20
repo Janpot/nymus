@@ -32,10 +32,16 @@ function interpolateJsxFragment(
     context,
     0
   );
-  return astUtil.buildReactElement(
-    t.memberExpression(t.identifier('React'), t.identifier('Fragment')),
-    fragment
-  );
+  if (fragment.length <= 0) {
+    return t.nullLiteral();
+  } else if (fragment.length === 1) {
+    return fragment[0];
+  } else {
+    return astUtil.buildReactElement(
+      t.memberExpression(t.identifier('React'), t.identifier('Fragment')),
+      fragment
+    );
+  }
 }
 
 function interpolateJsxFragmentChildren(
@@ -149,6 +155,8 @@ function icuNodesToJsExpression(
     } else {
       if (icuNode.length <= 0) {
         return t.stringLiteral('');
+      } else if (icuNode.length === 1 && mf.isLiteralElement(icuNode[0])) {
+        return t.stringLiteral(icuNode[0].value);
       } else {
         const rest = icuNode.slice(0, -1);
         const last = icuNode[icuNode.length - 1];
@@ -185,7 +193,7 @@ function icuNodesToJsExpression(
     const argIdentifier = context.addArgument(icuNode.value, 'string');
     const formatter = context.useFormatter('number', 'decimal');
     const formatted = context.addLocal(
-      'formatted',
+      `formatted_${icuNode.value}`,
       buildFormatterCall(formatter, argIdentifier)
     );
     context.enterPlural(formatted);
@@ -198,16 +206,23 @@ function icuNodesToJsExpression(
     const { other, ...options } = icuNode.options;
     const otherFragment = icuNodesToJsExpression(other.value, context);
     const pluralRules = context.usePlural(icuNode.pluralType);
-    const withOffset = context.addLocal(
-      'withOffset',
-      t.binaryExpression('-', argIdentifier, t.numericLiteral(icuNode.offset))
-    );
+    const withOffset =
+      icuNode.offset !== 0
+        ? context.addLocal(
+            `offsetted_${icuNode.value}`,
+            t.binaryExpression(
+              '-',
+              argIdentifier,
+              t.numericLiteral(icuNode.offset)
+            )
+          )
+        : argIdentifier;
     const exact = context.addLocal(
-      'exact',
+      `exact_${icuNode.value}_match`,
       t.binaryExpression('+', t.stringLiteral('='), withOffset)
     );
     const localized = context.addLocal(
-      'localized',
+      `localized_${icuNode.value}_match`,
       buildPluralRulesCall(pluralRules, withOffset)
     );
     const cases = Object.entries(options).map(([name, caseNode]) => {
