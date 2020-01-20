@@ -27,7 +27,7 @@ const { argv } = yargs
     type: 'boolean',
     description: 'Emit type declarations (.d.ts)',
     alias: 'd'
-  })
+  })/*
   .option('output-dir', {
     type: 'string',
     description: 'The directory where transformed files should be stored',
@@ -37,7 +37,7 @@ const { argv } = yargs
     type: 'string',
     description:
       'The directory where the source files are considered relative from'
-  });
+  }) */;
 
 async function resolveFiles(inputs: string[]): Promise<string[]> {
   const result: string[] = [];
