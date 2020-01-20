@@ -2,7 +2,7 @@ import * as mf from 'intl-messageformat-parser';
 import * as t from '@babel/types';
 import * as babylon from '@babel/parser';
 import Scope from './scope';
-import IcurError from './IcurError';
+import TransformationError from './TransformationError';
 import Module from './Module';
 import * as astUtil from './astUtil';
 
@@ -46,7 +46,7 @@ function interpolateJsxFragmentChildren(
 
   for (const child of jsx) {
     if (t.isJSXFragment(child)) {
-      throw new IcurError('Fragments are not allowed', child.loc);
+      throw new TransformationError('Fragments are not allowed', child.loc);
     } else if (t.isJSXExpressionContainer(child)) {
       const icuNode = icuNodes[icuIndex];
       icuIndex++;
@@ -55,13 +55,13 @@ function interpolateJsxFragmentChildren(
     } else if (t.isJSXElement(child)) {
       const identifier = child.openingElement.name;
       if (!t.isJSXIdentifier(identifier)) {
-        throw new IcurError(
+        throw new TransformationError(
           'Invalid JSX element',
           child.openingElement.name.loc
         );
       }
       if (child.openingElement.attributes.length > 0) {
-        throw new IcurError(
+        throw new TransformationError(
           'JSX attributes are not allowed',
           child.openingElement.attributes[0].loc
         );
@@ -165,7 +165,7 @@ function icuNodesToJsExpression(
   } else if (mf.isSelectElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
     if (!icuNode.options.hasOwnProperty('other')) {
-      throw new IcurError(
+      throw new TransformationError(
         'A select element requires an "other"',
         icuNode.location || null
       );
@@ -188,7 +188,7 @@ function icuNodesToJsExpression(
     );
     context.enterPlural(formatted);
     if (!icuNode.options.hasOwnProperty('other')) {
-      throw new IcurError(
+      throw new TransformationError(
         'A plural element requires an "other"',
         icuNode.location || null
       );

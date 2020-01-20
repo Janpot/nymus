@@ -1,7 +1,7 @@
 import * as yargs from 'yargs';
 import * as fs from 'fs';
 import * as path from 'path';
-import createModule, { IcurOptions } from './index';
+import createModule, { CreateModuleOptions } from './index';
 import { promisify } from 'util';
 
 const fsStat = promisify(fs.stat);
@@ -60,7 +60,7 @@ function getOutputDirectory(srcPath: string): string {
   return path.dirname(srcPath);
 }
 
-async function transformFile(srcPath: string, options: IcurOptions) {
+async function transformFile(srcPath: string, options: CreateModuleOptions) {
   const content = await fsReadFile(srcPath, { encoding: 'utf-8' });
   const messages = JSON.parse(content);
   const { code, declarations } = await createModule(messages, options);

@@ -1,10 +1,10 @@
-import icur, { IcurOptions } from './index';
+import createModule, { CreateModuleOptions } from './index';
 import * as vm from 'vm';
 import * as babelCore from '@babel/core';
 import * as React from 'react';
 import * as ReactDOMServer from 'react-dom/server';
 
-function importFrom(code: string, options: IcurOptions) {
+function importFrom(code: string, options: CreateModuleOptions) {
   const { code: cjs } =
     babelCore.transformSync(code, {
       plugins: ['@babel/plugin-transform-modules-commonjs']
@@ -39,9 +39,9 @@ type ComponentsOf<T, C> = {
 
 async function createComponents<C, T extends Messages>(
   messages: T,
-  options: IcurOptions = {}
+  options: CreateModuleOptions = {}
 ): Promise<ComponentsOf<T, C>> {
-  const { code } = await icur(messages, options);
+  const { code } = await createModule(messages, options);
   // console.log(code);
   const components = importFrom(code, options) as ComponentsOf<T, C>;
   for (const component of Object.values(components)) {
@@ -58,7 +58,7 @@ async function createComponents<C, T extends Messages>(
 
 export async function createStringComponent(
   message: string,
-  options?: IcurOptions
+  options?: CreateModuleOptions
 ): Promise<(props: any) => string> {
   const { Component } = await createComponents<
     (props: any) => string,
@@ -69,7 +69,7 @@ export async function createStringComponent(
 
 export async function createReactComponent(
   message: string,
-  options?: IcurOptions
+  options?: CreateModuleOptions
 ): Promise<React.ElementType> {
   const { Component } = await createComponents<
     React.ElementType,
@@ -88,7 +88,7 @@ export function renderReact(elm: React.ElementType, props = {}) {
 
 export async function renderMessageWithReact(
   message: string,
-  options: IcurOptions,
+  options: CreateModuleOptions,
   props: any
 ) {
   const { element } = await createComponents<

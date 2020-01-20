@@ -1,8 +1,8 @@
 import * as t from '@babel/types';
 import Scope from './scope';
-import { IcurOptions } from '.';
+import { CreateModuleOptions } from '.';
 import IntlMessageFormat from 'intl-messageformat';
-import icuToReactComponent, { Formats } from './icu-to-react-component';
+import createComponent, { Formats } from './createComponent';
 import * as astUtil from './astUtil';
 
 function getIntlFormatter(type: keyof Formats): string {
@@ -58,7 +58,7 @@ export default class Module {
   readonly locale?: string;
   readonly formats: Formats;
 
-  constructor(options: IcurOptions) {
+  constructor(options: CreateModuleOptions) {
     this.react = options.react || false;
     this.scope = new Scope();
     if (this.react) {
@@ -129,7 +129,7 @@ export default class Module {
       ? this.scope.createUniqueBinding(componentName)
       : this.scope.createBinding(componentName);
 
-    const { ast } = icuToReactComponent(localName, message, this);
+    const { ast } = createComponent(localName, message, this);
 
     this.exports.set(componentName, { localName, ast });
   }

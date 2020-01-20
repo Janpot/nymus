@@ -10,7 +10,7 @@ interface Messages {
   [key: string]: string;
 }
 
-export interface IcurOptions {
+export interface CreateModuleOptions {
   locale?: string;
   formats?: Partial<Formats>;
   ast?: boolean;
@@ -48,7 +48,7 @@ export function formatError(
 
 export default async function createModule(
   messages: Messages,
-  options: IcurOptions = {}
+  options: CreateModuleOptions = {}
 ) {
   const module = new Module(options);
 

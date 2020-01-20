@@ -1,10 +1,12 @@
-import icur from './index';
+import createModule from './index';
 import { loader } from 'webpack';
 
-const icurLoader: loader.Loader = function icurLoader(source) {
+const icuLoader: loader.Loader = function icuLoader(source) {
+  const callback = this.async();
   const messages = JSON.parse(String(source));
-  const { code } = icur(messages);
-  return code;
+  createModule(messages, { react: true })
+    .then(({ code }) => callback!(null, code))
+    .catch(callback);
 };
 
-export default icurLoader;
+export default icuLoader;

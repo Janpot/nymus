@@ -7,11 +7,10 @@ import {
   renderString
 } from './test-utils';
 import * as React from 'react';
-import { formatError } from './index';
-import { IcurOptions } from '../dist';
+import { formatError, CreateModuleOptions } from './index';
 
 type TestFunction = (
-  createComponent: (msg: string, options?: IcurOptions) => Promise<any>,
+  createComponent: (msg: string, options?: CreateModuleOptions) => Promise<any>,
   render: (component: any, props?: any) => string
 ) => void | Promise<void>;
 
