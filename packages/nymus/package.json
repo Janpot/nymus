@@ -8,9 +8,14 @@
     "nymus": "./cli.js"
   },
   "scripts": {
+    "prepublish": "npm run build",
     "build": "rm -rf ./dist && tsc",
     "test": "jest"
   },
+  "files": [
+    "dist",
+    "cli.js"
+  ],
   "keywords": [],
   "author": "",
   "license": "MIT",
