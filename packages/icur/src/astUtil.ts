@@ -36,3 +36,28 @@ export function buildReactElement(
     [element, t.nullLiteral(), ...children]
   );
 }
+
+/**
+ * builds the AST for chained ternaries:
+ * @example
+ * test1
+ *   ? consequent1
+ *   : test2
+ *     ? consequent2
+ *     // ...
+ *     : alternate
+ */
+export function buildTernaryChain(
+  cases: [t.Expression, t.Expression][],
+  alternate: t.Expression
+): t.Expression {
+  if (cases.length <= 0) {
+    return alternate;
+  }
+  const [[test, consequent], ...restCases] = cases;
+  return t.conditionalExpression(
+    test,
+    consequent,
+    buildTernaryChain(restCases, alternate)
+  );
+}

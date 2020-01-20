@@ -13,22 +13,6 @@ interface Argument {
 
 type IcuNode = mf.MessageFormatElement | mf.MessageFormatElement[];
 
-function switchExpression(
-  discriminant: t.Expression,
-  cases: [string, t.Expression][],
-  alternate: t.Expression
-): t.Expression {
-  if (cases.length <= 0) {
-    return alternate;
-  }
-  const [[test, consequent], ...restCases] = cases;
-  return t.conditionalExpression(
-    t.binaryExpression('===', discriminant, t.stringLiteral(test)),
-    consequent,
-    switchExpression(discriminant, restCases, alternate)
-  );
-}
-
 type JSXFragmentChild =
   | t.JSXFragment
   | t.JSXText
@@ -183,10 +167,13 @@ function icuNodesToJsExpression(
     }
     const { other, ...options } = icuNode.options;
     const cases = Object.entries(options).map(([name, caseNode]) => {
-      return [name, icuNodesToJsExpression(caseNode.value, context)];
-    }) as [string, t.Expression][];
+      return [
+        t.binaryExpression('===', argIdentifier, t.stringLiteral(name)),
+        icuNodesToJsExpression(caseNode.value, context)
+      ];
+    }) as [t.Expression, t.Expression][];
     const otherFragment = icuNodesToJsExpression(other.value, context);
-    return switchExpression(argIdentifier, cases, otherFragment);
+    return astUtil.buildTernaryChain(cases, otherFragment);
   } else if (mf.isPluralElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value);
     const formatter = context.useFormatter('number', 'decimal');
@@ -202,9 +189,6 @@ function icuNodesToJsExpression(
       );
     }
     const { other, ...options } = icuNode.options;
-    const cases = Object.entries(options).map(([name, caseNode]) => {
-      return [name, icuNodesToJsExpression(caseNode.value, context)];
-    }) as [string, t.Expression][];
     const otherFragment = icuNodesToJsExpression(other.value, context);
     const pluralRules = context.usePlural(icuNode.pluralType);
     const withOffset = context.addLocal(
@@ -222,11 +206,13 @@ function icuNodesToJsExpression(
         value: withOffset
       })
     );
-    const ast = switchExpression(
-      exact,
-      cases,
-      switchExpression(localized, cases, otherFragment)
-    );
+    const cases = Object.entries(options).map(([name, caseNode]) => {
+      const test = name.startsWith('=')
+        ? t.binaryExpression('===', exact, t.stringLiteral(name))
+        : t.binaryExpression('===', localized, t.stringLiteral(name));
+      return [test, icuNodesToJsExpression(caseNode.value, context)];
+    }) as [t.Expression, t.Expression][];
+    const ast = astUtil.buildTernaryChain(cases, otherFragment);
     context.exitPlural();
     return ast;
   } else if (mf.isNumberElement(icuNode)) {
