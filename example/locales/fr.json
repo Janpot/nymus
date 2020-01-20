@@ -1,0 +1,11 @@
+{
+  "HomeTitle": "Bienvenue chez Next.js!",
+  "HomeDescription": "Pour commencer, modifiez <Code>pages/index.js</Code> et enregistrez pour recharger.",
+  "HomeLinksDocs": "<Title>Documentation</Title><SubTitle>En savoir plus sur Next.js dans la documentation.</SubTitle>",
+  "HomeLinksLearn": "<Title>Apprends Next.js</Title><SubTitle>Découvrez Next.js en suivant un tutoriel interactif!</SubTitle>",
+  "HomeLinksExamples": "<Title>Exemples</Title><SubTitle>Trouvez d'autres exemples de passe-partout sur le Next.js GitHub.</SubTitle>",
+  "HomeLabel": "Home",
+  "LocaleEn": "English",
+  "LocaleNl": "Nederlands",
+  "LocaleFr": "Français"
+}

@@ -1,0 +1,16 @@
+{
+  "rules": [
+    {
+      "pathname": "/en",
+      "dest": "http://localhost:3001"
+    },
+    {
+      "pathname": "/nl",
+      "dest": "http://localhost:3002"
+    },
+    {
+      "pathname": "/fr",
+      "dest": "http://localhost:3003"
+    }
+  ]
+}

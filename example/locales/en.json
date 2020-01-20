@@ -1,0 +1,11 @@
+{
+  "HomeTitle": "Welcome to Next.js!",
+  "HomeDescription": "To get started, edit <Code>pages/index.js</Code> and save to reload.",
+  "HomeLinksDocs": "<Title>Documentation</Title><SubTitle>Learn more about Next.js in the documentation.</SubTitle>",
+  "HomeLinksLearn": "<Title>Next.js Learn</Title><SubTitle>Learn about Next.js by following an interactive tutorial!</SubTitle>",
+  "HomeLinksExamples": "<Title>Examples</Title><SubTitle>Find other example boilerplates on the Next.js GitHub.</SubTitle>",
+  "HomeLabel": "Home",
+  "LocaleEn": "English",
+  "LocaleNl": "Nederlands",
+  "LocaleFr": "Français"
+}

@@ -1,0 +1,29 @@
+{
+  "name": "example",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "nymus ./locales && LOCALE=en LOCALES=en,nl,fr next",
+    "build": "nymus ./locales && concurrently npm:build:*",
+    "build:en": "LOCALE=en LOCALES=en,nl,fr next build",
+    "build:nl": "LOCALE=nl LOCALES=en,nl,fr next build",
+    "build:fr": "LOCALE=fr LOCALES=en,nl,fr next build",
+    "startx": "node ./scripts/start",
+    "start": "concurrently npm:start:*",
+    "start:proxy": "micro-proxy -r proxy.json -p 3000",
+    "start:en": "LOCALE=en LOCALES=en,nl,fr BASE_PATH= next start -p 3001",
+    "start:nl": "LOCALE=nl LOCALES=en,nl,fr next start -p 3002",
+    "start:fr": "LOCALE=fr LOCALES=en,nl,fr next start -p 3003",
+    "proxy": "micro-proxy"
+  },
+  "dependencies": {
+    "concurrently": "^5.0.2",
+    "micro-proxy": "^1.1.0",
+    "next": "9.2.0",
+    "react": "16.12.0",
+    "react-dom": "16.12.0"
+  },
+  "devDependencies": {
+    "nymus": "^0.1.6"
+  }
+}
