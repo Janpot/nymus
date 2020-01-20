@@ -1,9 +1,10 @@
 import * as t from '@babel/types';
-import Scope from './scope';
+import Scope from './Scope';
 import { CreateModuleOptions } from '.';
 import IntlMessageFormat from 'intl-messageformat';
-import createComponent, { Formats } from './createComponent';
+import createComponent from './createComponent';
 import * as astUtil from './astUtil';
+import { Formats, mergeFormats } from './formats';
 
 function getIntlFormatter(type: keyof Formats): string {
   switch (type) {
@@ -14,23 +15,6 @@ function getIntlFormatter(type: keyof Formats): string {
     case 'time':
       return 'DateTimeFormat';
   }
-}
-
-function mergeFormats(...formattersList: Partial<Formats>[]): Formats {
-  return {
-    number: Object.assign(
-      {},
-      ...formattersList.map(formatters => formatters.number)
-    ),
-    date: Object.assign(
-      {},
-      ...formattersList.map(formatters => formatters.date)
-    ),
-    time: Object.assign(
-      {},
-      ...formattersList.map(formatters => formatters.time)
-    )
-  };
 }
 
 interface Export {

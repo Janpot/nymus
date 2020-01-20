@@ -1,6 +1,6 @@
 import * as t from '@babel/types';
 import * as babel from '@babel/core';
-import { Formats } from './icu-to-react-component';
+import { Formats } from './formats';
 import { codeFrameColumns, BabelCodeFrameOptions } from '@babel/code-frame';
 import Module from './Module';
 import TsPlugin from '@babel/plugin-transform-typescript';

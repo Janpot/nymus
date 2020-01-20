@@ -1,10 +1,11 @@
 import * as mf from 'intl-messageformat-parser';
 import * as t from '@babel/types';
 import * as babylon from '@babel/parser';
-import Scope from './scope';
+import Scope from './Scope';
 import TransformationError from './TransformationError';
 import Module from './Module';
 import * as astUtil from './astUtil';
+import { Formats } from './formats';
 
 interface Argument {
   localName?: string;
@@ -234,18 +235,6 @@ function icuNodesToJsExpression(
   } else {
     throw new Error(`Unknown AST node type`);
   }
-}
-
-interface FormatterStyles {
-  [style: string]: {
-    [key: string]: string;
-  };
-}
-
-export interface Formats {
-  number: FormatterStyles;
-  date: FormatterStyles;
-  time: FormatterStyles;
 }
 
 function createContext(module: Module): ComponentContext {

@@ -5,7 +5,7 @@ import {
   renderReact,
   createStringComponent,
   renderString
-} from './test-utils';
+} from './testUtils';
 import * as React from 'react';
 import { formatError, CreateModuleOptions } from './index';
 
