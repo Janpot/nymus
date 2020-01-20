@@ -6,7 +6,7 @@
   </a>
 </p>
 
-> Transform [ICU messages](http://userguide.icu-project.org/formatparse/messages) into performant React components.
+> Transform [ICU messages](http://userguide.icu-project.org/formatparse/messages) into React components.
 
 `nymus` aims to generate components that look as if they were handwritten.
 
@@ -22,18 +22,18 @@ given a `./messages.json` file:
 
 ```json
 {
-  "Welcome": "Hi there, {name}, how are you?"
+  "Welcome": "It's {name}, {gender, select, male {his} female {her} other {their}} birthday is {birthday, date, long}"
 }
 ```
 
-`nymus` will generate a modules containing React components that can be readily imported in your project as follows:
+`nymus` will generate a module containing React components that can be readily imported in your project as follows:
 
 ```js
 import * as React from 'react';
 import { Welcome } from './messages';
 
 export function HomePage() {
-  return <Welcome name="John" />;
+  return <Welcome name="John" gender="male" birthday={new Date(1985, 11, 3)} />;
 }
 ```
 

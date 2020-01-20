@@ -6,7 +6,7 @@
   </a>
 </p>
 
-> Transform [ICU messages](http://userguide.icu-project.org/formatparse/messages) into performant React components.
+> Transform [ICU messages](http://userguide.icu-project.org/formatparse/messages) into React components.
 
 `nymus` aims to generate components that look as if they were handwritten.
 
