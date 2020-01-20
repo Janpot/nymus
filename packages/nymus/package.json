@@ -1,6 +1,6 @@
 {
   "name": "nymus",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Transform ICU messages into React components.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -24,9 +24,10 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@babel/core": "^7.7.7",
     "@babel/code-frame": "^7.8.3",
+    "@babel/core": "^7.7.7",
     "@babel/parser": "^7.7.7",
+    "@babel/plugin-transform-typescript": "^7.8.3",
     "@babel/types": "^7.7.4",
     "intl-messageformat": "^7.8.2",
     "intl-messageformat-parser": "^3.6.2",
