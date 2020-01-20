@@ -10,24 +10,24 @@ const fsReadFile = promisify(fs.readFile);
 const fsWriteFile = promisify(fs.writeFile);
 
 const { argv } = yargs
-  .usage('Usage: $0 [options] [file...]')
-  .example('$0 --locale en ./string-en.json', '')
-  .option('locale', {
-    type: 'string',
-    description: 'The locale to use for formatters',
-    alias: 'l',
-    requiresArg: true
-  })
-  .option('typescript', {
-    type: 'boolean',
-    description: 'Emit typescript instead of javascript',
-    alias: 't'
-  })
-  .option('declarations', {
-    type: 'boolean',
-    description: 'Emit type declarations (.d.ts)',
-    alias: 'd'
-  })/*
+    .usage('Usage: $0 [options] [file...]')
+    .example('$0 --locale en ./string-en.json', '')
+    .option('locale', {
+      type: 'string',
+      description: 'The locale to use for formatters',
+      alias: 'l',
+      requiresArg: true
+    })
+    .option('typescript', {
+      type: 'boolean',
+      description: 'Emit typescript instead of javascript',
+      alias: 't'
+    })
+    .option('declarations', {
+      type: 'boolean',
+      description: 'Emit type declarations (.d.ts)',
+      alias: 'd'
+    }) /*
   .option('output-dir', {
     type: 'string',
     description: 'The directory where transformed files should be stored',
@@ -75,15 +75,15 @@ async function main() {
   await Promise.all(
     resolvedFiles.map(async resolvedFile => {
       const { code, declarations } = await transformFile(resolvedFile, {
-        react: true,
-        declarations: argv.declarations
+        ...argv,
+        // force this for now
+        react: true
       });
       const outputDirectory = getOutputDirectory(resolvedFile);
       const fileName = path.basename(resolvedFile);
       const extension = path.extname(resolvedFile);
       const fileBaseName =
         extension.length <= 0 ? fileName : fileName.slice(0, -extension.length);
-      console.log(extension, fileBaseName);
       const outputExtension = argv.typescript ? '.ts' : '.js';
       const outputPath = path.join(
         outputDirectory,

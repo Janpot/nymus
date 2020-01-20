@@ -9,6 +9,7 @@ import { Formats } from './formats';
 
 interface Argument {
   localName?: string;
+  type: ArgumentType;
 }
 
 type IcuNode = mf.MessageFormatElement | mf.MessageFormatElement[];
@@ -68,7 +69,7 @@ function interpolateJsxFragmentChildren(
         );
       }
 
-      const localName = context.addArgument(identifier.name);
+      const localName = context.addArgument(identifier.name, 'React.Element');
       const fragment = interpolateJsxFragmentChildren(
         child.children,
         icuNodes,
@@ -161,10 +162,10 @@ function icuNodesToJsExpression(
   } else if (mf.isLiteralElement(icuNode)) {
     return t.stringLiteral(icuNode.value);
   } else if (mf.isArgumentElement(icuNode)) {
-    const argIdentifier = context.addArgument(icuNode.value);
+    const argIdentifier = context.addArgument(icuNode.value, 'string');
     return argIdentifier;
   } else if (mf.isSelectElement(icuNode)) {
-    const argIdentifier = context.addArgument(icuNode.value);
+    const argIdentifier = context.addArgument(icuNode.value, 'string');
     if (!icuNode.options.hasOwnProperty('other')) {
       throw new TransformationError(
         'A select element requires an "other"',
@@ -181,7 +182,7 @@ function icuNodesToJsExpression(
     const otherFragment = icuNodesToJsExpression(other.value, context);
     return astUtil.buildTernaryChain(cases, otherFragment);
   } else if (mf.isPluralElement(icuNode)) {
-    const argIdentifier = context.addArgument(icuNode.value);
+    const argIdentifier = context.addArgument(icuNode.value, 'string');
     const formatter = context.useFormatter('number', 'decimal');
     const formatted = context.addLocal(
       'formatted',
@@ -219,15 +220,15 @@ function icuNodesToJsExpression(
     context.exitPlural();
     return ast;
   } else if (mf.isNumberElement(icuNode)) {
-    const value = context.addArgument(icuNode.value);
+    const value = context.addArgument(icuNode.value, 'number');
     const formatter = context.useFormatter('number', icuNode.style as string);
     return buildFormatterCall(formatter, value);
   } else if (mf.isDateElement(icuNode)) {
-    const value = context.addArgument(icuNode.value);
+    const value = context.addArgument(icuNode.value, 'Date');
     const formatter = context.useFormatter('date', icuNode.style as string);
     return buildFormatterCall(formatter, value);
   } else if (mf.isTimeElement(icuNode)) {
-    const value = context.addArgument(icuNode.value);
+    const value = context.addArgument(icuNode.value, 'Date');
     const formatter = context.useFormatter('time', icuNode.style as string);
     return buildFormatterCall(formatter, value);
   } else if (mf.isPoundElement(icuNode)) {
@@ -239,6 +240,23 @@ function icuNodesToJsExpression(
 
 function createContext(module: Module): ComponentContext {
   return new ComponentContext(module);
+}
+
+type ArgumentType = 'string' | 'number' | 'Date' | 'React.Element';
+
+function getTypeAnnotation(type: ArgumentType) {
+  switch (type) {
+    case 'string':
+      return t.tsStringKeyword();
+    case 'number':
+      return t.tsNumberKeyword();
+    case 'Date':
+      return t.tsTypeReference(t.identifier('Date'));
+    case 'React.Element':
+      return t.tsTypeReference(
+        t.tsQualifiedName(t.identifier('React'), t.identifier('Element'))
+      );
+  }
 }
 
 class ComponentContext {
@@ -280,8 +298,8 @@ class ComponentContext {
     return this._module.react;
   }
 
-  addArgument(name: string): t.Identifier {
-    const arg: Argument = {};
+  addArgument(name: string, type: ArgumentType): t.Identifier {
+    const arg: Argument = { type };
     if (this._scope.hasBinding(name)) {
       arg.localName = this._scope.createUniqueBinding(name);
     }
@@ -315,7 +333,14 @@ class ComponentContext {
         })
       );
       argsObjectPattern.typeAnnotation = t.tsTypeAnnotation(
-        t.tsTypeLiteral([])
+        t.tsTypeLiteral(
+          Array.from(this.args.entries(), ([name, arg]) => {
+            return t.tsPropertySignature(
+              t.identifier(name),
+              t.tsTypeAnnotation(getTypeAnnotation(arg.type))
+            );
+          })
+        )
       );
       return [argsObjectPattern];
     }
