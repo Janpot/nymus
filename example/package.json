@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nymus ./locales && LOCALE=en LOCALES=en,nl,fr next",
-    "build": "nymus ./locales && concurrently npm:build:*",
+    "nymus": "nymus ./locales/*.json",
+    "dev": "npm run nymus && LOCALE=en LOCALES=en,nl,fr next",
+    "build": "npm run nymus && concurrently npm:build:*",
     "build:en": "LOCALE=en LOCALES=en,nl,fr next build",
     "build:nl": "LOCALE=nl LOCALES=en,nl,fr next build",
     "build:fr": "LOCALE=fr LOCALES=en,nl,fr next build",
