@@ -1,11 +1,11 @@
 {
-  "name": "icur",
-  "version": "1.0.0",
+  "name": "nymus",
+  "version": "0.1.0",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "icur": "./cli.js"
+    "nymus": "./cli.js"
   },
   "scripts": {
     "build": "rm -rf ./dist && tsc",

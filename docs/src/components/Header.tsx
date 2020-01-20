@@ -19,7 +19,7 @@ export default function Header(props: HeaderProps & AppBarProps) {
     <AppBar position="static" color="default" {...props}>
       <Toolbar variant="dense">
         <Typography variant="h6" className={classes.title}>
-          icur
+          nymus
         </Typography>
         <Button component={Link} href="/" color="inherit">
           Docs

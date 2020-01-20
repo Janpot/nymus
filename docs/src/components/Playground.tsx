@@ -1,7 +1,7 @@
 import * as React from 'react';
 import IcuEditor from './IcuEditor';
 import Highlighter from './Highlighter';
-import icur, { formatError } from 'icur';
+import createModule, { formatError } from 'nymus';
 import { format } from 'prettier/standalone';
 import parserBabylon from 'prettier/parser-babylon';
 import { makeStyles } from '@material-ui/core/styles';
@@ -97,17 +97,23 @@ function commentLines(lines: string) {
 export default function Playground() {
   const classes = useStyles();
   const [value, setValue] = React.useState(SAMPLE);
-  const result: string = React.useMemo(() => {
-    try {
-      const { code } = icur({ Component: value });
-      const formatted = format(code, {
-        parser: 'babel',
-        plugins: [parserBabylon]
-      });
-      return formatted;
-    } catch (err) {
-      return commentLines(formatError(value, err));
-    }
+  const [result, setResult] = React.useState<string>();
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const { code } = await createModule(
+          { Component: value },
+          { react: true }
+        );
+        const formatted = format(code, {
+          parser: 'babel',
+          plugins: [parserBabylon]
+        });
+        setResult(formatted);
+      } catch (err) {
+        setResult(commentLines(formatError(value, err)));
+      }
+    })();
   }, [value]);
   return (
     <div className={classes.root}>

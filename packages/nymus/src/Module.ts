@@ -118,11 +118,6 @@ export default class Module {
     this.exports.set(componentName, { localName, ast });
   }
 
-  _getFormatOptionsAsAst(type: keyof Formats, style: string): t.Expression {
-    const format = this.formats[type][style];
-    return format ? astUtil.buildJson(format) : t.identifier('undefined');
-  }
-
   _buildSharedConstAst(sharedConst: SharedConst): t.Statement {
     return t.variableDeclaration('const', [
       t.variableDeclarator(

@@ -1,5 +1,5 @@
 {
-  "name": "icur",
+  "name": "nymus-root",
   "private": true,
   "workspaces": [
     "docs",
