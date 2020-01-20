@@ -167,8 +167,6 @@ function icuNodesToJsExpression(
     } else {
       if (icuNode.length <= 0) {
         return t.stringLiteral('');
-      } else if (icuNode.length <= 1) {
-        return icuNodesToJsExpression(icuNode[0], context);
       } else {
         const rest = icuNode.slice(0, -1);
         const last = icuNode[icuNode.length - 1];

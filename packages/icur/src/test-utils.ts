@@ -7,10 +7,7 @@ import * as ReactDOMServer from 'react-dom/server';
 function importFrom(code: string, options: IcurOptions) {
   const { code: cjs } =
     babelCore.transformSync(code, {
-      plugins: [
-        '@babel/plugin-transform-modules-commonjs',
-        ...(options.react ? ['@babel/plugin-transform-react-jsx'] : [])
-      ]
+      plugins: ['@babel/plugin-transform-modules-commonjs']
     }) || {};
 
   if (!cjs) {
