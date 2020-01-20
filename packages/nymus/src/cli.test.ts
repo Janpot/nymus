@@ -1,23 +1,43 @@
 /* eslint-env jest */
 
 import * as childProcess from 'child_process';
-import { promisify } from 'util';
 import * as path from 'path';
+import * as fs from 'fs';
+import { copyRecursive, rmDirRecursive, fileExists } from './fileUtil';
+import { promisify } from 'util';
+
+const fsReadFile = promisify(fs.readFile);
 
 function exec(command) {
-  return new Promise((resolve, reject) => {
-    childProcess.exec(
-      command,
-      { cwd: path.resolve(__dirname, './__fixtures__') },
-      (error, stdout, stderr) => {
-        resolve({
-          code: error ? error.code : null,
-          stdout: stdout.trim()
-        });
-      }
-    );
+  return new Promise(resolve => {
+    childProcess.exec(command, { cwd: FIXTURES_DIR }, (error, stdout) => {
+      resolve({
+        code: error ? error.code : null,
+        stdout: stdout.trim()
+      });
+    });
   });
 }
+
+const FIXTURES_DIR = path.resolve(__dirname, './__fixtures__');
+const FIXTURES_BACKUP_DIR = path.resolve(__dirname, './__fixtures_backup__');
+
+function fixturePath(src: string) {
+  return path.resolve(FIXTURES_DIR, src);
+}
+
+beforeAll(async () => {
+  await copyRecursive(FIXTURES_DIR, FIXTURES_BACKUP_DIR);
+});
+
+afterEach(async () => {
+  await rmDirRecursive(FIXTURES_DIR);
+  await copyRecursive(FIXTURES_BACKUP_DIR, FIXTURES_DIR);
+});
+
+afterAll(async () => {
+  await rmDirRecursive(FIXTURES_BACKUP_DIR);
+});
 
 describe('cli', () => {
   it('should fail on invalid json', async () => {
@@ -27,10 +47,45 @@ describe('cli', () => {
     });
   });
 
-  it('should fail on non existing json', async () => {
-    await expect(exec('nymus ./non-existing/en.json')).resolves.toMatchObject({
-      code: 1,
-      stdout: expect.stringMatching(/^ENOENT: no such file or directory/)
-    });
+  it('should compile a folder', async () => {
+    await exec('nymus ./strings/');
+    expect(await fileExists(fixturePath('./strings/en.js'))).toBe(true);
+    expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(true);
+    expect(await fileExists(fixturePath('./strings/fr.js'))).toBe(true);
+  });
+
+  it('should compile individual files', async () => {
+    await exec('nymus ./strings/nl.json');
+    expect(await fileExists(fixturePath('./strings/en.js'))).toBe(false);
+    expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(true);
+    expect(await fileExists(fixturePath('./strings/fr.js'))).toBe(false);
+  });
+
+  it('should compile glob patterns', async () => {
+    await exec('nymus ./strings/{en,fr}.json');
+    expect(await fileExists(fixturePath('./strings/en.js'))).toBe(true);
+    expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(false);
+    expect(await fileExists(fixturePath('./strings/fr.js'))).toBe(true);
+  });
+
+  it('should only compile javascript when no configuration', async () => {
+    await exec('nymus ./strings/nl.json');
+    expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(true);
+    expect(await fileExists(fixturePath('./strings/nl.ts'))).toBe(false);
+    expect(await fileExists(fixturePath('./strings/nl.d.ts'))).toBe(false);
+  });
+
+  it('should compile declarations when configured', async () => {
+    await exec('nymus -d ./strings/nl.json');
+    expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(true);
+    expect(await fileExists(fixturePath('./strings/nl.ts'))).toBe(false);
+    expect(await fileExists(fixturePath('./strings/nl.d.ts'))).toBe(true);
+  });
+
+  it('should compile typescript when configured', async () => {
+    await exec('nymus -t ./strings/nl.json');
+    expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(false);
+    expect(await fileExists(fixturePath('./strings/nl.ts'))).toBe(true);
+    expect(await fileExists(fixturePath('./strings/nl.d.ts'))).toBe(false);
   });
 });

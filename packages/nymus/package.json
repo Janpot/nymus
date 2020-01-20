@@ -29,6 +29,7 @@
     "@babel/parser": "^7.7.7",
     "@babel/plugin-transform-typescript": "^7.8.3",
     "@babel/types": "^7.7.4",
+    "globby": "^11.0.0",
     "intl-messageformat": "^7.8.2",
     "intl-messageformat-parser": "^3.6.2",
     "typescript": "^3.7.5",

@@ -3,9 +3,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import createModule, { CreateModuleOptions } from './index';
 import { promisify } from 'util';
+import * as globby from 'globby';
 
-const fsStat = promisify(fs.stat);
-const fsReaddir = promisify(fs.readdir);
 const fsReadFile = promisify(fs.readFile);
 const fsWriteFile = promisify(fs.writeFile);
 
@@ -39,23 +38,6 @@ const { argv } = yargs
       'The directory where the source files are considered relative from'
   }) */;
 
-async function resolveFiles(inputs: string[]): Promise<string[]> {
-  const result: string[] = [];
-  await Promise.all(
-    inputs.map(async input => {
-      const resolvedPath = path.resolve(process.cwd(), input);
-      const stat = await fsStat(resolvedPath);
-      if (stat.isDirectory()) {
-        const entries = await fsReaddir(resolvedPath);
-        result.push(...entries.map(entry => path.resolve(resolvedPath, entry)));
-      } else {
-        result.push(resolvedPath);
-      }
-    })
-  );
-  return result;
-}
-
 function getOutputDirectory(srcPath: string): string {
   return path.dirname(srcPath);
 }
@@ -68,10 +50,10 @@ async function transformFile(srcPath: string, options: CreateModuleOptions) {
 }
 
 async function main() {
-  const resolvedFiles = await resolveFiles(argv._);
-  if (resolvedFiles.length <= 0) {
+  if (argv._.length <= 0) {
     throw new Error('missing input');
   }
+  const resolvedFiles = await globby(argv._);
   await Promise.all(
     resolvedFiles.map(async resolvedFile => {
       const { code, declarations } = await transformFile(resolvedFile, {
