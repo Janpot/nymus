@@ -4,7 +4,7 @@ import Scope from './scope';
 import { IcurOptions } from '.';
 import IntlMessageFormat from 'intl-messageformat';
 import icuToReactComponent, { Formats } from './icu-to-react-component';
-import { buildJsonAst } from './astUtils';
+import * as astUtil from './astUtil';
 
 const buildFormatter = template.expression(`
   new Intl.%%format%%(%%locale%%, %%options%%)
@@ -113,7 +113,7 @@ export default class Module {
       return buildFormatter({
         format: t.identifier('PluralRules'),
         locale: this.getLocaleAsAst(),
-        options: type ? buildJsonAst({ type }) : t.identifier('undefined')
+        options: type ? astUtil.buildJson({ type }) : t.identifier('undefined')
       });
     });
   }
@@ -142,7 +142,7 @@ export default class Module {
 
   _getFormatOptionsAsAst(type: keyof Formats, style: string): t.Expression {
     const format = this.formats[type][style];
-    return format ? buildJsonAst(format) : t.identifier('undefined');
+    return format ? astUtil.buildJson(format) : t.identifier('undefined');
   }
 
   _buildSharedConstAst(sharedConst: SharedConst): t.Statement {

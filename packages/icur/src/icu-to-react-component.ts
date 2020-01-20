@@ -5,6 +5,7 @@ import * as babylon from '@babel/parser';
 import Scope from './scope';
 import IcurError from './IcurError';
 import Module from './Module';
+import * as astUtil from './astUtil';
 
 interface Argument {
   localName?: string;
@@ -35,16 +36,6 @@ type JSXFragmentChild =
   | t.JSXSpreadChild
   | t.JSXElement;
 
-/**
- * Build an AST for the expression: `React.createElement(element, null, ...children)`
- */
-function buildReactElementAst(element: t.Expression, children: t.Expression[]) {
-  return t.callExpression(
-    t.memberExpression(t.identifier('React'), t.identifier('createElement')),
-    [element, t.nullLiteral(), ...children]
-  );
-}
-
 function interpolateJsxFragment(
   jsxFragment: t.JSXFragment,
   icuNodes: mf.MessageFormatElement[],
@@ -56,7 +47,7 @@ function interpolateJsxFragment(
     context,
     0
   );
-  return buildReactElementAst(
+  return astUtil.buildReactElement(
     t.memberExpression(t.identifier('React'), t.identifier('Fragment')),
     fragment
   );
@@ -101,7 +92,7 @@ function interpolateJsxFragmentChildren(
         icuIndex
       );
 
-      const interpolatedChild = buildReactElementAst(localName, fragment);
+      const interpolatedChild = astUtil.buildReactElement(localName, fragment);
 
       ast.push(interpolatedChild);
     } else if (t.isJSXText(child)) {
