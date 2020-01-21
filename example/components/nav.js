@@ -1,5 +1,5 @@
 import React from 'react';
-import { LocaleNl, LocaleEn, LocaleFr } from '@locale';
+import { LocaleNl, LocaleEn, LocaleFr } from '@locale/strings.json';
 
 function LocalePicker() {
   const locales = process.env.LOCALES.split(',');

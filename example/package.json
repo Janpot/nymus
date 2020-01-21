@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "nymus": "nymus ./locales/*.json",
-    "dev": "npm run nymus && LOCALE=en LOCALES=en,nl,fr next",
+    "dev": "LOCALE=en LOCALES=en,nl,fr next",
     "build": "node ./scripts/build",
     "start": "node ./scripts/start"
   },

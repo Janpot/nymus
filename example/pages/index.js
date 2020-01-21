@@ -8,7 +8,7 @@ import {
   HomeLinksLearn,
   HomeLinksExamples,
   HomeLabel
-} from '@locale';
+} from '@locale/strings.json';
 
 function LinkTitle({ children }) {
   return (

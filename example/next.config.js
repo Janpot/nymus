@@ -19,6 +19,14 @@ module.exports = {
       __dirname,
       `./locales/${locale}`
     );
+
+    config.module.rules.push({
+      test: /\.json$/,
+      include: [path.resolve(__dirname, './locales/')],
+      use: 'nymus/webpack',
+      type: 'javascript/auto'
+    });
+
     return config;
   }
 };
