@@ -2,11 +2,10 @@
 
 import * as childProcess from 'child_process';
 import * as path from 'path';
-import * as fs from 'fs';
 import { copyRecursive, rmDirRecursive, fileExists } from './fileUtil';
-import { promisify } from 'util';
 
-const fsReadFile = promisify(fs.readFile);
+const FIXTURES_DIR = path.resolve(__dirname, './__fixtures__/cli');
+const FIXTURES_BACKUP_DIR = path.resolve(__dirname, './__fixtures__/cli.bak');
 
 function exec(command) {
   return new Promise(resolve => {
@@ -19,27 +18,24 @@ function exec(command) {
   });
 }
 
-const FIXTURES_DIR = path.resolve(__dirname, './__fixtures__');
-const FIXTURES_BACKUP_DIR = path.resolve(__dirname, './__fixtures_backup__');
-
-function fixturePath(src: string) {
-  return path.resolve(FIXTURES_DIR, src);
-}
-
-beforeAll(async () => {
-  await copyRecursive(FIXTURES_DIR, FIXTURES_BACKUP_DIR);
-});
-
-afterEach(async () => {
-  await rmDirRecursive(FIXTURES_DIR);
-  await copyRecursive(FIXTURES_BACKUP_DIR, FIXTURES_DIR);
-});
-
-afterAll(async () => {
-  await rmDirRecursive(FIXTURES_BACKUP_DIR);
-});
-
 describe('cli', () => {
+  function fixturePath(src: string) {
+    return path.resolve(FIXTURES_DIR, src);
+  }
+
+  beforeAll(async () => {
+    await copyRecursive(FIXTURES_DIR, FIXTURES_BACKUP_DIR);
+  });
+
+  afterEach(async () => {
+    await rmDirRecursive(FIXTURES_DIR);
+    await copyRecursive(FIXTURES_BACKUP_DIR, FIXTURES_DIR);
+  });
+
+  afterAll(async () => {
+    await rmDirRecursive(FIXTURES_BACKUP_DIR);
+  });
+
   it('should fail on invalid json', async () => {
     await expect(exec('nymus ./invalid/en.json')).resolves.toMatchObject({
       code: 1,
