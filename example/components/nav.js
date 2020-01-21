@@ -23,8 +23,8 @@ function LocalePicker() {
         .map((locale, i) => {
           return (
             <>
-              <span className="sep">{i > 0 ? '|' : ''}</span>
-              <a key={locale} href={`/${locale}`}>
+              {i > 0 ? <span className="sep">|</span> : null}
+              <a href={`/${locale}`}>
                 {{
                   en: <LocaleEn />,
                   nl: <LocaleNl />,
