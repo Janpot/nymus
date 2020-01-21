@@ -2,6 +2,7 @@
   "name": "nymus",
   "version": "0.1.7",
   "description": "Transform ICU messages into React components.",
+  "keywords": ["i18n", "internationalization", "localization", "l18n", "ICU", "messageformat", "translation"],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -20,8 +21,7 @@
     "dist",
     "cli.js"
   ],
-  "keywords": [],
-  "author": "",
+  "author": "Jan Potoms",
   "license": "MIT",
   "dependencies": {
     "@babel/code-frame": "^7.8.3",

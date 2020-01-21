@@ -37,6 +37,8 @@ export function HomePage() {
 
 ### Options
 
+Option | Description
+--- | ---
 `--locale`, `-l` | Locale to be used in the `Intl.NumberFormat`, `Intl.DateTimeFormat` and `Intl.PluralRules` constructors.
 `--typescript`, '-t' | Generate typescript files instead of javacsript files
 `--declarations`, '-d' | Emit type declarations (.d.ts files)
