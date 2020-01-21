@@ -23,14 +23,14 @@ module.exports = {
     config.module.rules.push({
       test: /\.json$/,
       include: [path.resolve(__dirname, './locales/')],
+      type: 'javascript/auto',
       use: [
         options.defaultLoaders.babel,
         {
           loader: 'nymus/webpack',
           options: { locale, declarations: true }
         }
-      ],
-      type: 'javascript/auto'
+      ]
     });
 
     return config;
