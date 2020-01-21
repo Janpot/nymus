@@ -1,7 +1,6 @@
 import * as t from '@babel/types';
 import Scope from './Scope';
 import { CreateModuleOptions } from '.';
-import IntlMessageFormat from 'intl-messageformat';
 import createComponent from './createComponent';
 import * as astUtil from './astUtil';
 import { Formats, mergeFormats } from './formats';
@@ -52,10 +51,7 @@ export default class Module {
     this.formatters = new Map();
     this._sharedConsts = new Map();
     this.locale = options.locale;
-    this.formats = mergeFormats(
-      IntlMessageFormat.formats,
-      options.formats || {}
-    );
+    this.formats = mergeFormats(options.formats || {});
   }
 
   _useSharedConst(

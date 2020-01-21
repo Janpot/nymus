@@ -2,7 +2,15 @@
   "name": "nymus",
   "version": "0.1.7",
   "description": "Transform ICU messages into React components.",
-  "keywords": ["i18n", "internationalization", "localization", "l18n", "ICU", "messageformat", "translation"],
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "localization",
+    "l18n",
+    "ICU",
+    "messageformat",
+    "translation"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -30,7 +38,6 @@
     "@babel/plugin-transform-typescript": "^7.8.3",
     "@babel/types": "^7.7.4",
     "globby": "^11.0.0",
-    "intl-messageformat": "^7.8.2",
     "intl-messageformat-parser": "^3.6.2",
     "typescript": "^3.7.5",
     "yargs": "^15.1.0"
