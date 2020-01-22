@@ -48,6 +48,8 @@
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.7.5",
     "@babel/plugin-transform-react-jsx": "^7.7.7",
+    "@babel/preset-env": "^7.8.3",
+    "@babel/preset-typescript": "^7.8.3",
     "@types/babel__code-frame": "^7.0.1",
     "@types/jest": "^24.9.0",
     "@types/loader-utils": "^1.1.3",
