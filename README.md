@@ -1,4 +1,4 @@
-<h1 align="center">nymus 🦉</h1>
+<h1 align="center">🦉 nymus</h1>
 <p>
   <a href="http://npmjs.com/package/nymus">
     <img alt="Version" src="https://img.shields.io/npm/v/nymus" />
