@@ -67,3 +67,24 @@ export function buildTernaryChain(
     buildTernaryChain(restCases, alternate)
   );
 }
+
+/**
+ * Build an AST for chaining binary expressions
+ * @example
+ * a + b + c + d + e + ...
+ */
+export function buildBinaryChain(operator: t.BinaryExpression['operator'], ...operands: t.Expression[]): t.BinaryExpression {
+  if (operands.length < 2) {
+    throw new Error('buildBinaryChain should be called with at least 2 operands')
+  } else if (operands.length === 2) {
+    return t.binaryExpression(operator, operands[0], operands[1]);
+  } else {
+    const rest = operands.slice(0, -1);
+    const last = operands[operands.length - 1];
+    return t.binaryExpression(
+      operator,
+      buildBinaryChain(operator, ...rest),
+      last
+    );
+  }
+}

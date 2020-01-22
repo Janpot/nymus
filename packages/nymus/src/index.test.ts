@@ -55,6 +55,15 @@ describe('shared', () => {
   });
 
   sharedTest(
+    'handles single argument only',
+    async (createComponent, render) => {
+      const singleArg = await createComponent('{a}');
+      const result = render(singleArg, { a: '1' });
+      expect(result).toBe('1');
+    }
+  );
+
+  sharedTest(
     'handles twice defined ICU arguments',
     async (createComponent, render) => {
       const argsTwice = await createComponent('{a} {a}');

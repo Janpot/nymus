@@ -6,6 +6,7 @@ import TransformationError from './TransformationError';
 import Module from './Module';
 import * as astUtil from './astUtil';
 import { Formats } from './formats';
+import { buildBinaryChain } from './astUtil';
 
 interface Argument {
   localName?: string;
@@ -150,18 +151,17 @@ function icuNodesToJsExpression(
   context: ComponentContext
 ): t.Expression {
   if (Array.isArray(icuNode)) {
+    // it's a fragment
     if (icuNode.length <= 0) {
       return t.stringLiteral('');
     } else if (icuNode.length === 1 && mf.isLiteralElement(icuNode[0])) {
       return t.stringLiteral(icuNode[0].value);
     } else {
-      const rest = icuNode.slice(0, -1);
-      const last = icuNode[icuNode.length - 1];
-      return t.binaryExpression(
-        '+',
-        icuNodesToJsExpression(rest, context),
-        icuNodesToJsExpression(last, context)
-      );
+      const operands = icuNode.map(node => icuNodesToJsExpression(node, context))
+      if (!mf.isLiteralElement(icuNode[0])) {
+        operands.unshift(t.stringLiteral(''))
+      }
+      return buildBinaryChain('+', ...operands);
     }
   } else if (mf.isLiteralElement(icuNode)) {
     return t.stringLiteral(icuNode.value);
