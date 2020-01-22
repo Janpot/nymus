@@ -28,11 +28,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
+      # Node ICU support
+      - uses: actions/cache@v1
+        id: full-icu-cache
+        with:
+          path: ~/full-icu
+          key: ${{ runner.os }}-full-icu
       - name: ICU Compatibility
         id: full-icu
+        if: steps.full-icu-cache.outputs.cache-hit != 'true'
         run: |
           npm install -g full-icu
-          echo "::set-output name=path::$(node-full-icu-path)"
+          cp -r $(node-full-icu-path) ~/full-icu
+
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -48,4 +56,4 @@ jobs:
         env:
           CI: true
           TZ: Europe/Brussels
-          NODE_ICU_DATA: ${{ steps.full-icu.outputs.path }}
+          NODE_ICU_DATA: ~/full-icu
