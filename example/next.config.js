@@ -28,7 +28,7 @@ module.exports = {
         options.defaultLoaders.babel,
         {
           loader: 'nymus/webpack',
-          options: { locale, declarations: true }
+          options: { locale, declarations: false }
         }
       ]
     });

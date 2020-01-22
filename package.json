@@ -6,7 +6,10 @@
     "packages/*"
   ],
   "scripts": {
-    "prettier": "prettier --write \"**/*.{js,ts,jsx,tsx,json,yml,md}\""
+    "build": "yarn workspaces run build",
+    "test": "yarn workspaces run test",
+    "fix": "yarn prettier --write",
+    "prettier": "prettier --check \"**/*.{js,ts,jsx,tsx,json,yml,md}\""
   },
   "license": "MIT",
   "devDependencies": {
