@@ -103,7 +103,7 @@ export default function Playground() {
       try {
         const { code } = await createModule(
           { Component: value },
-          { react: true }
+          { typescript: true, react: true }
         );
         const formatted = format(code, {
           parser: 'babel',
