@@ -52,6 +52,8 @@ jobs:
 
       - name: Build packages
         run: yarn build
+        env:
+          CI: true
 
       - name: Run tests
         run: yarn test

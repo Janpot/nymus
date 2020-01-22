@@ -150,22 +150,18 @@ function icuNodesToJsExpression(
   context: ComponentContext
 ): t.Expression {
   if (Array.isArray(icuNode)) {
-    if (context.react) {
-      return icuNodesToJsxExpression(icuNode, context);
+    if (icuNode.length <= 0) {
+      return t.stringLiteral('');
+    } else if (icuNode.length === 1 && mf.isLiteralElement(icuNode[0])) {
+      return t.stringLiteral(icuNode[0].value);
     } else {
-      if (icuNode.length <= 0) {
-        return t.stringLiteral('');
-      } else if (icuNode.length === 1 && mf.isLiteralElement(icuNode[0])) {
-        return t.stringLiteral(icuNode[0].value);
-      } else {
-        const rest = icuNode.slice(0, -1);
-        const last = icuNode[icuNode.length - 1];
-        return t.binaryExpression(
-          '+',
-          icuNodesToJsExpression(rest, context),
-          icuNodesToJsExpression(last, context)
-        );
-      }
+      const rest = icuNode.slice(0, -1);
+      const last = icuNode[icuNode.length - 1];
+      return t.binaryExpression(
+        '+',
+        icuNodesToJsExpression(rest, context),
+        icuNodesToJsExpression(last, context)
+      );
     }
   } else if (mf.isLiteralElement(icuNode)) {
     return t.stringLiteral(icuNode.value);
