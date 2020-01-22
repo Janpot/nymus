@@ -18,10 +18,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       # yarn caches
-      - name: Get yarn cache
+      - name: Get yarn cache dir
         id: yarn-cache
         run: echo "::set-output name=dir::$(yarn cache dir)"
-      - uses: actions/cache@v1
+      - name: Restore yarn cache
+        uses: actions/cache@v1
         with:
           path: ${{ steps.yarn-cache.outputs.dir }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
@@ -29,18 +30,18 @@ jobs:
             ${{ runner.os }}-yarn-
 
       # Node ICU support
-      - uses: actions/cache@v1
+      - name: Get ICU data cache
+        uses: actions/cache@v1
         id: full-icu-cache
         with:
           path: ~/full-icu
           key: ${{ runner.os }}-full-icu
-      - name: ICU Compatibility
+      - name: Download ICU data
         id: full-icu
         if: steps.full-icu-cache.outputs.cache-hit != 'true'
         run: |
           npm install -g full-icu
           cp -r $(node-full-icu-path) ~/full-icu
-
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
