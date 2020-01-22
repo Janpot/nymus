@@ -30,18 +30,19 @@ jobs:
             ${{ runner.os }}-yarn-
 
       # Node ICU support
-      - name: Get ICU data cache
+      - name: Get ICU cache dir
+        id: icu-cache
+        run: echo "::set-output name=dir::$(npm root -g)/full-icu"
+      - name: Restore ICU data cache
         uses: actions/cache@v1
         id: full-icu-cache
         with:
-          path: ~/full-icu
-          key: ${{ runner.os }}-full-icu
+          path: ${{ steps.icu-cache.outputs.dir }}
+          key: ${{ runner.os }}-icu
       - name: Download ICU data
         id: full-icu
         if: steps.full-icu-cache.outputs.cache-hit != 'true'
-        run: |
-          npm install -g full-icu
-          cp -r $(node-full-icu-path) ~/full-icu
+        run: npm install -g full-icu
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -57,4 +58,4 @@ jobs:
         env:
           CI: true
           TZ: Europe/Brussels
-          NODE_ICU_DATA: ~/full-icu
+          NODE_ICU_DATA: ${{ steps.icu-cache.outputs.dir }}
