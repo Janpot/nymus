@@ -19,7 +19,7 @@ jobs:
       - name: ICU Compatibility
         run: |
           yarn global add full-icu
-          echo "::set-env name={NODE_ICU_DATA}::{$(full-icu)}"
+          echo "::set-env name={NODE_ICU_DATA}::{$(node-full-icu-path)}"
       - name: yarn install, build, and test
         run: |
           yarn install --frozen-lockfile
