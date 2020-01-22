@@ -1,5 +1,8 @@
 import React from 'react';
 
+import Container from '@material-ui/core/Container';
+import Typography from '@material-ui/core/Typography';
+
 /*
 const SAMPLE = `
 Hello there  mr. {name}, how are you?
@@ -76,7 +79,11 @@ function createLoader<T, U>(loadFunction: (args: T) => Promise<U>) {
  */
 
 function Home() {
-  return <div>docs</div>;
+  return (
+    <Container>
+      <Typography variant="h3">Here be documentation</Typography>
+    </Container>
+  );
 }
 
 export default Home;

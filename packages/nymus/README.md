@@ -7,7 +7,7 @@
     <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" />
   </a>
   <a href="https://github.com/Janpot/nymus/actions">
-    <img alt="nymus test status" src="https://github.com/Janpot/nymus/workflows/nymus%20tests/badge.svg">
+    <img alt="nymus test status" src="https://img.shields.io/github/workflow/status/Janpot/nymus/nymus%20tests">
   </a>
 </p>
 

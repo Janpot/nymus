@@ -2,12 +2,13 @@
   "name": "nymus-root",
   "private": true,
   "workspaces": [
+    "docs",
     "packages/*"
   ],
   "scripts": {
     "build": "yarn workspaces run build",
     "test": "yarn workspaces run test",
-    "fix": "yarn prettier --write",
+    "fix": "$npm_execpath prettier --write",
     "prettier": "prettier --check \"**/*.{js,ts,jsx,tsx,json,yml,md}\""
   },
   "license": "MIT",

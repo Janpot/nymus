@@ -46,6 +46,20 @@ export function formatError(
   });
 }
 
+export async function createModuleAst(
+  messages: Messages,
+  options: CreateModuleOptions = {}
+): Promise<t.Program> {
+  const module = new Module(options);
+
+  for (const [key, message] of Object.entries(messages)) {
+    const componentName = t.toIdentifier(key);
+    module.addMessage(componentName, message);
+  }
+
+  return t.program(module.buildModuleAst());
+}
+
 export default async function createModule(
   messages: Messages,
   options: CreateModuleOptions = {}
@@ -57,7 +71,7 @@ export default async function createModule(
     module.addMessage(componentName, message);
   }
 
-  const tsAst = t.program(module.buildModuleAst());
+  const tsAst = await createModuleAst(messages, options);
 
   let declarations: string | undefined;
 

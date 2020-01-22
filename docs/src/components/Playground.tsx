@@ -1,13 +1,15 @@
 import * as React from 'react';
 import IcuEditor from './IcuEditor';
 import Highlighter from './Highlighter';
-import createModule, { formatError } from 'nymus';
+import { createModuleAst, formatError } from 'nymus';
 import { format } from 'prettier/standalone';
 import parserBabylon from 'prettier/parser-babylon';
 import { makeStyles } from '@material-ui/core/styles';
+import generate from '@babel/generator';
 
 const useStyles = makeStyles(theme => ({
   root: {
+    height: '100%',
     display: 'flex',
     flexDirection: 'row',
     padding: theme.spacing(1)
@@ -21,22 +23,21 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const SAMPLE = `
-Hello there  mr. {name}, how are you?
-
 { gender, select,
-  female {{
-    count, plural,
-       =0 {Ela não tem nenhum Pokémon}
-      one {Ela tem só um Pokémon}
-    other {Ela tem # Pokémon}
-  }}
-  other {{
-    count, plural,
-       =0 {Ele não tem nenhum Pokémon}
-      one {Ele tem só um Pokémon}
-    other {Ele tem # Pokémon}
-  }}
-}`;
+  female {{
+    count, plural,
+       =0 {Ela não tem nenhum Pokémon}
+      one {Ela tem só um Pokémon}
+    other {Ela tem # Pokémon}
+  }}
+  other {{
+    count, plural,
+       =0 {Ele não tem nenhum Pokémon}
+      one {Ele tem só um Pokémon}
+    other {Ele tem # Pokémon}
+  }}
+}
+`;
 /* const SAMPLE = `
 Hello there  mr. {name}, how are you?
 
@@ -94,17 +95,22 @@ function commentLines(lines: string) {
     .join('\n');
 }
 
-export default function Playground() {
+interface PlaygroundProps {
+  className?: string;
+}
+
+export default function Playground({ className }: PlaygroundProps) {
   const classes = useStyles();
-  const [value, setValue] = React.useState(SAMPLE);
+  const [value, setValue] = React.useState(SAMPLE.trim());
   const [result, setResult] = React.useState<string>();
   React.useEffect(() => {
     (async () => {
       try {
-        const { code } = await createModule(
+        const ast = await createModuleAst(
           { Component: value },
           { typescript: true, react: true }
         );
+        const { code } = generate(ast, { concise: true });
         const formatted = format(code, {
           parser: 'babel',
           plugins: [parserBabylon]
@@ -116,7 +122,7 @@ export default function Playground() {
     })();
   }, [value]);
   return (
-    <div className={classes.root}>
+    <div className={`${className || ''} ${classes.root}`}>
       <IcuEditor className={classes.pane} value={value} onChange={setValue} />
       <Highlighter className={classes.pane} value={result} />
     </div>
