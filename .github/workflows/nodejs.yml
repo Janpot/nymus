@@ -24,3 +24,5 @@ jobs:
         env:
           CI: true
           TZ: Europe/Brussels
+          # needed for node < 12
+          NODE_ICU_DATA: node_modules/full-icu
