@@ -18,8 +18,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: ICU Compatibility
         run: |
-          yarn global add full-icu
-          echo "::set-env name={NODE_ICU_DATA}::{$(node-full-icu-path)}"
+          echo "::set-env name={NODE_ICU_DATA}::{$(npx full-icu)}"
       - name: yarn install, build, and test
         run: |
           yarn install --frozen-lockfile
