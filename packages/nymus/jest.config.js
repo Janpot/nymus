@@ -1,4 +1,3 @@
 module.exports = {
-  testEnvironment: 'node',
-  watchPathIgnorePatterns: ['__fixtures__']
+  testEnvironment: 'node'
 };

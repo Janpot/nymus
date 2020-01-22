@@ -1,22 +1,16 @@
 import path from 'path';
 import webpack from 'webpack';
 import { createFsFromVolume, Volume } from 'memfs';
-import { copyRecursive, rmDirRecursive, fileExists } from './fileUtil';
+import { fileExists, tmpDirFromTemplate } from './fileUtil';
 import { join as pathJoin } from 'path';
 import * as fs from 'fs';
 import { promisify } from 'util';
 
 const fsReadFile = promisify(fs.readFile);
 
-const FIXTURES_DIR = path.resolve(__dirname, './__fixtures__/webpack');
-const FIXTURES_BACKUP_DIR = path.resolve(
-  __dirname,
-  './__fixtures__/webpack.bak'
-);
-
-async function compile(fixture, options = {}): Promise<webpack.Stats> {
+async function compile(context, fixture, options = {}): Promise<webpack.Stats> {
   const compiler = webpack({
-    context: FIXTURES_DIR,
+    context,
     entry: fixture,
     output: {
       path: path.resolve(__dirname),
@@ -50,25 +44,24 @@ async function compile(fixture, options = {}): Promise<webpack.Stats> {
 }
 
 describe('webpack', () => {
+  let fixtureDir;
+
   function fixturePath(src: string) {
-    return path.resolve(FIXTURES_DIR, src);
+    return path.resolve(fixtureDir.path, src);
   }
 
-  beforeAll(async () => {
-    await copyRecursive(FIXTURES_DIR, FIXTURES_BACKUP_DIR);
+  beforeEach(async () => {
+    fixtureDir = await tmpDirFromTemplate(
+      path.resolve(__dirname, './__fixtures__')
+    );
   });
 
-  afterEach(async () => {
-    await rmDirRecursive(FIXTURES_DIR);
-    await copyRecursive(FIXTURES_BACKUP_DIR, FIXTURES_DIR);
-  });
-
-  afterAll(async () => {
-    await rmDirRecursive(FIXTURES_BACKUP_DIR);
+  afterEach(() => {
+    fixtureDir.cleanup();
   });
 
   it('should compile', async () => {
-    const stats = await compile('./strings/en.json');
+    const stats = await compile(fixtureDir.path, './strings/en.json');
     const statsJson = stats.toJson();
     expect(statsJson.modules[0].source).toMatchInlineSnapshot(`
       "const message = function message() {
@@ -81,7 +74,7 @@ describe('webpack', () => {
   });
 
   it('should emit declarations', async () => {
-    await compile('./strings/en.json', { declarations: true });
+    await compile(fixtureDir.path, './strings/en.json', { declarations: true });
     expect(
       await fsReadFile(fixturePath('./strings/en.json.d.ts'), {
         encoding: 'utf-8'

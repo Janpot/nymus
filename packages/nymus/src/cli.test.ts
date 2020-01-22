@@ -2,14 +2,11 @@
 
 import * as childProcess from 'child_process';
 import * as path from 'path';
-import { copyRecursive, rmDirRecursive, fileExists } from './fileUtil';
+import { tmpDirFromTemplate, fileExists } from './fileUtil';
 
-const FIXTURES_DIR = path.resolve(__dirname, './__fixtures__/cli');
-const FIXTURES_BACKUP_DIR = path.resolve(__dirname, './__fixtures__/cli.bak');
-
-function exec(command) {
+function exec(cwd: string, command: string) {
   return new Promise(resolve => {
-    childProcess.exec(command, { cwd: FIXTURES_DIR }, (error, stdout) => {
+    childProcess.exec(command, { cwd }, (error, stdout) => {
       resolve({
         code: error ? error.code : null,
         stdout: stdout.trim()
@@ -19,67 +16,68 @@ function exec(command) {
 }
 
 describe('cli', () => {
+  let fixtureDir;
+
   function fixturePath(src: string) {
-    return path.resolve(FIXTURES_DIR, src);
+    return path.resolve(fixtureDir.path, src);
   }
 
-  beforeAll(async () => {
-    await copyRecursive(FIXTURES_DIR, FIXTURES_BACKUP_DIR);
+  beforeEach(async () => {
+    fixtureDir = await tmpDirFromTemplate(
+      path.resolve(__dirname, './__fixtures__')
+    );
   });
 
-  afterEach(async () => {
-    await rmDirRecursive(FIXTURES_DIR);
-    await copyRecursive(FIXTURES_BACKUP_DIR, FIXTURES_DIR);
-  });
-
-  afterAll(async () => {
-    await rmDirRecursive(FIXTURES_BACKUP_DIR);
+  afterEach(() => {
+    fixtureDir.cleanup();
   });
 
   it('should fail on invalid json', async () => {
-    await expect(exec('nymus ./invalid/en.json')).resolves.toMatchObject({
+    await expect(
+      exec(fixtureDir.path, 'nymus ./invalid/en.json')
+    ).resolves.toMatchObject({
       code: 1,
       stdout: `Unexpected end of JSON input`
     });
   });
 
   it('should compile a folder', async () => {
-    await exec('nymus ./strings/');
+    await exec(fixtureDir.path, 'nymus ./strings/');
     expect(await fileExists(fixturePath('./strings/en.js'))).toBe(true);
     expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(true);
     expect(await fileExists(fixturePath('./strings/fr.js'))).toBe(true);
   });
 
   it('should compile individual files', async () => {
-    await exec('nymus ./strings/nl.json');
+    await exec(fixtureDir.path, 'nymus ./strings/nl.json');
     expect(await fileExists(fixturePath('./strings/en.js'))).toBe(false);
     expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(true);
     expect(await fileExists(fixturePath('./strings/fr.js'))).toBe(false);
   });
 
   it('should compile glob patterns', async () => {
-    await exec('nymus ./strings/{en,fr}.json');
+    await exec(fixtureDir.path, 'nymus ./strings/{en,fr}.json');
     expect(await fileExists(fixturePath('./strings/en.js'))).toBe(true);
     expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(false);
     expect(await fileExists(fixturePath('./strings/fr.js'))).toBe(true);
   });
 
   it('should only compile javascript when no configuration', async () => {
-    await exec('nymus ./strings/nl.json');
+    await exec(fixtureDir.path, 'nymus ./strings/nl.json');
     expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(true);
     expect(await fileExists(fixturePath('./strings/nl.ts'))).toBe(false);
     expect(await fileExists(fixturePath('./strings/nl.d.ts'))).toBe(false);
   });
 
   it('should compile declarations when configured', async () => {
-    await exec('nymus -d ./strings/nl.json');
+    await exec(fixtureDir.path, 'nymus -d ./strings/nl.json');
     expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(true);
     expect(await fileExists(fixturePath('./strings/nl.ts'))).toBe(false);
     expect(await fileExists(fixturePath('./strings/nl.d.ts'))).toBe(true);
   });
 
   it('should compile typescript when configured', async () => {
-    await exec('nymus -t ./strings/nl.json');
+    await exec(fixtureDir.path, 'nymus -t ./strings/nl.json');
     expect(await fileExists(fixturePath('./strings/nl.js'))).toBe(false);
     expect(await fileExists(fixturePath('./strings/nl.ts'))).toBe(true);
     expect(await fileExists(fixturePath('./strings/nl.d.ts'))).toBe(false);
