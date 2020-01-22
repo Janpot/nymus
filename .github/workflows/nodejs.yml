@@ -18,10 +18,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: ICU Compatibility
         run: |
-          echo "::set-env name={NODE_ICU_DATA}::{$(npx full-icu)}"
+          echo "::set-env name=NODE_ICU_DATA::$(npx full-icu)"
       - name: yarn install, build, and test
         run: |
           yarn install --frozen-lockfile
+          yarn prettier
           yarn build
           yarn test
         env:
