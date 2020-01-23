@@ -19,9 +19,9 @@ function sharedTest(name: string, testFn: TestFunction, itFn = it) {
     await testFn(createReactComponent, renderReact);
   });
 
-  itFn(`${name} [string]`, async () => {
+  /*   itFn(`${name} [string]`, async () => {
     await testFn(createStringComponent, renderString);
-  });
+  }); */
 }
 
 sharedTest.only = (name: string, testFn: TestFunction) => {
@@ -45,6 +45,7 @@ describe('shared', () => {
       const simpleString = await createComponent('x');
       const result = render(simpleString);
       expect(result).toBe('x');
+      expect(typeof simpleString()).toBe('string');
     }
   );
 
@@ -106,6 +107,8 @@ describe('shared', () => {
       gender: 'whatever'
     });
     expect(otherResult).toBe('They');
+
+    expect(typeof withSelect({ gender: 'male' })).toBe('string');
   });
 
   sharedTest('can nest select expressions', async (createComponent, render) => {
@@ -151,6 +154,7 @@ describe('shared', () => {
       percentage: 0.6549
     });
     expect(result).toBe('Score: 65%.');
+    expect(typeof msg({ percentage: 0.6549 })).toBe('string');
   });
 
   sharedTest('can reuse formatters', async (createComponent, render) => {
@@ -162,6 +166,12 @@ describe('shared', () => {
       max: 0.9436
     });
     expect(result).toBe('Score: 65%, Maximum: 94%.');
+    expect(
+      typeof msg({
+        score: 0.6549,
+        max: 0.9436
+      })
+    ).toBe('string');
   });
 
   sharedTest('can format currencies', async (createComponent, render) => {
