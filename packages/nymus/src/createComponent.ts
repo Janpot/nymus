@@ -205,7 +205,7 @@ function icuNodesToJsExpression(
       ast: astUtil.buildTernaryChain(cases, otherFragment.ast)
     };
   } else if (mf.isPluralElement(icuNode)) {
-    const argIdentifier = context.addArgument(icuNode.value, 'string');
+    const argIdentifier = context.addArgument(icuNode.value, 'number');
     const formatted = context.useFormattedValue(
       argIdentifier,
       'number',
@@ -221,7 +221,6 @@ function icuNodesToJsExpression(
     const { other, ...options } = icuNode.options;
     const otherFragment = icuNodesToJsxExpression(other.value, context);
     const withOffset = context.useWithOffset(argIdentifier, icuNode.offset);
-    const exact = context.useExactMatcher(withOffset);
     const localized = context.useLocalizedMatcher(
       withOffset,
       icuNode.pluralType
@@ -231,7 +230,11 @@ function icuNodesToJsExpression(
     }) as [string, Fragment][];
     const cases = caseFragments.map(([name, fragment]) => {
       const test = name.startsWith('=')
-        ? t.binaryExpression('===', exact, t.stringLiteral(name))
+        ? t.binaryExpression(
+            '===',
+            withOffset,
+            t.numericLiteral(Number(name.slice(1)))
+          )
         : t.binaryExpression('===', localized, t.stringLiteral(name));
       return [test, fragment.ast];
     }) as [t.Expression, t.Expression][];
@@ -370,13 +373,6 @@ class ComponentContext {
     const key = JSON.stringify(['withOffset', value.name, offset]);
     return this._useSharedConst(key, `${value.name}_offset_${offset}`, () =>
       t.binaryExpression('-', value, t.numericLiteral(offset))
-    );
-  }
-
-  useExactMatcher(value: t.Identifier): t.Identifier {
-    const key = JSON.stringify(['exactMatcher', value.name]);
-    return this._useSharedConst(key, `${value.name}_exact`, () =>
-      t.binaryExpression('+', t.stringLiteral('='), value)
     );
   }
 
