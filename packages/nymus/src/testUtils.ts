@@ -4,7 +4,11 @@ import * as babelCore from '@babel/core';
 import * as React from 'react';
 import * as ReactDOMServer from 'react-dom/server';
 
-function importFrom(code: string, options: CreateModuleOptions) {
+function importFrom(
+  code: string,
+  options: CreateModuleOptions,
+  intlMock = Intl
+) {
   const { code: cjs } =
     babelCore.transformSync(code, {
       plugins: ['@babel/plugin-transform-modules-commonjs']
@@ -22,10 +26,10 @@ function importFrom(code: string, options: CreateModuleOptions) {
     return require(moduleId);
   };
   vm.runInThisContext(`
-    (require, exports) => {
+    (require, exports, Intl) => {
       ${cjs}
     }
-  `)(requireFn, exports);
+  `)(requireFn, exports, intlMock);
   return exports;
 }
 
@@ -39,11 +43,12 @@ type ComponentsOf<T, C> = {
 
 async function createComponents<C, T extends Messages>(
   messages: T,
-  options: CreateModuleOptions = {}
+  options: CreateModuleOptions = {},
+  intlMock?: any
 ): Promise<ComponentsOf<T, C>> {
   const { code } = await createModule(messages, options);
   console.log(code);
-  const components = importFrom(code, options) as ComponentsOf<T, C>;
+  const components = importFrom(code, options, intlMock) as ComponentsOf<T, C>;
   for (const component of Object.values(components)) {
     // create unique names to invalidate warning cache
     // https://github.com/facebook/react/blob/db6ac5c01c4ad669db7ca264bc81ae5b3d6dfa01/src/isomorphic/classic/types/checkReactTypeSpec.js#L68
@@ -58,23 +63,25 @@ async function createComponents<C, T extends Messages>(
 
 export async function createStringComponent(
   message: string,
-  options?: CreateModuleOptions
+  options?: CreateModuleOptions,
+  intlMock?: any
 ): Promise<(props: any) => string> {
   const { Component } = await createComponents<
     (props: any) => string,
     { Component: string }
-  >({ Component: message }, { ...options, react: false });
+  >({ Component: message }, { ...options, react: false }, intlMock);
   return Component;
 }
 
 export async function createReactComponent(
   message: string,
-  options?: CreateModuleOptions
+  options?: CreateModuleOptions,
+  intlMock?: any
 ): Promise<React.ElementType> {
   const { Component } = await createComponents<
     React.ElementType,
     { Component: string }
-  >({ Component: message }, { ...options, react: true });
+  >({ Component: message }, { ...options, react: true }, intlMock);
   return Component;
 }
 

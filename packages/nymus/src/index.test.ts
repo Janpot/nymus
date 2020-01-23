@@ -10,7 +10,11 @@ import * as React from 'react';
 import { formatError, CreateModuleOptions } from './index';
 
 type TestFunction = (
-  createComponent: (msg: string, options?: CreateModuleOptions) => Promise<any>,
+  createComponent: (
+    msg: string,
+    options?: CreateModuleOptions,
+    intlMock?: any
+  ) => Promise<any>,
   render: (component: any, props?: any) => string
 ) => void | Promise<void>;
 
@@ -158,13 +162,17 @@ describe('shared', () => {
   });
 
   sharedTest('can reuse formatters', async (createComponent, render) => {
+    const spy = jest.spyOn(Intl, 'NumberFormat');
     const msg = await createComponent(
-      'Score: {score, number, percent}, Maximum: {max, number, percent}.'
+      'Score: {score, number, percent}, Maximum: {max, number, percent}.',
+      {},
+      Intl
     );
     const result = render(msg, {
       score: 0.6549,
       max: 0.9436
     });
+    expect(spy).toHaveBeenCalledTimes(1);
     expect(result).toBe('Score: 65%, Maximum: 94%.');
     expect(
       typeof msg({
@@ -173,6 +181,30 @@ describe('shared', () => {
       })
     ).toBe('string');
   });
+
+  sharedTest.skip(
+    'can reuse formatted values',
+    async (createComponent, render) => {
+      const Original = Intl.NumberFormat;
+      const spy = jest
+        .spyOn(Intl, 'NumberFormat')
+        .mockImplementation((...args) => {
+          const instance = new Original(...args);
+          const format = jest
+            .fn()
+            .mockImplementation(instance.format.bind(instance));
+          return { ...instance, format };
+        });
+      const msg = await createComponent(
+        'Score: {score, number, percent}, Maximum: {score, number, percent}.',
+        {},
+        Intl
+      );
+      const result = render(msg, { score: 0.6549 });
+      expect(result).toBe('Score: 65%, Maximum: 65%.');
+      expect(spy.mock.results[0].value.format).toHaveBeenCalledTimes(1);
+    }
+  );
 
   sharedTest('can format currencies', async (createComponent, render) => {
     const msg = await createComponent('It costs {amount, number, USD}.', {
