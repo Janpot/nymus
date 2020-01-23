@@ -6,14 +6,16 @@ import TransformationError from './TransformationError';
 import Module from './Module';
 import * as astUtil from './astUtil';
 import { Formats } from './formats';
-import { buildBinaryChain } from './astUtil';
+
+interface Fragment {
+  elm: boolean;
+  ast: t.Expression;
+}
 
 interface Argument {
   localName?: string;
   type: ArgumentType;
 }
-
-type IcuNode = mf.MessageFormatElement | mf.MessageFormatElement[];
 
 type JSXFragmentChild =
   | t.JSXFragment
@@ -24,43 +26,57 @@ type JSXFragmentChild =
 
 function interpolateJsxFragment(
   jsxFragment: t.JSXFragment,
-  icuNodes: mf.MessageFormatElement[],
+  fragments: Fragment[],
   context: ComponentContext
-): t.Expression {
+): Fragment {
   const fragment = interpolateJsxFragmentChildren(
     jsxFragment.children,
-    icuNodes,
+    fragments,
     context,
     0
   );
   if (fragment.length <= 0) {
-    return t.nullLiteral();
+    return { elm: false, ast: t.nullLiteral() };
   } else if (fragment.length === 1) {
     return fragment[0];
   } else {
-    return astUtil.buildReactElement(
-      t.memberExpression(t.identifier('React'), t.identifier('Fragment')),
-      fragment
-    );
+    const elm = fragment.some(frag => frag.elm);
+    if (elm) {
+      return {
+        elm,
+        ast: astUtil.buildReactElement(
+          t.memberExpression(t.identifier('React'), t.identifier('Fragment')),
+          fragment.map(frag => frag.ast)
+        )
+      };
+    } else {
+      const operands = fragment.map(fragment => fragment.ast);
+      if (!t.isStringLiteral(operands[0])) {
+        operands.unshift(t.stringLiteral(''));
+      }
+      return {
+        elm,
+        ast: astUtil.buildBinaryChain('+', ...operands)
+      };
+    }
   }
 }
 
 function interpolateJsxFragmentChildren(
   jsx: JSXFragmentChild[],
-  icuNodes: mf.MessageFormatElement[],
+  fragments: Fragment[],
   context: ComponentContext,
-  icuIndex: number
-): t.Expression[] {
-  const ast: t.Expression[] = [];
+  index: number
+): Fragment[] {
+  const result = [];
 
   for (const child of jsx) {
     if (t.isJSXFragment(child)) {
       throw new TransformationError('Fragments are not allowed', child.loc);
     } else if (t.isJSXExpressionContainer(child)) {
-      const icuNode = icuNodes[icuIndex];
-      icuIndex++;
-      const fragment = icuNodesToJsExpression(icuNode, context);
-      ast.push(fragment);
+      const fragment = fragments[index];
+      index++;
+      result.push(fragment);
     } else if (t.isJSXElement(child)) {
       const identifier = child.openingElement.name;
       if (!t.isJSXIdentifier(identifier)) {
@@ -79,28 +95,31 @@ function interpolateJsxFragmentChildren(
       const localName = context.addArgument(identifier.name, 'React.Element');
       const fragment = interpolateJsxFragmentChildren(
         child.children,
-        icuNodes,
+        fragments,
         context,
-        icuIndex
+        index
       );
 
-      const interpolatedChild = astUtil.buildReactElement(localName, fragment);
+      const interpolatedChild = astUtil.buildReactElement(
+        localName,
+        fragment.map(frag => frag.ast)
+      );
 
-      ast.push(interpolatedChild);
+      result.push({ elm: true, ast: interpolatedChild });
     } else if (t.isJSXText(child)) {
-      ast.push(t.stringLiteral(child.value));
+      result.push({ elm: false, ast: t.stringLiteral(child.value) });
     }
   }
 
-  return ast;
+  return result;
 }
 
 function icuNodesToJsxExpression(
   icuNodes: mf.MessageFormatElement[],
   context: ComponentContext
-): t.Expression {
+): Fragment {
   if (icuNodes.length <= 0) {
-    return t.nullLiteral();
+    return { ast: t.nullLiteral(), elm: false };
   }
 
   const jsxContent = icuNodes
@@ -129,7 +148,11 @@ function icuNodesToJsxExpression(
     node => !mf.isLiteralElement(node)
   );
 
-  return interpolateJsxFragment(jsxAst, interpollatedIcuNodes, context);
+  const fragments = interpollatedIcuNodes.map(icuNode =>
+    icuNodesToJsExpression(icuNode, context)
+  );
+
+  return interpolateJsxFragment(jsxAst, fragments, context);
 }
 
 function buildFormatterCall(formatter: t.Identifier, value: t.Identifier) {
@@ -147,27 +170,14 @@ function buildPluralRulesCall(formatter: t.Identifier, value: t.Identifier) {
 }
 
 function icuNodesToJsExpression(
-  icuNode: IcuNode,
+  icuNode: mf.MessageFormatElement,
   context: ComponentContext
-): t.Expression {
-  if (Array.isArray(icuNode)) {
-    // it's a fragment
-    if (icuNode.length <= 0) {
-      return t.stringLiteral('');
-    } else if (icuNode.length === 1 && mf.isLiteralElement(icuNode[0])) {
-      return t.stringLiteral(icuNode[0].value);
-    } else {
-      const operands = icuNode.map(node => icuNodesToJsExpression(node, context))
-      if (!mf.isLiteralElement(icuNode[0])) {
-        operands.unshift(t.stringLiteral(''))
-      }
-      return buildBinaryChain('+', ...operands);
-    }
-  } else if (mf.isLiteralElement(icuNode)) {
-    return t.stringLiteral(icuNode.value);
+): Fragment {
+  if (mf.isLiteralElement(icuNode)) {
+    return { elm: false, ast: t.stringLiteral(icuNode.value) };
   } else if (mf.isArgumentElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value, 'string');
-    return argIdentifier;
+    return { elm: true, ast: argIdentifier };
   } else if (mf.isSelectElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value, 'string');
     if (!icuNode.options.hasOwnProperty('other')) {
@@ -177,14 +187,21 @@ function icuNodesToJsExpression(
       );
     }
     const { other, ...options } = icuNode.options;
-    const cases = Object.entries(options).map(([name, caseNode]) => {
+    const caseFragments = Object.entries(options).map(([name, caseNode]) => {
+      return [name, icuNodesToJsxExpression(caseNode.value, context)];
+    }) as [string, Fragment][];
+    const cases = caseFragments.map(([name, fragment]) => {
       return [
         t.binaryExpression('===', argIdentifier, t.stringLiteral(name)),
-        icuNodesToJsExpression(caseNode.value, context)
+        fragment.ast
       ];
     }) as [t.Expression, t.Expression][];
-    const otherFragment = icuNodesToJsExpression(other.value, context);
-    return astUtil.buildTernaryChain(cases, otherFragment);
+    const otherFragment = icuNodesToJsxExpression(other.value, context);
+    return {
+      elm:
+        caseFragments.some(([, fragment]) => fragment.elm) || otherFragment.elm,
+      ast: astUtil.buildTernaryChain(cases, otherFragment.ast)
+    };
   } else if (mf.isPluralElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value, 'string');
     const formatter = context.useFormatter('number', 'decimal');
@@ -200,7 +217,7 @@ function icuNodesToJsExpression(
       );
     }
     const { other, ...options } = icuNode.options;
-    const otherFragment = icuNodesToJsExpression(other.value, context);
+    const otherFragment = icuNodesToJsxExpression(other.value, context);
     const pluralRules = context.usePlural(icuNode.pluralType);
     const withOffset =
       icuNode.offset !== 0
@@ -221,29 +238,36 @@ function icuNodesToJsExpression(
       `localized_${icuNode.value}_match`,
       buildPluralRulesCall(pluralRules, withOffset)
     );
-    const cases = Object.entries(options).map(([name, caseNode]) => {
+    const caseFragments = Object.entries(options).map(([name, caseNode]) => {
+      return [name, icuNodesToJsxExpression(caseNode.value, context)];
+    }) as [string, Fragment][];
+    const cases = caseFragments.map(([name, fragment]) => {
       const test = name.startsWith('=')
         ? t.binaryExpression('===', exact, t.stringLiteral(name))
         : t.binaryExpression('===', localized, t.stringLiteral(name));
-      return [test, icuNodesToJsExpression(caseNode.value, context)];
+      return [test, fragment.ast];
     }) as [t.Expression, t.Expression][];
-    const ast = astUtil.buildTernaryChain(cases, otherFragment);
+    const ast = astUtil.buildTernaryChain(cases, otherFragment.ast);
     context.exitPlural();
-    return ast;
+    return {
+      elm:
+        caseFragments.some(([, fragment]) => fragment.elm) || otherFragment.elm,
+      ast
+    };
   } else if (mf.isNumberElement(icuNode)) {
     const value = context.addArgument(icuNode.value, 'number');
     const formatter = context.useFormatter('number', icuNode.style as string);
-    return buildFormatterCall(formatter, value);
+    return { elm: false, ast: buildFormatterCall(formatter, value) };
   } else if (mf.isDateElement(icuNode)) {
     const value = context.addArgument(icuNode.value, 'Date');
     const formatter = context.useFormatter('date', icuNode.style as string);
-    return buildFormatterCall(formatter, value);
+    return { elm: false, ast: buildFormatterCall(formatter, value) };
   } else if (mf.isTimeElement(icuNode)) {
     const value = context.addArgument(icuNode.value, 'Date');
     const formatter = context.useFormatter('time', icuNode.style as string);
-    return buildFormatterCall(formatter, value);
+    return { elm: false, ast: buildFormatterCall(formatter, value) };
   } else if (mf.isPoundElement(icuNode)) {
-    return context.getPound();
+    return { elm: false, ast: context.getPound() };
   } else {
     throw new Error(`Unknown AST node type`);
   }
@@ -375,15 +399,13 @@ export default function icuToReactComponent(
   const icuAst = mf.parse(icuStr, {
     captureLocation: true
   });
-  const returnValue = module.react
-    ? icuNodesToJsxExpression(icuAst, context)
-    : icuNodesToJsExpression(icuAst, context);
+  const returnValue = icuNodesToJsxExpression(icuAst, context);
   const ast = t.functionExpression(
     t.identifier(componentName),
     context.buildArgsAst(),
     t.blockStatement([
       ...context.buildConstsAst(),
-      t.returnStatement(returnValue)
+      t.returnStatement(returnValue.ast)
     ])
   );
 

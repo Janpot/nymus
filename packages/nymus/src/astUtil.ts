@@ -73,9 +73,14 @@ export function buildTernaryChain(
  * @example
  * a + b + c + d + e + ...
  */
-export function buildBinaryChain(operator: t.BinaryExpression['operator'], ...operands: t.Expression[]): t.BinaryExpression {
+export function buildBinaryChain(
+  operator: t.BinaryExpression['operator'],
+  ...operands: t.Expression[]
+): t.BinaryExpression {
   if (operands.length < 2) {
-    throw new Error('buildBinaryChain should be called with at least 2 operands')
+    throw new Error(
+      'buildBinaryChain should be called with at least 2 operands'
+    );
   } else if (operands.length === 2) {
     return t.binaryExpression(operator, operands[0], operands[1]);
   } else {

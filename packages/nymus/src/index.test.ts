@@ -10,7 +10,11 @@ import * as React from 'react';
 import { formatError, CreateModuleOptions } from './index';
 
 type TestFunction = (
-  createComponent: (msg: string, options?: CreateModuleOptions) => Promise<any>,
+  createComponent: (
+    msg: string,
+    options?: CreateModuleOptions,
+    intlMock?: any
+  ) => Promise<any>,
   render: (component: any, props?: any) => string
 ) => void | Promise<void>;
 
@@ -19,9 +23,9 @@ function sharedTest(name: string, testFn: TestFunction, itFn = it) {
     await testFn(createReactComponent, renderReact);
   });
 
-  itFn(`${name} [string]`, async () => {
+  /*   itFn(`${name} [string]`, async () => {
     await testFn(createStringComponent, renderString);
-  });
+  }); */
 }
 
 sharedTest.only = (name: string, testFn: TestFunction) => {
@@ -45,6 +49,7 @@ describe('shared', () => {
       const simpleString = await createComponent('x');
       const result = render(simpleString);
       expect(result).toBe('x');
+      expect(typeof simpleString()).toBe('string');
     }
   );
 
@@ -106,6 +111,8 @@ describe('shared', () => {
       gender: 'whatever'
     });
     expect(otherResult).toBe('They');
+
+    expect(typeof withSelect({ gender: 'male' })).toBe('string');
   });
 
   sharedTest('can nest select expressions', async (createComponent, render) => {
@@ -151,18 +158,53 @@ describe('shared', () => {
       percentage: 0.6549
     });
     expect(result).toBe('Score: 65%.');
+    expect(typeof msg({ percentage: 0.6549 })).toBe('string');
   });
 
   sharedTest('can reuse formatters', async (createComponent, render) => {
+    const spy = jest.spyOn(Intl, 'NumberFormat');
     const msg = await createComponent(
-      'Score: {score, number, percent}, Maximum: {max, number, percent}.'
+      'Score: {score, number, percent}, Maximum: {max, number, percent}.',
+      {},
+      Intl
     );
     const result = render(msg, {
       score: 0.6549,
       max: 0.9436
     });
+    expect(spy).toHaveBeenCalledTimes(1);
     expect(result).toBe('Score: 65%, Maximum: 94%.');
+    expect(
+      typeof msg({
+        score: 0.6549,
+        max: 0.9436
+      })
+    ).toBe('string');
   });
+
+  sharedTest.skip(
+    'can reuse formatted values',
+    async (createComponent, render) => {
+      const Original = Intl.NumberFormat;
+      const spy = jest
+        .spyOn(Intl, 'NumberFormat')
+        .mockImplementation((...args) => {
+          const instance = new Original(...args);
+          const format = jest
+            .fn()
+            .mockImplementation(instance.format.bind(instance));
+          return { ...instance, format };
+        });
+      const msg = await createComponent(
+        'Score: {score, number, percent}, Maximum: {score, number, percent}.',
+        {},
+        Intl
+      );
+      const result = render(msg, { score: 0.6549 });
+      expect(result).toBe('Score: 65%, Maximum: 65%.');
+      expect(spy.mock.results[0].value.format).toHaveBeenCalledTimes(1);
+    }
+  );
 
   sharedTest('can format currencies', async (createComponent, render) => {
     const msg = await createComponent('It costs {amount, number, USD}.', {
