@@ -220,25 +220,11 @@ function icuNodesToJsExpression(
     }
     const { other, ...options } = icuNode.options;
     const otherFragment = icuNodesToJsxExpression(other.value, context);
-    const pluralRules = context.usePlural(icuNode.pluralType);
-    const withOffset =
-      icuNode.offset !== 0
-        ? context.addLocal(
-            `offsetted_${icuNode.value}`,
-            t.binaryExpression(
-              '-',
-              argIdentifier,
-              t.numericLiteral(icuNode.offset)
-            )
-          )
-        : argIdentifier;
-    const exact = context.addLocal(
-      `exact_${icuNode.value}_match`,
-      t.binaryExpression('+', t.stringLiteral('='), withOffset)
-    );
-    const localized = context.addLocal(
-      `localized_${icuNode.value}_match`,
-      buildPluralRulesCall(pluralRules, withOffset)
+    const withOffset = context.useWithOffset(argIdentifier, icuNode.offset);
+    const exact = context.useExactMatcher(withOffset);
+    const localized = context.useLocalizedMatcher(
+      withOffset,
+      icuNode.pluralType
     );
     const caseFragments = Object.entries(options).map(([name, caseNode]) => {
       return [name, icuNodesToJsxExpression(caseNode.value, context)];
@@ -316,7 +302,6 @@ interface SharedConst {
 class ComponentContext {
   _module: Module;
   args: Map<string, Argument>;
-  _localConsts: Map<string, t.Expression>;
   _scope: Scope;
   _poundStack: t.Identifier[];
   _sharedConsts: Map<string, SharedConst>;
@@ -325,7 +310,6 @@ class ComponentContext {
     this._module = module;
     this._scope = new Scope(module.scope);
     this.args = new Map();
-    this._localConsts = new Map();
     this._poundStack = [];
     this._sharedConsts = new Map();
   }
@@ -374,13 +358,41 @@ class ComponentContext {
   ): t.Identifier {
     const formatterId = this.useFormatter(type, style);
     const key = JSON.stringify(['formattedValue', value.name, type, style]);
-    const formattedValue = this._useSharedConst(key, value.name, () =>
+    return this._useSharedConst(key, value.name, () =>
       buildFormatterCall(formatterId, value)
     );
-    return formattedValue;
   }
 
-  usePlural(type?: 'ordinal' | 'cardinal'): t.Identifier {
+  useWithOffset(value: t.Identifier, offset: number = 0): t.Identifier {
+    if (offset === 0) {
+      return value;
+    }
+    const key = JSON.stringify(['withOffset', value.name, offset]);
+    return this._useSharedConst(key, `${value.name}_offset_${offset}`, () =>
+      t.binaryExpression('-', value, t.numericLiteral(offset))
+    );
+  }
+
+  useExactMatcher(value: t.Identifier): t.Identifier {
+    const key = JSON.stringify(['exactMatcher', value.name]);
+    return this._useSharedConst(key, `${value.name}_exact`, () =>
+      t.binaryExpression('+', t.stringLiteral('='), value)
+    );
+  }
+
+  useLocalizedMatcher(
+    value: t.Identifier,
+    pluralType: 'ordinal' | 'cardinal' = 'cardinal'
+  ): t.Identifier {
+    const key = JSON.stringify(['localizedMatcher', value.name, pluralType]);
+    const pluralRules = this.usePlural(pluralType);
+
+    return this._useSharedConst(key, `${value.name}_loc`, () =>
+      buildPluralRulesCall(pluralRules, value)
+    );
+  }
+
+  usePlural(type: 'ordinal' | 'cardinal' = 'cardinal'): t.Identifier {
     return this._module.usePlural(type);
   }
 
@@ -396,12 +408,6 @@ class ComponentContext {
 
     const localName = this._scope.createUniqueBinding(name);
     this._sharedConsts.set(key, { localName, init: build() });
-    return t.identifier(localName);
-  }
-
-  addLocal(name: string, init: t.Expression): t.Identifier {
-    const localName = this._scope.createUniqueBinding(name);
-    this._localConsts.set(localName, init);
     return t.identifier(localName);
   }
 
@@ -428,14 +434,6 @@ class ComponentContext {
       );
       return [argsObjectPattern];
     }
-  }
-
-  buildConstsAst(): t.Statement[] {
-    return Array.from(this._localConsts.entries(), ([name, init]) => {
-      return t.variableDeclaration('const', [
-        t.variableDeclarator(t.identifier(name), init)
-      ]);
-    });
   }
 
   _buildSharedConstAst(sharedConst: SharedConst): t.Statement {
@@ -469,7 +467,6 @@ export default function icuToReactComponent(
     context.buildArgsAst(),
     t.blockStatement([
       ...context.buildSharedConstsAst(),
-      ...context.buildConstsAst(),
       t.returnStatement(returnValue.ast)
     ])
   );
