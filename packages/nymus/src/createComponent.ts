@@ -6,6 +6,13 @@ import TransformationError from './TransformationError';
 import Module from './Module';
 import * as astUtil from './astUtil';
 import { Formats } from './formats';
+import { UnifiedNumberFormatOptions } from '@formatjs/intl-unified-numberformat';
+
+type ToType<F> = {
+  [K in keyof F]: F[K];
+};
+
+export type FormatOptions = ToType<UnifiedNumberFormatOptions>;
 
 interface Fragment {
   // Flag to indicate whether this fragment contains parts that can be React Elements
@@ -38,7 +45,7 @@ function interpolateJsxFragment(
     0
   );
   if (fragment.length <= 0) {
-    return { elm: false, ast: t.nullLiteral() };
+    return { elm: false, ast: t.stringLiteral('') };
   } else if (fragment.length === 1) {
     return fragment[0];
   } else {
@@ -121,7 +128,7 @@ function icuNodesToJsxExpression(
   context: ComponentContext
 ): Fragment {
   if (icuNodes.length <= 0) {
-    return { ast: t.nullLiteral(), elm: false };
+    return { ast: t.stringLiteral(''), elm: false };
   }
 
   const jsxContent = icuNodes
@@ -247,18 +254,27 @@ function icuNodesToJsExpression(
     };
   } else if (mf.isNumberElement(icuNode)) {
     const value = context.addArgument(icuNode.value, 'number');
-    const formattedValue = context.useFormattedValue(
-      value,
-      'number',
-      icuNode.style as string
-    );
-    return { elm: false, ast: formattedValue };
+    if (mf.isNumberSkeleton(icuNode.style)) {
+      const formattedValue = context.useFormattedValue(
+        value,
+        'number',
+        mf.convertNumberSkeletonToNumberFormatOptions(icuNode.style.tokens)
+      );
+      return { elm: false, ast: formattedValue };
+    } else {
+      const formattedValue = context.useFormattedValue(
+        value,
+        'number',
+        icuNode.style || 'decimal'
+      );
+      return { elm: false, ast: formattedValue };
+    }
   } else if (mf.isDateElement(icuNode)) {
     const value = context.addArgument(icuNode.value, 'Date');
     const formattedValue = context.useFormattedValue(
       value,
       'date',
-      icuNode.style as string
+      (icuNode.style as string) || 'medium'
     );
     return { elm: false, ast: formattedValue };
   } else if (mf.isTimeElement(icuNode)) {
@@ -266,7 +282,7 @@ function icuNodesToJsExpression(
     const formattedValue = context.useFormattedValue(
       value,
       'time',
-      icuNode.style as string
+      (icuNode.style as string) || 'medium'
     );
     return { elm: false, ast: formattedValue };
   } else if (mf.isPoundElement(icuNode)) {
@@ -350,14 +366,17 @@ class ComponentContext {
     return t.identifier(arg.localName || name);
   }
 
-  useFormatter(type: keyof Formats, style: string): t.Identifier {
+  useFormatter(
+    type: keyof Formats,
+    style: string | FormatOptions
+  ): t.Identifier {
     return this._module.useFormatter(type, style);
   }
 
   useFormattedValue(
     value: t.Identifier,
     type: keyof Formats,
-    style: string
+    style: string | FormatOptions
   ): t.Identifier {
     const formatterId = this.useFormatter(type, style);
     const key = JSON.stringify(['formattedValue', value.name, type, style]);

@@ -61,52 +61,18 @@ async function createComponents<C, T extends Messages>(
   return components;
 }
 
-export async function createStringComponent(
+export async function createComponent(
   message: string,
   options?: CreateModuleOptions,
   intlMock?: any
-): Promise<(props: any) => string> {
+): Promise<React.FunctionComponent<any>> {
   const { Component } = await createComponents<
-    (props: any) => string,
-    { Component: string }
-  >({ Component: message }, { ...options, react: false }, intlMock);
-  return Component;
-}
-
-export async function createReactComponent(
-  message: string,
-  options?: CreateModuleOptions,
-  intlMock?: any
-): Promise<React.ElementType> {
-  const { Component } = await createComponents<
-    React.ElementType,
+    React.FunctionComponent<any>,
     { Component: string }
   >({ Component: message }, { ...options, react: true }, intlMock);
   return Component;
 }
 
-export function renderString(elm: React.ElementType, props = {}) {
+export function render(elm: React.FunctionComponent<any>, props = {}) {
   return ReactDOMServer.renderToStaticMarkup(React.createElement(elm, props));
-}
-
-export function renderReact(elm: React.ElementType, props = {}) {
-  return ReactDOMServer.renderToStaticMarkup(React.createElement(elm, props));
-}
-
-export async function renderMessageWithReact(
-  message: string,
-  options: CreateModuleOptions,
-  props: any
-) {
-  const { element } = await createComponents<
-    React.ElementType,
-    { element: string }
-  >(
-    { element: message },
-    {
-      ...options,
-      react: true
-    }
-  );
-  return renderReact(element, props);
 }

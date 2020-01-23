@@ -4,7 +4,6 @@ import { Formats } from './formats';
 import { codeFrameColumns, BabelCodeFrameOptions } from '@babel/code-frame';
 import Module from './Module';
 import TsPlugin from '@babel/plugin-transform-typescript';
-import * as ts from 'typescript';
 
 interface Messages {
   [key: string]: string;
@@ -80,6 +79,9 @@ export default async function createModule(
     if (!code) {
       throw new Error('Failed to generate code');
     }
+
+    const ts = await import('typescript');
+
     const host = ts.createCompilerHost({});
 
     const readFile = host.readFile;

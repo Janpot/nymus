@@ -1,6 +1,7 @@
 import * as t from '@babel/types';
 
 export type Json =
+  | undefined
   | string
   | number
   | boolean
@@ -16,10 +17,14 @@ export function buildJson(value: Json): t.Expression {
     return t.stringLiteral(value);
   } else if (typeof value === 'number') {
     return t.numericLiteral(value);
+  } else if (typeof value === 'boolean') {
+    return t.booleanLiteral(value);
   } else if (Array.isArray(value)) {
     return t.arrayExpression(value.map(buildJson));
   } else if (value === null) {
     return t.nullLiteral();
+  } else if (value === undefined) {
+    return t.identifier('undefined');
   } else if (typeof value === 'object') {
     return t.objectExpression(
       Object.entries(value).map(([propKey, propValue]) => {
@@ -27,7 +32,7 @@ export function buildJson(value: Json): t.Expression {
       })
     );
   }
-  throw new Error('value type not supported');
+  throw new Error(`value type not supported "${value}"`);
 }
 
 /**

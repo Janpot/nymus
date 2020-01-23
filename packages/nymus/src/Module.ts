@@ -1,7 +1,7 @@
 import * as t from '@babel/types';
 import Scope from './Scope';
 import { CreateModuleOptions } from '.';
-import createComponent from './createComponent';
+import createComponent, { FormatOptions } from './createComponent';
 import * as astUtil from './astUtil';
 import { Formats, mergeFormats } from './formats';
 
@@ -79,13 +79,16 @@ export default class Module {
     );
   }
 
-  useFormatter(type: keyof Formats, style: string): t.Identifier {
+  useFormatter(
+    type: keyof Formats,
+    style: string | FormatOptions
+  ): t.Identifier {
     const sharedKey = JSON.stringify(['formatter', type, style]);
 
-    return this._useSharedConst(sharedKey, `f_${type}_${style}`, () => {
+    return this._useSharedConst(sharedKey, type, () => {
       return this.buildFormatterAst(
         getIntlFormatter(type),
-        this.formats[type][style]
+        typeof style === 'string' ? this.formats[type][style] : style
       );
     });
   }
