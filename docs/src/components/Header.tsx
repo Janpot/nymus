@@ -1,8 +1,9 @@
 import AppBar, { AppBarProps } from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import Link from './Link';
+import Link, { NakedLink } from './Link';
+import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
+import GitHubIcon from '@material-ui/icons/GitHub';
 import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles({
@@ -17,16 +18,19 @@ export default function Header(props: HeaderProps & AppBarProps) {
   const classes = useStyles();
   return (
     <AppBar position="static" color="default" {...props}>
-      <Toolbar variant="dense">
-        <Typography variant="h6" className={classes.title}>
+      <Toolbar>
+        <Link href="/" variant="h6" color="inherit" className={classes.title}>
           nymus
-        </Typography>
-        <Button component={Link} href="/" color="inherit">
+        </Link>
+        <Button component={NakedLink} href="/docs" color="inherit">
           Docs
         </Button>
-        <Button component={Link} href="/playground" color="inherit">
+        <Button component={NakedLink} href="/playground" color="inherit">
           Playground
         </Button>
+        <IconButton component="a" href="https://github.com/Janpot/nymus">
+          <GitHubIcon />
+        </IconButton>
       </Toolbar>
     </AppBar>
   );

@@ -1,5 +1,7 @@
 import React from 'react';
+import { makeStyles } from '@material-ui/core/styles';
 
+import Link from '@material-ui/core/Link';
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 
@@ -78,10 +80,33 @@ function createLoader<T, U>(loadFunction: (args: T) => Promise<U>) {
 }
  */
 
+const useStyles = makeStyles(theme => ({
+  logo: {
+    fontSize: 100
+  },
+  title: {
+    margin: theme.spacing(5, 0)
+  },
+  subtitle: {
+    fontSize: 20
+  }
+}));
+
 function Home() {
+  const classes = useStyles();
   return (
-    <Container>
-      <Typography variant="h3">Here be documentation</Typography>
+    <Container className={classes.title}>
+      <Typography className={classes.logo} align="center"></Typography>
+      <Typography variant="h1" align="center">
+        🦉 nymus
+      </Typography>
+      <Typography align="center">
+        Transform{' '}
+        <Link href="http://userguide.icu-project.org/formatparse/messages">
+          ICU message format
+        </Link>{' '}
+        into React components
+      </Typography>
     </Container>
   );
 }

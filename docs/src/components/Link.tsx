@@ -65,3 +65,5 @@ function Link(props: LinkProps) {
 export default React.forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => (
   <Link {...props} innerRef={ref} />
 ));
+
+export { NextComposed as NakedLink };
