@@ -8,7 +8,9 @@ import * as astUtil from './astUtil';
 import { Formats } from './formats';
 
 interface Fragment {
+  // Flag to indicate whether this fragment contains parts that can be React Elements
   elm: boolean;
+  // AST representation of the fragment
   ast: t.Expression;
 }
 
@@ -204,10 +206,10 @@ function icuNodesToJsExpression(
     };
   } else if (mf.isPluralElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value, 'string');
-    const formatter = context.useFormatter('number', 'decimal');
-    const formatted = context.addLocal(
-      `formatted_${icuNode.value}`,
-      buildFormatterCall(formatter, argIdentifier)
+    const formatted = context.useFormattedValue(
+      argIdentifier,
+      'number',
+      'decimal'
     );
     context.enterPlural(formatted);
     if (!icuNode.options.hasOwnProperty('other')) {
@@ -256,16 +258,28 @@ function icuNodesToJsExpression(
     };
   } else if (mf.isNumberElement(icuNode)) {
     const value = context.addArgument(icuNode.value, 'number');
-    const formatter = context.useFormatter('number', icuNode.style as string);
-    return { elm: false, ast: buildFormatterCall(formatter, value) };
+    const formattedValue = context.useFormattedValue(
+      value,
+      'number',
+      icuNode.style as string
+    );
+    return { elm: false, ast: formattedValue };
   } else if (mf.isDateElement(icuNode)) {
     const value = context.addArgument(icuNode.value, 'Date');
-    const formatter = context.useFormatter('date', icuNode.style as string);
-    return { elm: false, ast: buildFormatterCall(formatter, value) };
+    const formattedValue = context.useFormattedValue(
+      value,
+      'date',
+      icuNode.style as string
+    );
+    return { elm: false, ast: formattedValue };
   } else if (mf.isTimeElement(icuNode)) {
     const value = context.addArgument(icuNode.value, 'Date');
-    const formatter = context.useFormatter('time', icuNode.style as string);
-    return { elm: false, ast: buildFormatterCall(formatter, value) };
+    const formattedValue = context.useFormattedValue(
+      value,
+      'time',
+      icuNode.style as string
+    );
+    return { elm: false, ast: formattedValue };
   } else if (mf.isPoundElement(icuNode)) {
     return { elm: false, ast: context.getPound() };
   } else {
@@ -294,12 +308,18 @@ function getTypeAnnotation(type: ArgumentType) {
   }
 }
 
+interface SharedConst {
+  localName: string;
+  init: t.Expression;
+}
+
 class ComponentContext {
   _module: Module;
   args: Map<string, Argument>;
   _localConsts: Map<string, t.Expression>;
   _scope: Scope;
   _poundStack: t.Identifier[];
+  _sharedConsts: Map<string, SharedConst>;
 
   constructor(module: Module) {
     this._module = module;
@@ -307,6 +327,7 @@ class ComponentContext {
     this.args = new Map();
     this._localConsts = new Map();
     this._poundStack = [];
+    this._sharedConsts = new Map();
   }
 
   enterPlural(identifier: t.Identifier) {
@@ -346,8 +367,36 @@ class ComponentContext {
     return this._module.useFormatter(type, style);
   }
 
+  useFormattedValue(
+    value: t.Identifier,
+    type: keyof Formats,
+    style: string
+  ): t.Identifier {
+    const formatterId = this.useFormatter(type, style);
+    const key = JSON.stringify(['formattedValue', value.name, type, style]);
+    const formattedValue = this._useSharedConst(key, value.name, () =>
+      buildFormatterCall(formatterId, value)
+    );
+    return formattedValue;
+  }
+
   usePlural(type?: 'ordinal' | 'cardinal'): t.Identifier {
     return this._module.usePlural(type);
+  }
+
+  _useSharedConst(
+    key: string,
+    name: string,
+    build: () => t.Expression
+  ): t.Identifier {
+    const sharedConst = this._sharedConsts.get(key);
+    if (sharedConst) {
+      return t.identifier(sharedConst.localName);
+    }
+
+    const localName = this._scope.createUniqueBinding(name);
+    this._sharedConsts.set(key, { localName, init: build() });
+    return t.identifier(localName);
   }
 
   addLocal(name: string, init: t.Expression): t.Identifier {
@@ -388,6 +437,21 @@ class ComponentContext {
       ]);
     });
   }
+
+  _buildSharedConstAst(sharedConst: SharedConst): t.Statement {
+    return t.variableDeclaration('const', [
+      t.variableDeclarator(
+        t.identifier(sharedConst.localName),
+        sharedConst.init
+      )
+    ]);
+  }
+
+  buildSharedConstsAst(): t.Statement[] {
+    return Array.from(this._sharedConsts.values(), sharedConst =>
+      this._buildSharedConstAst(sharedConst)
+    );
+  }
 }
 
 export default function icuToReactComponent(
@@ -404,6 +468,7 @@ export default function icuToReactComponent(
     t.identifier(componentName),
     context.buildArgsAst(),
     t.blockStatement([
+      ...context.buildSharedConstsAst(),
       ...context.buildConstsAst(),
       t.returnStatement(returnValue.ast)
     ])

@@ -47,7 +47,7 @@ async function createComponents<C, T extends Messages>(
   intlMock?: any
 ): Promise<ComponentsOf<T, C>> {
   const { code } = await createModule(messages, options);
-  console.log(code);
+  // console.log(code);
   const components = importFrom(code, options, intlMock) as ComponentsOf<T, C>;
   for (const component of Object.values(components)) {
     // create unique names to invalidate warning cache
