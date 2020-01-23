@@ -182,29 +182,16 @@ describe('shared', () => {
     ).toBe('string');
   });
 
-  sharedTest.skip(
-    'can reuse formatted values',
-    async (createComponent, render) => {
-      const Original = Intl.NumberFormat;
-      const spy = jest
-        .spyOn(Intl, 'NumberFormat')
-        .mockImplementation((...args) => {
-          const instance = new Original(...args);
-          const format = jest
-            .fn()
-            .mockImplementation(instance.format.bind(instance));
-          return { ...instance, format };
-        });
-      const msg = await createComponent(
-        'Score: {score, number, percent}, Maximum: {score, number, percent}.',
-        {},
-        Intl
-      );
-      const result = render(msg, { score: 0.6549 });
-      expect(result).toBe('Score: 65%, Maximum: 65%.');
-      expect(spy.mock.results[0].value.format).toHaveBeenCalledTimes(1);
-    }
-  );
+  sharedTest('can reuse formatted values', async (createComponent, render) => {
+    // TODO: find way to count number of .format calls
+    const msg = await createComponent(
+      'Score: {score, number, percent}, Maximum: {score, number, percent}.',
+      {},
+      Intl
+    );
+    const result = render(msg, { score: 0.6549 });
+    expect(result).toBe('Score: 65%, Maximum: 65%.');
+  });
 
   sharedTest('can format currencies', async (createComponent, render) => {
     const msg = await createComponent('It costs {amount, number, USD}.', {
