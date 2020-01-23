@@ -43,7 +43,7 @@ async function compile(context, fixture, options = {}): Promise<webpack.Stats> {
   });
 }
 
-describe('webpack', () => {
+describe.skip('webpack', () => {
   let fixtureDir;
 
   function fixturePath(src: string) {

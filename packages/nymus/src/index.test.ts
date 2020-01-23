@@ -1,11 +1,6 @@
 /* eslint-env jest */
 
-import {
-  createReactComponent,
-  renderReact,
-  createStringComponent,
-  renderString
-} from './testUtils';
+import { createComponent, render } from './testUtils';
 import * as React from 'react';
 import { formatError, CreateModuleOptions } from './index';
 
@@ -18,84 +13,51 @@ type TestFunction = (
   render: (component: any, props?: any) => string
 ) => void | Promise<void>;
 
-function sharedTest(name: string, testFn: TestFunction, itFn = it) {
-  itFn(`${name} [react]`, async () => {
-    await testFn(createReactComponent, renderReact);
-  });
-
-  /*   itFn(`${name} [string]`, async () => {
-    await testFn(createStringComponent, renderString);
-  }); */
-}
-
-sharedTest.only = (name: string, testFn: TestFunction) => {
-  sharedTest(name, testFn, it.only);
-};
-
-sharedTest.skip = (name: string, testFn: TestFunction) => {
-  sharedTest(name, testFn, it.skip);
-};
-
 describe('shared', () => {
-  sharedTest('creates empty component', async (createComponent, render) => {
+  it('creates empty component', async () => {
     const empty = await createComponent('');
     const result = render(empty);
     expect(result).toBe('');
   });
 
-  sharedTest(
-    'creates simple text component',
-    async (createComponent, render) => {
-      const simpleString = await createComponent('x');
-      const result = render(simpleString);
-      expect(result).toBe('x');
-      expect(typeof simpleString()).toBe('string');
-    }
-  );
+  it('creates simple text component', async () => {
+    const simpleString = await createComponent('x');
+    const result = render(simpleString);
+    expect(result).toBe('x');
+    expect(typeof simpleString({})).toBe('string');
+  });
 
-  sharedTest('handles ICU arguments', async (createComponent, render) => {
+  it('handles ICU arguments', async () => {
     const withArguments = await createComponent('x {a} y {b} z');
     const result = render(withArguments, { a: '1', b: '2' });
     expect(result).toBe('x 1 y 2 z');
   });
 
-  sharedTest(
-    'handles single argument only',
-    async (createComponent, render) => {
-      const singleArg = await createComponent('{a}');
-      const result = render(singleArg, { a: '1' });
-      expect(result).toBe('1');
-    }
-  );
+  it('handles single argument only', async () => {
+    const singleArg = await createComponent('{a}');
+    const result = render(singleArg, { a: '1' });
+    expect(result).toBe('1');
+  });
 
-  sharedTest(
-    'handles twice defined ICU arguments',
-    async (createComponent, render) => {
-      const argsTwice = await createComponent('{a} {a}');
-      const result = render(argsTwice, { a: '1' });
-      expect(result).toBe('1 1');
-    }
-  );
+  it('handles twice defined ICU arguments', async () => {
+    const argsTwice = await createComponent('{a} {a}');
+    const result = render(argsTwice, { a: '1' });
+    expect(result).toBe('1 1');
+  });
 
-  sharedTest(
-    'handles numeric input concatenation correctly',
-    async (createComponent, render) => {
-      const argsTwice = await createComponent('{a}{b}');
-      const result = render(argsTwice, { a: 2, b: 3 });
-      expect(result).toBe('23');
-    }
-  );
+  it('handles numeric input concatenation correctly', async () => {
+    const argsTwice = await createComponent('{a}{b}');
+    const result = render(argsTwice, { a: 2, b: 3 });
+    expect(result).toBe('23');
+  });
 
-  sharedTest(
-    "Doesn't fail on React named component",
-    async (createComponent, render) => {
-      const React = await createComponent('react');
-      const result = render(React);
-      expect(result).toBe('react');
-    }
-  );
+  it("Doesn't fail on React named component", async () => {
+    const React = await createComponent('react');
+    const result = render(React);
+    expect(result).toBe('react');
+  });
 
-  sharedTest('do select expressions', async (createComponent, render) => {
+  it('do select expressions', async () => {
     const withSelect = await createComponent(
       '{gender, select, male{He} female{She} other{They}}'
     );
@@ -115,7 +77,7 @@ describe('shared', () => {
     expect(typeof withSelect({ gender: 'male' })).toBe('string');
   });
 
-  sharedTest('can nest select expressions', async (createComponent, render) => {
+  it('can nest select expressions', async () => {
     const nestedSelect = await createComponent(`a{x, select,
           a1 {b{y, select,
             a11 {g}
@@ -135,24 +97,21 @@ describe('shared', () => {
     expect(render(nestedSelect, { x: 'a2', z: 'a22' })).toBe('acjef');
   });
 
-  sharedTest(
-    'can format numbers and dates',
-    async (createComponent, render) => {
-      const msg = await createComponent(
-        'At {theDate, time, medium} on {theDate, date, medium}, there was {text} on planet {planet, number, decimal}.'
-      );
-      const result = render(msg, {
-        theDate: new Date(1507216343344),
-        text: 'a disturbance in the Force',
-        planet: 7
-      });
-      expect(result).toBe(
-        'At 5:12:23 PM on Oct 5, 2017, there was a disturbance in the Force on planet 7.'
-      );
-    }
-  );
+  it('can format numbers and dates', async () => {
+    const msg = await createComponent(
+      'At {theDate, time, medium} on {theDate, date, medium}, there was {text} on planet {planet, number, decimal}.'
+    );
+    const result = render(msg, {
+      theDate: new Date(1507216343344),
+      text: 'a disturbance in the Force',
+      planet: 7
+    });
+    expect(result).toBe(
+      'At 5:12:23 PM on Oct 5, 2017, there was a disturbance in the Force on planet 7.'
+    );
+  });
 
-  sharedTest('can format percentages', async (createComponent, render) => {
+  it('can format percentages', async () => {
     const msg = await createComponent('Score: {percentage, number, percent}.');
     const result = render(msg, {
       percentage: 0.6549
@@ -161,7 +120,7 @@ describe('shared', () => {
     expect(typeof msg({ percentage: 0.6549 })).toBe('string');
   });
 
-  sharedTest('can reuse formatters', async (createComponent, render) => {
+  it('can reuse formatters', async () => {
     const spy = jest.spyOn(Intl, 'NumberFormat');
     const msg = await createComponent(
       'Score: {score, number, percent}, Maximum: {max, number, percent}.',
@@ -182,7 +141,7 @@ describe('shared', () => {
     ).toBe('string');
   });
 
-  sharedTest('can reuse formatted values', async (createComponent, render) => {
+  it('can reuse formatted values', async () => {
     // TODO: find way to count number of .format calls
     const msg = await createComponent(
       'Score: {score, number, percent}, Maximum: {score, number, percent}.',
@@ -193,7 +152,7 @@ describe('shared', () => {
     expect(result).toBe('Score: 65%, Maximum: 65%.');
   });
 
-  sharedTest('can format currencies', async (createComponent, render) => {
+  it('can format currencies', async () => {
     const msg = await createComponent('It costs {amount, number, USD}.', {
       locale: 'en-US',
       formats: {
@@ -213,36 +172,27 @@ describe('shared', () => {
 
   describe('ported intl-messageformat tests', () => {
     describe('using a string pattern', () => {
-      sharedTest(
-        'should properly replace direct arguments in the string',
-        async (createComponent, render) => {
-          const mf = await createComponent('My name is {FIRST} {LAST}.');
-          const output = render(mf, { FIRST: 'Anthony', LAST: 'Pipkin' });
-          expect(output).toBe('My name is Anthony Pipkin.');
-        }
-      );
+      it('should properly replace direct arguments in the string', async () => {
+        const mf = await createComponent('My name is {FIRST} {LAST}.');
+        const output = render(mf, { FIRST: 'Anthony', LAST: 'Pipkin' });
+        expect(output).toBe('My name is Anthony Pipkin.');
+      });
 
-      sharedTest(
-        'should not ignore zero values',
-        async (createComponent, render) => {
-          const mf = await createComponent('I am {age} years old.');
-          const output = render(mf, { age: 0 });
-          expect(output).toBe('I am 0 years old.');
-        }
-      );
+      it('should not ignore zero values', async () => {
+        const mf = await createComponent('I am {age} years old.');
+        const output = render(mf, { age: 0 });
+        expect(output).toBe('I am 0 years old.');
+      });
 
-      sharedTest.skip(
-        'should ignore false, null, and undefined',
-        async (createComponent, render) => {
-          const mf = await createComponent('{a}{b}{c}');
-          const output = render(mf, {
-            a: false,
-            b: null,
-            c: undefined
-          });
-          expect(output).toBe('');
-        }
-      );
+      it.skip('should ignore false, null, and undefined', async () => {
+        const mf = await createComponent('{a}{b}{c}');
+        const output = render(mf, {
+          a: false,
+          b: null,
+          c: undefined
+        });
+        expect(output).toBe('');
+      });
     });
 
     describe('and plurals under the Arabic locale', () => {
@@ -257,37 +207,37 @@ describe('shared', () => {
         'other {some other amount of points}}' +
         '.';
 
-      sharedTest('should match zero', async (createComponent, render) => {
+      it('should match zero', async () => {
         const msgFmt = await createComponent(msg, { locale: 'ar' });
         const output = render(msgFmt, { numPeople: 0 });
         expect(output).toBe('I have zero points.');
       });
 
-      sharedTest('should match one', async (createComponent, render) => {
+      it('should match one', async () => {
         const msgFmt = await createComponent(msg, { locale: 'ar' });
         const output = render(msgFmt, { numPeople: 1 });
         expect(output).toBe('I have a point.');
       });
 
-      sharedTest('should match two', async (createComponent, render) => {
+      it('should match two', async () => {
         const msgFmt = await createComponent(msg, { locale: 'ar' });
         const output = render(msgFmt, { numPeople: 2 });
         expect(output).toBe('I have two points.');
       });
 
-      sharedTest('should match few', async (createComponent, render) => {
+      it('should match few', async () => {
         const msgFmt = await createComponent(msg, { locale: 'ar' });
         const output = render(msgFmt, { numPeople: 5 });
         expect(output).toBe('I have a few points.');
       });
 
-      sharedTest('should match many', async (createComponent, render) => {
+      it('should match many', async () => {
         const msgFmt = await createComponent(msg, { locale: 'ar' });
         const output = render(msgFmt, { numPeople: 20 });
         expect(output).toBe('I have lots of points.');
       });
 
-      sharedTest('should match other', async (createComponent, render) => {
+      it('should match other', async () => {
         const msgFmt = await createComponent(msg, { locale: 'ar' });
         const output = render(msgFmt, { numPeople: 100 });
         expect(output).toBe('I have some other amount of points.');
@@ -344,57 +294,45 @@ describe('shared', () => {
         CITY: 'Paris'
       };
 
-      sharedTest(
-        'should format message en-US simple with different objects',
-        async (createComponent, render) => {
-          const simpleEn = await createComponent(simple.en, {
-            locale: 'en-US'
-          });
-          expect(render(simpleEn, maleObj)).toBe('Tony went to Paris.');
-          expect(render(simpleEn, femaleObj)).toBe('Jenny went to Paris.');
-        }
-      );
+      it('should format message en-US simple with different objects', async () => {
+        const simpleEn = await createComponent(simple.en, {
+          locale: 'en-US'
+        });
+        expect(render(simpleEn, maleObj)).toBe('Tony went to Paris.');
+        expect(render(simpleEn, femaleObj)).toBe('Jenny went to Paris.');
+      });
 
-      sharedTest(
-        'should format message fr-FR simple with different objects',
-        async (createComponent, render) => {
-          const simpleFr = await createComponent(simple.fr, {
-            locale: 'fr-FR'
-          });
-          expect(render(simpleFr, maleObj)).toBe('Tony est allé à Paris.');
-          expect(render(simpleFr, femaleObj)).toBe('Jenny est allée à Paris.');
-        }
-      );
+      it('should format message fr-FR simple with different objects', async () => {
+        const simpleFr = await createComponent(simple.fr, {
+          locale: 'fr-FR'
+        });
+        expect(render(simpleFr, maleObj)).toBe('Tony est allé à Paris.');
+        expect(render(simpleFr, femaleObj)).toBe('Jenny est allée à Paris.');
+      });
 
-      sharedTest(
-        'should format message en-US complex with different objects',
-        async (createComponent, render) => {
-          const complexEn = await createComponent(complex.en, {
-            locale: 'en-US'
-          });
-          expect(render(complexEn, maleTravelers)).toBe(
-            'Lucas, Tony and Drew went to Paris.'
-          );
-          expect(render(complexEn, femaleTravelers)).toBe(
-            'Monica went to Paris.'
-          );
-        }
-      );
+      it('should format message en-US complex with different objects', async () => {
+        const complexEn = await createComponent(complex.en, {
+          locale: 'en-US'
+        });
+        expect(render(complexEn, maleTravelers)).toBe(
+          'Lucas, Tony and Drew went to Paris.'
+        );
+        expect(render(complexEn, femaleTravelers)).toBe(
+          'Monica went to Paris.'
+        );
+      });
 
-      sharedTest(
-        'should format message fr-FR complex with different objects',
-        async (createComponent, render) => {
-          const complexFr = await createComponent(complex.fr, {
-            locale: 'fr-FR'
-          });
-          expect(render(complexFr, maleTravelers)).toBe(
-            'Lucas, Tony and Drew sont allés à Paris.'
-          );
-          expect(render(complexFr, femaleTravelers)).toBe(
-            'Monica est allée à Paris.'
-          );
-        }
-      );
+      it('should format message fr-FR complex with different objects', async () => {
+        const complexFr = await createComponent(complex.fr, {
+          locale: 'fr-FR'
+        });
+        expect(render(complexFr, maleTravelers)).toBe(
+          'Lucas, Tony and Drew sont allés à Paris.'
+        );
+        expect(render(complexFr, femaleTravelers)).toBe(
+          'Monica est allée à Paris.'
+        );
+      });
     });
 
     describe('and change the locale with different counts', () => {
@@ -415,90 +353,71 @@ describe('shared', () => {
           ' новые книги.'
       };
 
-      sharedTest(
-        'should format a message with en-US locale',
-        async (createComponent, render) => {
-          const msgFmt = await createComponent(messages.en, {
-            locale: 'en-US'
-          });
-          expect(render(msgFmt, { COMPANY_COUNT: 0 })).toBe(
-            '0 companies published new books.'
-          );
-          expect(render(msgFmt, { COMPANY_COUNT: 1 })).toBe(
-            'One company published new books.'
-          );
-          expect(render(msgFmt, { COMPANY_COUNT: 2 })).toBe(
-            '2 companies published new books.'
-          );
-          expect(render(msgFmt, { COMPANY_COUNT: 5 })).toBe(
-            '5 companies published new books.'
-          );
-          expect(render(msgFmt, { COMPANY_COUNT: 10 })).toBe(
-            '10 companies published new books.'
-          );
-        }
-      );
+      it('should format a message with en-US locale', async () => {
+        const msgFmt = await createComponent(messages.en, {
+          locale: 'en-US'
+        });
+        expect(render(msgFmt, { COMPANY_COUNT: 0 })).toBe(
+          '0 companies published new books.'
+        );
+        expect(render(msgFmt, { COMPANY_COUNT: 1 })).toBe(
+          'One company published new books.'
+        );
+        expect(render(msgFmt, { COMPANY_COUNT: 2 })).toBe(
+          '2 companies published new books.'
+        );
+        expect(render(msgFmt, { COMPANY_COUNT: 5 })).toBe(
+          '5 companies published new books.'
+        );
+        expect(render(msgFmt, { COMPANY_COUNT: 10 })).toBe(
+          '10 companies published new books.'
+        );
+      });
 
-      sharedTest(
-        'should format a message with ru-RU locale',
-        async (createComponent, render) => {
-          const msgFmt = await createComponent(messages.ru, {
-            locale: 'ru-RU'
-          });
-          expect(render(msgFmt, { COMPANY_COUNT: 0 })).toBe(
-            '0 компаний опубликовали новые книги.'
-          );
-          expect(render(msgFmt, { COMPANY_COUNT: 1 })).toBe(
-            'Одна компания опубликовала новые книги.'
-          );
-          expect(render(msgFmt, { COMPANY_COUNT: 2 })).toBe(
-            '2 компании опубликовали новые книги.'
-          );
-          expect(render(msgFmt, { COMPANY_COUNT: 5 })).toBe(
-            '5 компаний опубликовали новые книги.'
-          );
-          expect(render(msgFmt, { COMPANY_COUNT: 10 })).toBe(
-            '10 компаний опубликовали новые книги.'
-          );
-          expect(render(msgFmt, { COMPANY_COUNT: 21 })).toBe(
-            '21 компания опубликовала новые книги.'
-          );
-        }
-      );
+      it('should format a message with ru-RU locale', async () => {
+        const msgFmt = await createComponent(messages.ru, {
+          locale: 'ru-RU'
+        });
+        expect(render(msgFmt, { COMPANY_COUNT: 0 })).toBe(
+          '0 компаний опубликовали новые книги.'
+        );
+        expect(render(msgFmt, { COMPANY_COUNT: 1 })).toBe(
+          'Одна компания опубликовала новые книги.'
+        );
+        expect(render(msgFmt, { COMPANY_COUNT: 2 })).toBe(
+          '2 компании опубликовали новые книги.'
+        );
+        expect(render(msgFmt, { COMPANY_COUNT: 5 })).toBe(
+          '5 компаний опубликовали новые книги.'
+        );
+        expect(render(msgFmt, { COMPANY_COUNT: 10 })).toBe(
+          '10 компаний опубликовали новые книги.'
+        );
+        expect(render(msgFmt, { COMPANY_COUNT: 21 })).toBe(
+          '21 компания опубликовала новые книги.'
+        );
+      });
     });
 
     describe('selectordinal arguments', () => {
       var msg =
         'This is my {year, selectordinal, one{#st} two{#nd} few{#rd} other{#th}} birthday.';
 
-      sharedTest(
-        'should use ordinal pluralization rules',
-        async (createComponent, render) => {
-          const msgFmt = await createComponent(msg, { locale: 'en' });
-          expect(render(msgFmt, { year: 1 })).toBe('This is my 1st birthday.');
-          expect(render(msgFmt, { year: 2 })).toBe('This is my 2nd birthday.');
-          expect(render(msgFmt, { year: 3 })).toBe('This is my 3rd birthday.');
-          expect(render(msgFmt, { year: 4 })).toBe('This is my 4th birthday.');
-          expect(render(msgFmt, { year: 11 })).toBe(
-            'This is my 11th birthday.'
-          );
-          expect(render(msgFmt, { year: 21 })).toBe(
-            'This is my 21st birthday.'
-          );
-          expect(render(msgFmt, { year: 22 })).toBe(
-            'This is my 22nd birthday.'
-          );
-          expect(render(msgFmt, { year: 33 })).toBe(
-            'This is my 33rd birthday.'
-          );
-          expect(render(msgFmt, { year: 44 })).toBe(
-            'This is my 44th birthday.'
-          );
-          expect(render(msgFmt, { year: 1024 })).toBe(
-            'This is my 1,024th birthday.'
-          );
-        }
-      );
+      it('should use ordinal pluralization rules', async () => {
+        const msgFmt = await createComponent(msg, { locale: 'en' });
+        expect(render(msgFmt, { year: 1 })).toBe('This is my 1st birthday.');
+        expect(render(msgFmt, { year: 2 })).toBe('This is my 2nd birthday.');
+        expect(render(msgFmt, { year: 3 })).toBe('This is my 3rd birthday.');
+        expect(render(msgFmt, { year: 4 })).toBe('This is my 4th birthday.');
+        expect(render(msgFmt, { year: 11 })).toBe('This is my 11th birthday.');
+        expect(render(msgFmt, { year: 21 })).toBe('This is my 21st birthday.');
+        expect(render(msgFmt, { year: 22 })).toBe('This is my 22nd birthday.');
+        expect(render(msgFmt, { year: 33 })).toBe('This is my 33rd birthday.');
+        expect(render(msgFmt, { year: 44 })).toBe('This is my 44th birthday.');
+        expect(render(msgFmt, { year: 1024 })).toBe(
+          'This is my 1,024th birthday.'
+        );
+      });
     });
   });
 });
@@ -507,7 +426,7 @@ function errorSnapshotTest(message: string) {
   it('error snapshot ', async () => {
     expect.assertions(1);
     try {
-      await createReactComponent(message);
+      await createComponent(message);
     } catch (err) {
       const formatted = formatError(message, err);
       expect(formatted).toMatchSnapshot();
@@ -529,11 +448,11 @@ describe('error formatting', () => {
 
 describe('with jsx', () => {
   it('understands jsx', async () => {
-    const withJsx = await createReactComponent('<A>foo</A>');
+    const withJsx = await createComponent('<A>foo</A>');
     // TODO: will this be supported?
     // const result1 = renderReact(withJsx, {});
     // expect(result1).toBe('foo');
-    const result2 = renderReact(withJsx, {
+    const result2 = render(withJsx, {
       A: ({ children }: React.PropsWithChildren<{}>) =>
         React.createElement('span', { className: 'bar' }, children)
     });
@@ -541,11 +460,11 @@ describe('with jsx', () => {
   });
 
   it('understands jsx with argument', async () => {
-    const withArgJsx = await createReactComponent('<A>foo {bar} baz</A>');
+    const withArgJsx = await createComponent('<A>foo {bar} baz</A>');
     // TODO: will this be supported?
-    // const result1 = renderReact(withArgJsx, { bar: 'quux' });
+    // const result1 = render(withArgJsx, { bar: 'quux' });
     // expect(result1).toBe('foo quux baz');
-    const result2 = renderReact(withArgJsx, {
+    const result2 = render(withArgJsx, {
       A: ({ children }: React.PropsWithChildren<{}>) =>
         React.createElement('span', { className: 'bla' }, children),
       bar: 'quux'
@@ -554,44 +473,42 @@ describe('with jsx', () => {
   });
 
   it('handles special characters', async () => {
-    const htmlSpecialChars = await createReactComponent('Hel\'lo Wo"rld!');
-    const result = renderReact(htmlSpecialChars);
+    const htmlSpecialChars = await createComponent('Hel\'lo Wo"rld!');
+    const result = render(htmlSpecialChars);
     expect(result).toBe('Hel&#x27;lo Wo&quot;rld!');
   });
 
   it('can interpolate components', async () => {
-    const interpolate = await createReactComponent('a {b} c');
-    const result = renderReact(interpolate, {
+    const interpolate = await createComponent('a {b} c');
+    const result = render(interpolate, {
       b: React.createElement('span', null, 'x')
     });
     expect(result).toBe('a <span>x</span> c');
   });
 
   it('can interpolate arrays', async () => {
-    const interpolate = await createReactComponent('a {b} c');
-    const result = renderReact(interpolate, {
+    const interpolate = await createComponent('a {b} c');
+    const result = render(interpolate, {
       b: ['x', React.createElement('span', { key: 'key' }, 'y'), 'z']
     });
     expect(result).toBe('a x<span>y</span>z c');
   });
 
   it('understands jsx with <React />', async () => {
-    const withReact = await createReactComponent('foo <React /> bar');
-    const result = renderReact(withReact, { React: () => 'quux' });
+    const withReact = await createComponent('foo <React /> bar');
+    const result = render(withReact, { React: () => 'quux' });
     expect(result).toBe('foo quux bar');
   });
 
   it('can interpolate "React"', async () => {
-    const withReact = await createReactComponent('foo {React} <A />baz');
-    const result = renderReact(withReact, { React: 'bar', A: () => null });
+    const withReact = await createComponent('foo {React} <A />baz');
+    const result = render(withReact, { React: 'bar', A: () => null });
     expect(result).toBe('foo bar baz');
   });
 
   it('understands nested jsx', async () => {
-    const withNestedJsx = await createReactComponent(
-      '<A>foo <B>bar</B> baz</A>'
-    );
-    const result1 = renderReact(withNestedJsx, {
+    const withNestedJsx = await createComponent('<A>foo <B>bar</B> baz</A>');
+    const result1 = render(withNestedJsx, {
       A: ({ children }: React.PropsWithChildren<{}>) => children,
       B: ({ children }: React.PropsWithChildren<{}>) => children
     });
@@ -599,14 +516,14 @@ describe('with jsx', () => {
   });
 
   it('understands self closing jsx', async () => {
-    const selfClosing = await createReactComponent('a<B/>c');
-    const result = renderReact(selfClosing, { B: () => 'b' });
+    const selfClosing = await createComponent('a<B/>c');
+    const result = render(selfClosing, { B: () => 'b' });
     expect(result).toBe('abc');
   });
 
   it('can interpolate void elements', async () => {
-    const selfClosing = await createReactComponent('<A/>');
-    const result = renderReact(selfClosing, { A: 'br' });
+    const selfClosing = await createComponent('<A/>');
+    const result = render(selfClosing, { A: 'br' });
     expect(result).toBe('<br/>');
   });
 });

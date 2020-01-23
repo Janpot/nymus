@@ -15,7 +15,7 @@ function exec(cwd: string, command: string) {
   });
 }
 
-describe('cli', () => {
+describe.skip('cli', () => {
   let fixtureDir;
 
   function fixturePath(src: string) {
