@@ -2,22 +2,14 @@
 
 import { createComponent, render } from './testUtils';
 import * as React from 'react';
-import { formatError, CreateModuleOptions } from './index';
-
-type TestFunction = (
-  createComponent: (
-    msg: string,
-    options?: CreateModuleOptions,
-    intlMock?: any
-  ) => Promise<any>,
-  render: (component: any, props?: any) => string
-) => void | Promise<void>;
+import { formatError } from './index';
 
 describe('shared', () => {
   it('creates empty component', async () => {
     const empty = await createComponent('');
     const result = render(empty);
     expect(result).toBe('');
+    expect(typeof empty({})).toBe('string');
   });
 
   it('creates simple text component', async () => {
@@ -111,6 +103,64 @@ describe('shared', () => {
     );
   });
 
+  it('makes string returning components for numbers, dates, times and pounds', async () => {
+    const msg = await createComponent(
+      '{today, date}, {today, time}, {count, number}, {count, plural, other {#}}'
+    );
+
+    const result = render(msg, {
+      today: new Date(1507216343344),
+      count: 123
+    });
+
+    expect(result).toBe('Oct 5, 2017, 5:12:23 PM, 123, 123');
+    expect(
+      typeof msg({
+        today: new Date(1507216343344),
+        count: 123
+      })
+    ).toBe('string');
+  });
+
+  it('Handles number skeleton with goup-off', async () => {
+    const msg = await createComponent(
+      '{amount, number, ::currency/CAD .0 group-off}',
+      { locale: 'en-US' }
+    );
+
+    const result = render(msg, { amount: 123456.78 });
+    expect(result).toBe('CA$123456.8');
+  });
+
+  it('Handles number skeleton', async () => {
+    const msg = await createComponent('{amount, number, ::currency/GBP .0#}', {
+      locale: 'en-US'
+    });
+
+    const result = render(msg, { amount: 123456.789 });
+    expect(result).toBe('£123,456.79');
+  });
+
+  it('custom formats should work for time', async () => {
+    const msg = await createComponent('Today is {time, time, verbose}', {
+      formats: {
+        time: {
+          verbose: {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+            timeZoneName: 'short'
+          }
+        }
+      }
+    });
+    const result = render(msg, { time: new Date(0) });
+    expect(result).toBe('Today is January 1, 1970, 1:00:00 AM GMT+1');
+  });
+
   it('can format percentages', async () => {
     const msg = await createComponent('Score: {percentage, number, percent}.');
     const result = render(msg, {
@@ -168,6 +218,15 @@ describe('shared', () => {
       amount: 123.456
     });
     expect(result).toBe('It costs $123.46.');
+  });
+
+  it('should handle @ correctly', async () => {
+    const msg = await createComponent('hi @{there}', { locale: 'en' });
+    expect(
+      render(msg, {
+        there: '2008'
+      })
+    ).toBe('hi @2008');
   });
 
   describe('ported intl-messageformat tests', () => {
