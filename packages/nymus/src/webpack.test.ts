@@ -1,3 +1,5 @@
+/* eslint-env jest */
+
 import path from 'path';
 import webpack from 'webpack';
 import { createFsFromVolume, Volume } from 'memfs';
