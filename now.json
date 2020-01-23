@@ -1,0 +1,16 @@
+{
+  "name": "nymus",
+  "builds": [
+    {
+      "src": "docs/next.config.js",
+      "use": "@now/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "docs/$1",
+      "continue": true
+    }
+  ]
+}

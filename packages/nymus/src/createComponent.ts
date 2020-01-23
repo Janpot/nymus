@@ -123,7 +123,7 @@ function interpolateJsxFragmentChildren(
   return result;
 }
 
-function icuNodesToJsxExpression(
+function icuNodesToJsExpression(
   icuNodes: mf.MessageFormatElement[],
   context: ComponentContext
 ): Fragment {
@@ -158,7 +158,7 @@ function icuNodesToJsxExpression(
   );
 
   const fragments = interpollatedIcuNodes.map(icuNode =>
-    icuNodesToJsExpression(icuNode, context)
+    icuNodeToJsExpression(icuNode, context)
   );
 
   return interpolateJsxFragment(jsxAst, fragments, context);
@@ -178,7 +178,7 @@ function buildPluralRulesCall(formatter: t.Identifier, value: t.Identifier) {
   );
 }
 
-function icuNodesToJsExpression(
+function icuNodeToJsExpression(
   icuNode: mf.MessageFormatElement,
   context: ComponentContext
 ): Fragment {
@@ -186,7 +186,7 @@ function icuNodesToJsExpression(
     return { elm: false, ast: t.stringLiteral(icuNode.value) };
   } else if (mf.isArgumentElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value, 'string');
-    return { elm: true, ast: argIdentifier };
+    return { elm: false, ast: argIdentifier };
   } else if (mf.isSelectElement(icuNode)) {
     const argIdentifier = context.addArgument(icuNode.value, 'string');
     if (!icuNode.options.hasOwnProperty('other')) {
@@ -197,7 +197,7 @@ function icuNodesToJsExpression(
     }
     const { other, ...options } = icuNode.options;
     const caseFragments = Object.entries(options).map(([name, caseNode]) => {
-      return [name, icuNodesToJsxExpression(caseNode.value, context)];
+      return [name, icuNodesToJsExpression(caseNode.value, context)];
     }) as [string, Fragment][];
     const cases = caseFragments.map(([name, fragment]) => {
       return [
@@ -205,7 +205,7 @@ function icuNodesToJsExpression(
         fragment.ast
       ];
     }) as [t.Expression, t.Expression][];
-    const otherFragment = icuNodesToJsxExpression(other.value, context);
+    const otherFragment = icuNodesToJsExpression(other.value, context);
     return {
       elm:
         caseFragments.some(([, fragment]) => fragment.elm) || otherFragment.elm,
@@ -226,14 +226,14 @@ function icuNodesToJsExpression(
       );
     }
     const { other, ...options } = icuNode.options;
-    const otherFragment = icuNodesToJsxExpression(other.value, context);
+    const otherFragment = icuNodesToJsExpression(other.value, context);
     const withOffset = context.useWithOffset(argIdentifier, icuNode.offset);
     const localized = context.useLocalizedMatcher(
       withOffset,
       icuNode.pluralType
     );
     const caseFragments = Object.entries(options).map(([name, caseNode]) => {
-      return [name, icuNodesToJsxExpression(caseNode.value, context)];
+      return [name, icuNodesToJsExpression(caseNode.value, context)];
     }) as [string, Fragment][];
     const cases = caseFragments.map(([name, fragment]) => {
       const test = name.startsWith('=')
@@ -476,7 +476,7 @@ export default function icuToReactComponent(
   const icuAst = mf.parse(icuStr, {
     captureLocation: true
   });
-  const returnValue = icuNodesToJsxExpression(icuAst, context);
+  const returnValue = icuNodesToJsExpression(icuAst, context);
   const ast = t.functionExpression(
     t.identifier(componentName),
     context.buildArgsAst(),

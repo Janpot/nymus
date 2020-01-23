@@ -243,14 +243,14 @@ describe('shared', () => {
         expect(output).toBe('I am 0 years old.');
       });
 
-      it.skip('should ignore false, null, and undefined', async () => {
-        const mf = await createComponent('{a}{b}{c}');
+      it('should stringify false, null, and undefined', async () => {
+        const mf = await createComponent('{a} {b} {c}');
         const output = render(mf, {
           a: false,
           b: null,
           c: undefined
         });
-        expect(output).toBe('');
+        expect(output).toBe('false null undefined');
       });
     });
 
@@ -537,20 +537,22 @@ describe('with jsx', () => {
     expect(result).toBe('Hel&#x27;lo Wo&quot;rld!');
   });
 
-  it('can interpolate components', async () => {
+  it('can interpolate objects', async () => {
     const interpolate = await createComponent('a {b} c');
     const result = render(interpolate, {
-      b: React.createElement('span', null, 'x')
+      b: {
+        toString: () => 'b'
+      }
     });
-    expect(result).toBe('a <span>x</span> c');
+    expect(result).toBe('a b c');
   });
 
   it('can interpolate arrays', async () => {
     const interpolate = await createComponent('a {b} c');
     const result = render(interpolate, {
-      b: ['x', React.createElement('span', { key: 'key' }, 'y'), 'z']
+      b: ['x', 'y', 'z']
     });
-    expect(result).toBe('a x<span>y</span>z c');
+    expect(result).toBe('a x,y,z c');
   });
 
   it('understands jsx with <React />', async () => {

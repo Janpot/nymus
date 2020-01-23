@@ -2,6 +2,17 @@ module.exports = {
   typescript: {
     ignoreDevErrors: true
   },
+  experimental: {
+    redirects: async () => {
+      return [
+        {
+          source: '/docs',
+          destination: '/docs/getting-started',
+          permanent: true
+        }
+      ];
+    }
+  },
   webpack: (config, options) => {
     if (!options.isServer) {
       // Hack to make importing @babel/core not fail
