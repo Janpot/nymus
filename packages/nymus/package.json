@@ -1,6 +1,6 @@
 {
   "name": "nymus",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Transform ICU messages into React components.",
   "keywords": [
     "i18n",
