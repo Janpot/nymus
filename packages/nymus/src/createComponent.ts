@@ -12,7 +12,9 @@ type ToType<F> = {
   [K in keyof F]: F[K];
 };
 
-export type FormatOptions = ToType<UnifiedNumberFormatOptions>;
+export type FormatOptions = ToType<
+  UnifiedNumberFormatOptions | mf.ExtendedDateTimeFormatOptions
+>;
 
 interface Fragment {
   // Flag to indicate whether this fragment contains parts that can be React Elements
@@ -271,20 +273,38 @@ function icuNodeToJsExpression(
     }
   } else if (mf.isDateElement(icuNode)) {
     const value = context.addArgument(icuNode.value, 'Date');
-    const formattedValue = context.useFormattedValue(
-      value,
-      'date',
-      (icuNode.style as string) || 'medium'
-    );
-    return { elm: false, ast: formattedValue };
+    if (mf.isDateTimeSkeleton(icuNode.style)) {
+      const formattedValue = context.useFormattedValue(
+        value,
+        'date',
+        mf.parseDateTimeSkeleton(icuNode.style.pattern)
+      );
+      return { elm: false, ast: formattedValue };
+    } else {
+      const formattedValue = context.useFormattedValue(
+        value,
+        'date',
+        icuNode.style || 'medium'
+      );
+      return { elm: false, ast: formattedValue };
+    }
   } else if (mf.isTimeElement(icuNode)) {
     const value = context.addArgument(icuNode.value, 'Date');
-    const formattedValue = context.useFormattedValue(
-      value,
-      'time',
-      (icuNode.style as string) || 'medium'
-    );
-    return { elm: false, ast: formattedValue };
+    if (mf.isDateTimeSkeleton(icuNode.style)) {
+      const formattedValue = context.useFormattedValue(
+        value,
+        'time',
+        mf.parseDateTimeSkeleton(icuNode.style.pattern)
+      );
+      return { elm: false, ast: formattedValue };
+    } else {
+      const formattedValue = context.useFormattedValue(
+        value,
+        'time',
+        (icuNode.style as string) || 'medium'
+      );
+      return { elm: false, ast: formattedValue };
+    }
   } else if (mf.isPoundElement(icuNode)) {
     return { elm: false, ast: context.getPound() };
   } else {
