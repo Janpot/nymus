@@ -34,13 +34,11 @@ async function getManifest() {
   return import('../../markdown/manifest.json');
 }
 
-export async function unstable_getStaticPaths() {
+export async function unstable_getStaticPaths(): Promise<
+  { params: { slug: string } }[]
+> {
   const { routes } = await getManifest();
-  return routes.map(route => {
-    params: {
-      slug: path.basename(route.path);
-    }
-  });
+  return routes.map(route => ({ params: { slug: path.basename(route.path) } }));
 }
 
 async function readMarkdownFile(slug: string): Promise<string> {
