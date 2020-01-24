@@ -20,7 +20,9 @@
     "codemirror": "^5.50.2",
     "codemirror-mode-icu": "0.1.0",
     "next": "^9.2.1-canary.10",
+    "highlight.js": "^9.18.0",
     "nymus": "0.1.11",
+    "marked": "^0.8.0",
     "prettier": "^1.19.1",
     "react": "16.12.0",
     "react-codemirror2": "^6.0.0",
@@ -32,8 +34,6 @@
     "@types/marked": "^0.7.2",
     "@types/node": "^13.1.8",
     "@types/prettier": "^1.19.0",
-    "highlight.js": "^9.18.0",
-    "marked": "^0.8.0",
     "typescript": "^3.7.5"
   }
 }
