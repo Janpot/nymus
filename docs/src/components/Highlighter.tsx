@@ -1,7 +1,7 @@
 import 'codemirror/mode/jsx/jsx';
 import React from 'react';
 import { Controlled as CodeMirror } from 'react-codemirror2';
-// import icuMode from 'codemirror-mode-icu';
+import icuMode from 'codemirror-mode-icu';
 import { CM_THEME } from '../constants';
 
 interface HighlighterProps {
@@ -22,7 +22,7 @@ export default function Highlighter({
       className={className}
       value={value}
       // @ts-ignore bad typing here
-      // defineMode={{ name: 'icu', fn: icuMode }}
+      defineMode={{ name: 'icu', fn: icuMode }}
       options={{
         theme: CM_THEME,
         lineNumbers: true,
