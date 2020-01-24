@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build-deps": "cd .. && yarn workspace nymus build && yarn workspace codemirror-mode-icu build ",
-    "build": "next build",
+    "build": "yarn build-deps && next build",
     "start": "next start",
     "test": "echo \"no tests\""
   },
