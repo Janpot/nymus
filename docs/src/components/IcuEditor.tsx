@@ -1,4 +1,5 @@
 import { Controlled as CodeMirror } from 'react-codemirror2';
+import { CM_THEME } from '../constants';
 
 import icuMode from 'codemirror-mode-icu';
 import 'codemirror/mode/javascript/javascript';
@@ -24,7 +25,7 @@ export default function IcuEditor({
       // @ts-ignore bad typing here
       defineMode={{ name: 'icu', fn: icuMode }}
       options={{
-        theme: 'material-darker',
+        theme: CM_THEME,
         lineNumbers: true,
         mode: 'icu'
       }}

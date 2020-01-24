@@ -1,4 +1,4 @@
-<h1 align="center">🦉 nymus</h1>
+<h1 align="center"><a href="https://nymus.now.sh/">🦉 nymus</a></h1>
 <p>
   <a href="http://npmjs.com/package/nymus">
     <img alt="Version" src="https://img.shields.io/npm/v/nymus" />
@@ -40,13 +40,10 @@ export function HomePage() {
 }
 ```
 
-### Options
+## Documentation
 
-| Option                 | Description                                                                                              |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `--locale`, `-l`       | Locale to be used in the `Intl.NumberFormat`, `Intl.DateTimeFormat` and `Intl.PluralRules` constructors. |
-| `--typescript`, `-t`   | Generate typescript files instead of javacsript files                                                    |
-| `--declarations`, `-d` | Emit type declarations (.d.ts files)                                                                     |
+- [playground](https://nymus.now.sh/playground)
+- [documentation](https://nymus.now.sh/docs)
 
 ## Author
 
