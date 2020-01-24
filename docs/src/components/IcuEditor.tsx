@@ -19,6 +19,7 @@ export default function IcuEditor({
 }: IcuEditorProps) {
   return (
     <CodeMirror
+      // @ts-ignore
       style={stretch ? { height: '100%' } : undefined}
       className={className}
       value={value}
