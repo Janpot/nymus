@@ -21,7 +21,7 @@
     "url": "https://github.com/Janpot/nymus.git"
   },
   "scripts": {
-    "prepublish": "npm run build",
+    "prepack": "npm run build",
     "build": "rm -rf ./dist && tsc",
     "test": "jest"
   },

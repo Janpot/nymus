@@ -7,15 +7,13 @@ import { CM_THEME } from '../constants';
 interface HighlighterProps {
   mode: 'icu' | 'jsx';
   className?: string;
-  inline?: boolean;
   value?: string;
 }
 
 export default function Highlighter({
   className,
   value = '',
-  mode = 'jsx',
-  inline
+  mode = 'jsx'
 }: HighlighterProps) {
   return (
     <CodeMirror
