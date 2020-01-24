@@ -12,5 +12,8 @@
       "dest": "docs/$1",
       "continue": true
     }
+  ],
+  "redirects": [
+    { "source": "/docs", "destination": "/docs/getting-styarted", "statusCode": 308 }
   ]
 }
