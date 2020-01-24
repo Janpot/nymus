@@ -15,7 +15,7 @@
   "redirects": [
     {
       "source": "/docs",
-      "destination": "/docs/getting-styarted",
+      "destination": "/docs/getting-started",
       "statusCode": 308
     }
   ]

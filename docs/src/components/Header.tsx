@@ -17,16 +17,12 @@ interface HeaderProps {}
 export default function Header(props: HeaderProps & AppBarProps) {
   const classes = useStyles();
   return (
-    <AppBar elevation={0} position="static" color="default" {...props}>
+    <AppBar elevation={1} position="static" color="default" {...props}>
       <Toolbar>
         <Link href="/" variant="h6" color="inherit" className={classes.title}>
           nymus
         </Link>
-        <Button
-          component={NakedLink}
-          href="/docs/getting-started"
-          color="inherit"
-        >
+        <Button component={NakedLink} href="/docs" color="inherit">
           Docs
         </Button>
         <Button component={NakedLink} href="/playground" color="inherit">
