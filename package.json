@@ -2,7 +2,8 @@
   "name": "nymus-root",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "docs"
   ],
   "scripts": {
     "build": "yarn workspaces run build",
