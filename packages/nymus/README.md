@@ -43,7 +43,7 @@ export function HomePage() {
 ## Documentation
 
 - [playground](https://nymus.now.sh/playground)
-- [documentation](https://nymus.now.sh/docs)
+- [documentation](https://nymus.now.sh/docs/getting-started)
 
 ## Author
 
