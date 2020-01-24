@@ -22,7 +22,11 @@ export default function Header(props: HeaderProps & AppBarProps) {
         <Link href="/" variant="h6" color="inherit" className={classes.title}>
           nymus
         </Link>
-        <Button component={NakedLink} href="/docs/getting-started" color="inherit">
+        <Button
+          component={NakedLink}
+          href="/docs/getting-started"
+          color="inherit"
+        >
           Docs
         </Button>
         <Button component={NakedLink} href="/playground" color="inherit">

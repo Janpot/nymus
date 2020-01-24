@@ -6,14 +6,17 @@
       "use": "@now/next"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "docs/$1",
-      "continue": true
+      "source": "/(.*)",
+      "destination": "docs/$1"
     }
   ],
   "redirects": [
-    { "source": "/docs", "destination": "/docs/getting-styarted", "statusCode": 308 }
+    {
+      "source": "/docs",
+      "destination": "/docs/getting-styarted",
+      "statusCode": 308
+    }
   ]
 }
