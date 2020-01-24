@@ -17,7 +17,7 @@ interface HeaderProps {}
 export default function Header(props: HeaderProps & AppBarProps) {
   const classes = useStyles();
   return (
-    <AppBar position="static" color="default" {...props}>
+    <AppBar elevation={1} position="static" color="default" {...props}>
       <Toolbar>
         <Link href="/" variant="h6" color="inherit" className={classes.title}>
           nymus

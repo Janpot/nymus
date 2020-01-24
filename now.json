@@ -1,0 +1,22 @@
+{
+  "name": "nymus",
+  "builds": [
+    {
+      "src": "docs/next.config.js",
+      "use": "@now/next"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "docs/$1"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/docs",
+      "destination": "/docs/getting-started",
+      "statusCode": 308
+    }
+  ]
+}

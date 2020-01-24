@@ -1,0 +1,24 @@
+{
+  "routes": [
+    {
+      "title": "Getting Started",
+      "path": "getting-started"
+    },
+    {
+      "title": "Usage",
+      "path": "usage"
+    },
+    {
+      "title": "ICU message format",
+      "path": "icu-message-format"
+    },
+    {
+      "title": "Configuration",
+      "path": "configuration"
+    },
+    {
+      "title": "About",
+      "path": "about"
+    }
+  ]
+}
