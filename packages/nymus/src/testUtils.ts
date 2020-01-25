@@ -41,10 +41,10 @@ type ComponentsOf<T, C> = {
   [K in keyof T]: C;
 };
 
-async function createComponents<C, T extends Messages>(
+export async function createComponents<C, T extends Messages>(
   messages: T,
   options: CreateModuleOptions = {},
-  intlMock?: any
+  intlMock: typeof Intl = Intl
 ): Promise<ComponentsOf<T, C>> {
   const { code } = await createModule(messages, options);
   // console.log(code);
@@ -64,7 +64,7 @@ async function createComponents<C, T extends Messages>(
 export async function createComponent(
   message: string,
   options?: CreateModuleOptions,
-  intlMock?: any
+  intlMock: typeof Intl = Intl
 ): Promise<React.FunctionComponent<any>> {
   const { Component } = await createComponents<
     React.FunctionComponent<any>,

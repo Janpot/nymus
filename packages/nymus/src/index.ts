@@ -52,6 +52,10 @@ export async function createModuleAst(
   const module = new Module(options);
 
   for (const [key, message] of Object.entries(messages)) {
+    console.log(message);
+    if (typeof message !== 'string') {
+      throw new Error(`Invalid JSON, "${key}" is not a string`);
+    }
     const componentName = t.toIdentifier(key);
     module.addMessage(componentName, message);
   }
@@ -63,13 +67,6 @@ export default async function createModule(
   messages: Messages,
   options: CreateModuleOptions = {}
 ) {
-  const module = new Module(options);
-
-  for (const [key, message] of Object.entries(messages)) {
-    const componentName = t.toIdentifier(key);
-    module.addMessage(componentName, message);
-  }
-
   const tsAst = await createModuleAst(messages, options);
 
   let declarations: string | undefined;

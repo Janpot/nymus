@@ -1,15 +1,24 @@
 /* eslint-env jest */
 
-import { createComponent, render } from './testUtils';
+import { createComponents, createComponent, render } from './testUtils';
 import * as React from 'react';
 import { formatError } from './index';
 
 describe('shared', () => {
+  it('fails on invalid json', async () => {
+    await expect(
+      createComponents({
+        // @ts-ignore We want to test output on invalid input
+        message: {}
+      })
+    ).rejects.toHaveProperty('message', 'hekllo');
+  });
+
   it('creates empty component', async () => {
     const empty = await createComponent('');
     const result = render(empty);
     expect(result).toBe('');
-    expect(typeof empty({})).toBe('string');
+    expect(typeof empty({})).toBe('Invalid JSON, "message" is not a string');
   });
 
   it('creates simple text component', async () => {
@@ -149,7 +158,7 @@ describe('shared', () => {
 
   it('handles date skeleton', async () => {
     const msg = await createComponent(
-      "{today, date, ::yyyy.MM.dd G 'at' HH:mm:ss zzzz}",
+      "{today, date, ::yyyy.MM.dd 'at' HH:mm:ss zzzz}",
       {
         locale: 'en-US'
       }

@@ -34,10 +34,19 @@ describe('cli', () => {
 
   it('should fail on invalid json', async () => {
     await expect(
-      exec(fixtureDir.path, 'nymus ./invalid/en.json')
+      exec(fixtureDir.path, 'nymus ./invalid-json.json')
     ).resolves.toMatchObject({
       code: 1,
       stdout: `Unexpected end of JSON input`
+    });
+  });
+
+  it('should fail on invalid message', async () => {
+    await expect(
+      exec(fixtureDir.path, 'nymus ./invalid-message.json')
+    ).resolves.toMatchObject({
+      code: 1,
+      stdout: `Invalid JSON, "message" is not a string`
     });
   });
 
