@@ -10,11 +10,13 @@
     "test": "yarn workspaces run test",
     "dev": "now dev",
     "fix": "$npm_execpath prettier --write",
-    "prettier": "prettier --check \"**/*.{js,ts,jsx,tsx,json,yml,md}\""
+    "prettier": "prettier --check \"**/*.{js,ts,jsx,tsx,json,yml,md}\"",
+    "lerna": "lerna"
   },
   "license": "MIT",
   "devDependencies": {
     "@now/next": "^2.3.12",
+    "lerna": "^3.20.2",
     "now": "^16.7.3",
     "prettier": "^1.19.1"
   }
