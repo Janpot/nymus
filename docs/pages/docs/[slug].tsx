@@ -4,9 +4,10 @@ import marked from 'marked';
 import Link from '../../src/components/Link';
 import { promisify } from 'util';
 import Container from '@material-ui/core/Container';
-import Box from '@material-ui/core/Box';
+import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/core/styles';
 import highlight from '../../src/highlight';
+import { Typography, Box } from '@material-ui/core';
 
 const fsReadFile = promisify(fs.readFile);
 
@@ -86,21 +87,31 @@ export default function DocumentationPage({
 }: DocumentationPageProps) {
   const classes = useStyles();
   return (
-    <Container>
-      <Box display="flex" flexDirection="row">
-        <Box width={200} flexShrink={0} mt={4}>
-          {routes.map(route => (
-            <div key={route.path}>
-              <Link href={`/docs/${route.path}`}>{route.title}</Link>
-            </div>
-          ))}
-        </Box>
-        <Box
+    <Container maxWidth="lg">
+      <Grid container spacing={5}>
+        <Grid
+          item
+          xs={12}
+          md={8}
           className={classes.content}
-          flex={1}
           dangerouslySetInnerHTML={{ __html: content }}
         />
-      </Box>
+        <Grid item xs={12} md={4}>
+          <Box mt={4} position={{ md: 'fixed' }}>
+            <Typography variant="h6">Docs</Typography>
+            {routes.map(route => (
+              <Link
+                display="block"
+                key={route.path}
+                variant="body1"
+                href={`/docs/${route.path}`}
+              >
+                {route.title}
+              </Link>
+            ))}
+          </Box>
+        </Grid>
+      </Grid>
     </Container>
   );
 }

@@ -1,10 +1,12 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-
-import Link from '@material-ui/core/Link';
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
-import { Box } from '@material-ui/core';
+import {
+  Grid,
+  Container,
+  Link,
+  Typography,
+  makeStyles,
+  Box
+} from '@material-ui/core';
 import transform from '../src/transform';
 import dynamic from 'next/dynamic';
 
@@ -58,13 +60,21 @@ function Home({ exampleInput, exampleOutput }: HomePageProps) {
         </Link>{' '}
         into React components
       </Typography>
-      <Box>
-        Put in ICU formatted messages
-        <Highlighter mode="jsx" value={exampleInput} />
-      </Box>
-      <Box>
-        Get out React components
-        <Highlighter mode="jsx" value={exampleOutput} />
+      <Box mt={5}>
+        <Grid container>
+          <Grid item xs={12} md={6}>
+            <Typography align="center" variant="h6">
+              Put in ICU formatted messages
+            </Typography>
+            <Highlighter mode="jsx" value={exampleInput} />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Typography align="center" variant="h6">
+              Get out React components
+            </Typography>
+            <Highlighter mode="jsx" value={exampleOutput} />
+          </Grid>
+        </Grid>
       </Box>
     </Container>
   );
