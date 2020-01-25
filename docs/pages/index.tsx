@@ -1,26 +1,25 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-
-import Link from '@material-ui/core/Link';
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
-import { Box } from '@material-ui/core';
-import transform from '../src/transform';
-import dynamic from 'next/dynamic';
-
-const Highlighter = dynamic(() => import('../src/components/Highlighter'), {
-  ssr: false
-});
+import {
+  Grid,
+  Container,
+  Link,
+  Typography,
+  makeStyles,
+  Box
+} from '@material-ui/core';
+import highlight from '../src/highlight';
 
 const useStyles = makeStyles(theme => ({
-  logo: {
-    fontSize: 100
-  },
   title: {
     marginTop: theme.spacing(5)
   },
   subtitle: {
     fontSize: 20
+  },
+  code: {
+    '& .hljs': {
+      padding: theme.spacing(3)
+    }
   }
 }));
 
@@ -32,14 +31,30 @@ interface HomePageProps {
 export async function unstable_getStaticProps(): Promise<{
   props: HomePageProps;
 }> {
-  const sample = {
-    Message: 'Hello there, {name}, your score is {score, number, percent}.',
-    CurrentTime: "It's {now, time, short}."
+  const input = {
+    Message: 'Hi {name}, your score is {score, number, percent}.',
+    CurrentDate: "It's {now, time, short}.",
+    Basket: 'I have {eggs, plural, one {one egg} other {# eggs}}.',
+    Progress: 'Your score went {direction, select, up {up} other {down}}.',
+    Navigate: 'Go to our <Link>about page</Link>.'
   };
+  const output = [
+    "import { Message, CurrentDate, Basket, Progress, Navigate } from '@locale'",
+    '',
+    'function Example () {',
+    '  return <>',
+    '    <Message name="johnny" score={0.75} />',
+    '    <CurrentDate now={new Date()} />',
+    '    <Basket eggs={12} />',
+    "    <Progress direction='up' />",
+    "    <Navigate Link={props => <a href='/about'>{props.children}</a>} />",
+    '  </>',
+    '}'
+  ].join('\n');
   return {
     props: {
-      exampleInput: JSON.stringify(sample, null, 2),
-      exampleOutput: await transform(sample)
+      exampleInput: highlight(JSON.stringify(input, null, 2), 'json'),
+      exampleOutput: highlight(output, 'jsx')
     }
   };
 }
@@ -58,13 +73,27 @@ function Home({ exampleInput, exampleOutput }: HomePageProps) {
         </Link>{' '}
         into React components
       </Typography>
-      <Box>
-        Put in ICU formatted messages
-        <Highlighter mode="jsx" value={exampleInput} />
-      </Box>
-      <Box>
-        Get out React components
-        <Highlighter mode="jsx" value={exampleOutput} />
+      <Box mt={5}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <Typography align="center" variant="h6">
+              Put in ICU formatted messages
+            </Typography>
+            <div
+              className={classes.code}
+              dangerouslySetInnerHTML={{ __html: exampleInput }}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Typography align="center" variant="h6">
+              Get out React components
+            </Typography>
+            <div
+              className={classes.code}
+              dangerouslySetInnerHTML={{ __html: exampleOutput }}
+            />
+          </Grid>
+        </Grid>
       </Box>
     </Container>
   );
