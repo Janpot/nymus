@@ -11,7 +11,10 @@ describe('shared', () => {
         // @ts-ignore We want to test output on invalid input
         message: {}
       })
-    ).rejects.toHaveProperty('message', 'Invalid JSON, "message" is not a string');
+    ).rejects.toHaveProperty(
+      'message',
+      'Invalid JSON, "message" is not a string'
+    );
   });
 
   it('creates empty component', async () => {
