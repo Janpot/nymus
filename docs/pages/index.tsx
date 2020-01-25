@@ -7,7 +7,6 @@ import {
   makeStyles,
   Box
 } from '@material-ui/core';
-import transform from '../src/transform';
 import highlight from '../src/highlight';
 
 const useStyles = makeStyles(theme => ({
@@ -36,13 +35,15 @@ export async function unstable_getStaticProps(): Promise<{
     Message: 'Hi {name}, your score is {score, number, percent}.',
     CurrentDate: "It's {now, time, short}.",
     Basket: 'I have {eggs, plural, one {one egg} other {# eggs}}.',
-    Progress: 'Your score went {direction, select, up {up} other {down}}.'
+    Progress: 'Your score went {direction, select, up {up} other {down}}.',
+    Navigate: 'Go to our <Link>about page</Link>.'
   };
   const output = [
     '<Message name="johnny" score={0.75} />',
     '<CurrentDate now={new Date()} />',
     '<Basket eggs={12} />',
-    "<Progress direction='up' />"
+    "<Progress direction='up' />",
+    "<Navigate Link={({ children }) => <a href='/about'>{children}</a>} />"
   ].join('\n');
   return {
     props: {
