@@ -103,6 +103,12 @@ describe('shared', () => {
     );
   });
 
+  it('can format dates from numbers', async () => {
+    const msg = await createComponent('On {theDate, date, medium}.');
+    const result = render(msg, { theDate: 1507216343344 });
+    expect(result).toBe('On Oct 5, 2017.');
+  });
+
   it('makes string returning components for numbers, dates, times and pounds', async () => {
     const msg = await createComponent(
       '{today, date}, {today, time}, {count, number}, {count, plural, other {#}}'
@@ -122,7 +128,7 @@ describe('shared', () => {
     ).toBe('string');
   });
 
-  it('Handles number skeleton with goup-off', async () => {
+  it('handles number skeleton with goup-off', async () => {
     const msg = await createComponent(
       '{amount, number, ::currency/CAD .0 group-off}',
       { locale: 'en-US' }
@@ -132,13 +138,27 @@ describe('shared', () => {
     expect(result).toBe('CA$123456.8');
   });
 
-  it('Handles number skeleton', async () => {
+  it('handles number skeleton', async () => {
     const msg = await createComponent('{amount, number, ::currency/GBP .0#}', {
       locale: 'en-US'
     });
 
     const result = render(msg, { amount: 123456.789 });
     expect(result).toBe('£123,456.79');
+  });
+
+  it('handles date skeleton', async () => {
+    const msg = await createComponent(
+      "{today, date, ::yyyy.MM.dd G 'at' HH:mm:ss zzzz}",
+      {
+        locale: 'en-US'
+      }
+    );
+
+    const result = render(msg, { today: new Date(1579940163111) });
+    expect(result).toBe(
+      '01 25, 2020 AD, 09:16:03 Central European Standard Time'
+    );
   });
 
   it('custom formats should work for time', async () => {

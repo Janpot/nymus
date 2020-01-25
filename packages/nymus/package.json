@@ -20,6 +20,7 @@
     "type": "git",
     "url": "https://github.com/Janpot/nymus.git"
   },
+  "homepage": "https://nymus.now.sh/",
   "scripts": {
     "prepack": "npm run build",
     "build": "rm -rf ./dist && tsc",
