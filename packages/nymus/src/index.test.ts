@@ -161,16 +161,14 @@ describe('shared', () => {
 
   it('handles date skeleton', async () => {
     const msg = await createComponent(
-      "{today, date, ::yyyy.MM.dd G 'at' HH:mm:ss zzzz}",
+      "{today, date, ::hh 'o''clock' a, zzzz}",
       {
         locale: 'en-US'
       }
     );
 
     const result = render(msg, { today: new Date(1579940163111) });
-    expect(result).toBe(
-      '01 25, 2020 AD, 09:16:03 Central European Standard Time'
-    );
+    expect(result).toBe('09 AM Central European Standard Time');
   });
 
   it('custom formats should work for time', async () => {
