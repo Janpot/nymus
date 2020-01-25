@@ -1,6 +1,6 @@
 {
   "name": "codemirror-mode-icu",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "codemirror language mode for ICU message format",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
