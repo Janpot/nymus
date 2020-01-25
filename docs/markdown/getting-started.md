@@ -27,3 +27,9 @@ Use the generated component:
 ```jsx
 <WelcomeMessage name="Johnny" place="the nymus docs" />
 ```
+
+## Examples
+
+Take alook at the examples to get an idea of how a complete setup would work
+
+- [with next.js](https://github.com/Janpot/nymus/tree/master/examples/next.js)
