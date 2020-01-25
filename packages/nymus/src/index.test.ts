@@ -11,14 +11,14 @@ describe('shared', () => {
         // @ts-ignore We want to test output on invalid input
         message: {}
       })
-    ).rejects.toHaveProperty('message', 'hekllo');
+    ).rejects.toHaveProperty('message', 'Invalid JSON, "message" is not a string');
   });
 
   it('creates empty component', async () => {
     const empty = await createComponent('');
     const result = render(empty);
     expect(result).toBe('');
-    expect(typeof empty({})).toBe('Invalid JSON, "message" is not a string');
+    expect(typeof empty({})).toBe('string');
   });
 
   it('creates simple text component', async () => {
@@ -158,7 +158,7 @@ describe('shared', () => {
 
   it('handles date skeleton', async () => {
     const msg = await createComponent(
-      "{today, date, ::yyyy.MM.dd 'at' HH:mm:ss zzzz}",
+      "{today, date, ::yyyy.MM.dd G 'at' HH:mm:ss zzzz}",
       {
         locale: 'en-US'
       }

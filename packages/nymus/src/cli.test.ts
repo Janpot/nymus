@@ -46,7 +46,7 @@ describe('cli', () => {
       exec(fixtureDir.path, 'nymus ./invalid-message.json')
     ).resolves.toMatchObject({
       code: 1,
-      stdout: `Invalid JSON, "message" is not a string`
+      stdout: `Invalid JSON, "invalid" is not a string`
     });
   });
 
