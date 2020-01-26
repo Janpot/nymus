@@ -11,7 +11,8 @@
     "dev": "now dev",
     "fix": "$npm_execpath prettier --write",
     "prettier": "prettier --check \"**/*.{js,ts,jsx,tsx,json,yml,md}\"",
-    "lerna": "lerna"
+    "version": "lerna version",
+    "publish": "lerna publish from-package --yes"
   },
   "license": "MIT",
   "devDependencies": {

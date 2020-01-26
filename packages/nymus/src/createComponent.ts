@@ -125,7 +125,7 @@ function interpolateJsxFragmentChildren(
   return result;
 }
 
-function icuNodesToJsExpression(
+function icuNodesToJsFragment(
   icuNodes: mf.MessageFormatElement[],
   context: ComponentContext
 ): Fragment {
@@ -160,7 +160,7 @@ function icuNodesToJsExpression(
   );
 
   const fragments = interpollatedIcuNodes.map(icuNode =>
-    icuNodeToJsExpression(icuNode, context)
+    icuNodeToJsFragment(icuNode, context)
   );
 
   return interpolateJsxFragment(jsxAst, fragments, context);
@@ -180,135 +180,158 @@ function buildPluralRulesCall(formatter: t.Identifier, value: t.Identifier) {
   );
 }
 
-function icuNodeToJsExpression(
+function icuLiteralElementToJsFragment(
+  elm: mf.LiteralElement,
+  context: ComponentContext
+): Fragment {
+  return { elm: false, ast: t.stringLiteral(elm.value) };
+}
+
+function icuArgumentElementToJsFragment(
+  elm: mf.ArgumentElement,
+  context: ComponentContext
+): Fragment {
+  const argIdentifier = context.addArgument(elm.value, 'string');
+  return { elm: false, ast: argIdentifier };
+}
+
+function icuSelectElementToJsFragment(
+  elm: mf.SelectElement,
+  context: ComponentContext
+): Fragment {
+  const argIdentifier = context.addArgument(elm.value, 'string');
+  if (!elm.options.hasOwnProperty('other')) {
+    throw new TransformationError(
+      'A select element requires an "other"',
+      elm.location || null
+    );
+  }
+  const { other, ...options } = elm.options;
+  const caseFragments = Object.entries(options).map(([name, caseNode]) => {
+    return [name, icuNodesToJsFragment(caseNode.value, context)];
+  }) as [string, Fragment][];
+  const cases = caseFragments.map(([name, fragment]) => {
+    return [
+      t.binaryExpression('===', argIdentifier, t.stringLiteral(name)),
+      fragment.ast
+    ];
+  }) as [t.Expression, t.Expression][];
+  const otherFragment = icuNodesToJsFragment(other.value, context);
+  return {
+    elm:
+      caseFragments.some(([, fragment]) => fragment.elm) || otherFragment.elm,
+    ast: astUtil.buildTernaryChain(cases, otherFragment.ast)
+  };
+}
+function icuPluralElementToJsFragment(
+  elm: mf.PluralElement,
+  context: ComponentContext
+): Fragment {
+  const argIdentifier = context.addArgument(elm.value, 'number');
+  const formatted = context.useFormattedValue(
+    argIdentifier,
+    'number',
+    'decimal'
+  );
+  context.enterPlural(formatted);
+  if (!elm.options.hasOwnProperty('other')) {
+    throw new TransformationError(
+      'A plural element requires an "other"',
+      elm.location || null
+    );
+  }
+  const { other, ...options } = elm.options;
+  const otherFragment = icuNodesToJsFragment(other.value, context);
+  const withOffset = context.useWithOffset(argIdentifier, elm.offset);
+  const localized = context.useLocalizedMatcher(withOffset, elm.pluralType);
+  const caseFragments = Object.entries(options).map(([name, caseNode]) => {
+    return [name, icuNodesToJsFragment(caseNode.value, context)];
+  }) as [string, Fragment][];
+  const cases = caseFragments.map(([name, fragment]) => {
+    const test = name.startsWith('=')
+      ? t.binaryExpression(
+          '===',
+          withOffset,
+          t.numericLiteral(Number(name.slice(1)))
+        )
+      : t.binaryExpression('===', localized, t.stringLiteral(name));
+    return [test, fragment.ast];
+  }) as [t.Expression, t.Expression][];
+  const ast = astUtil.buildTernaryChain(cases, otherFragment.ast);
+  context.exitPlural();
+  return {
+    elm:
+      caseFragments.some(([, fragment]) => fragment.elm) || otherFragment.elm,
+    ast
+  };
+}
+
+function icuNumberElementToJsFragment(
+  elm: mf.NumberElement,
+  context: ComponentContext
+): Fragment {
+  const value = context.addArgument(elm.value, 'number');
+  const style = mf.isNumberSkeleton(elm.style)
+    ? mf.convertNumberSkeletonToNumberFormatOptions(elm.style.tokens)
+    : elm.style || 'decimal';
+  const formattedValue = context.useFormattedValue(value, 'number', style);
+  return { elm: false, ast: formattedValue };
+}
+
+function icuDateElementToJsFragment(
+  elm: mf.DateElement,
+  context: ComponentContext
+): Fragment {
+  const value = context.addArgument(elm.value, 'Date');
+  const style = mf.isDateTimeSkeleton(elm.style)
+    ? mf.parseDateTimeSkeleton(elm.style.pattern)
+    : elm.style || 'medium';
+  const formattedValue = context.useFormattedValue(value, 'date', style);
+  return { elm: false, ast: formattedValue };
+}
+
+function icuTimeElementToJsFragment(
+  elm: mf.TimeElement,
+  context: ComponentContext
+): Fragment {
+  const value = context.addArgument(elm.value, 'Date');
+  const style = mf.isDateTimeSkeleton(elm.style)
+    ? mf.parseDateTimeSkeleton(elm.style.pattern)
+    : elm.style || 'medium';
+  const formattedValue = context.useFormattedValue(value, 'time', style);
+  return { elm: false, ast: formattedValue };
+}
+
+function icuPoundElementToJsFragment(
+  elm: mf.PoundElement,
+  context: ComponentContext
+): Fragment {
+  return { elm: false, ast: context.getPound() };
+}
+
+function icuNodeToJsFragment(
   icuNode: mf.MessageFormatElement,
   context: ComponentContext
 ): Fragment {
-  if (mf.isLiteralElement(icuNode)) {
-    return { elm: false, ast: t.stringLiteral(icuNode.value) };
-  } else if (mf.isArgumentElement(icuNode)) {
-    const argIdentifier = context.addArgument(icuNode.value, 'string');
-    return { elm: false, ast: argIdentifier };
-  } else if (mf.isSelectElement(icuNode)) {
-    const argIdentifier = context.addArgument(icuNode.value, 'string');
-    if (!icuNode.options.hasOwnProperty('other')) {
-      throw new TransformationError(
-        'A select element requires an "other"',
-        icuNode.location || null
-      );
-    }
-    const { other, ...options } = icuNode.options;
-    const caseFragments = Object.entries(options).map(([name, caseNode]) => {
-      return [name, icuNodesToJsExpression(caseNode.value, context)];
-    }) as [string, Fragment][];
-    const cases = caseFragments.map(([name, fragment]) => {
-      return [
-        t.binaryExpression('===', argIdentifier, t.stringLiteral(name)),
-        fragment.ast
-      ];
-    }) as [t.Expression, t.Expression][];
-    const otherFragment = icuNodesToJsExpression(other.value, context);
-    return {
-      elm:
-        caseFragments.some(([, fragment]) => fragment.elm) || otherFragment.elm,
-      ast: astUtil.buildTernaryChain(cases, otherFragment.ast)
-    };
-  } else if (mf.isPluralElement(icuNode)) {
-    const argIdentifier = context.addArgument(icuNode.value, 'number');
-    const formatted = context.useFormattedValue(
-      argIdentifier,
-      'number',
-      'decimal'
-    );
-    context.enterPlural(formatted);
-    if (!icuNode.options.hasOwnProperty('other')) {
-      throw new TransformationError(
-        'A plural element requires an "other"',
-        icuNode.location || null
-      );
-    }
-    const { other, ...options } = icuNode.options;
-    const otherFragment = icuNodesToJsExpression(other.value, context);
-    const withOffset = context.useWithOffset(argIdentifier, icuNode.offset);
-    const localized = context.useLocalizedMatcher(
-      withOffset,
-      icuNode.pluralType
-    );
-    const caseFragments = Object.entries(options).map(([name, caseNode]) => {
-      return [name, icuNodesToJsExpression(caseNode.value, context)];
-    }) as [string, Fragment][];
-    const cases = caseFragments.map(([name, fragment]) => {
-      const test = name.startsWith('=')
-        ? t.binaryExpression(
-            '===',
-            withOffset,
-            t.numericLiteral(Number(name.slice(1)))
-          )
-        : t.binaryExpression('===', localized, t.stringLiteral(name));
-      return [test, fragment.ast];
-    }) as [t.Expression, t.Expression][];
-    const ast = astUtil.buildTernaryChain(cases, otherFragment.ast);
-    context.exitPlural();
-    return {
-      elm:
-        caseFragments.some(([, fragment]) => fragment.elm) || otherFragment.elm,
-      ast
-    };
-  } else if (mf.isNumberElement(icuNode)) {
-    const value = context.addArgument(icuNode.value, 'number');
-    if (mf.isNumberSkeleton(icuNode.style)) {
-      const formattedValue = context.useFormattedValue(
-        value,
-        'number',
-        mf.convertNumberSkeletonToNumberFormatOptions(icuNode.style.tokens)
-      );
-      return { elm: false, ast: formattedValue };
-    } else {
-      const formattedValue = context.useFormattedValue(
-        value,
-        'number',
-        icuNode.style || 'decimal'
-      );
-      return { elm: false, ast: formattedValue };
-    }
-  } else if (mf.isDateElement(icuNode)) {
-    const value = context.addArgument(icuNode.value, 'Date');
-    if (mf.isDateTimeSkeleton(icuNode.style)) {
-      const formattedValue = context.useFormattedValue(
-        value,
-        'date',
-        mf.parseDateTimeSkeleton(icuNode.style.pattern)
-      );
-      return { elm: false, ast: formattedValue };
-    } else {
-      const formattedValue = context.useFormattedValue(
-        value,
-        'date',
-        icuNode.style || 'medium'
-      );
-      return { elm: false, ast: formattedValue };
-    }
-  } else if (mf.isTimeElement(icuNode)) {
-    const value = context.addArgument(icuNode.value, 'Date');
-    if (mf.isDateTimeSkeleton(icuNode.style)) {
-      const formattedValue = context.useFormattedValue(
-        value,
-        'time',
-        mf.parseDateTimeSkeleton(icuNode.style.pattern)
-      );
-      return { elm: false, ast: formattedValue };
-    } else {
-      const formattedValue = context.useFormattedValue(
-        value,
-        'time',
-        (icuNode.style as string) || 'medium'
-      );
-      return { elm: false, ast: formattedValue };
-    }
-  } else if (mf.isPoundElement(icuNode)) {
-    return { elm: false, ast: context.getPound() };
-  } else {
-    throw new Error(`Unknown AST node type`);
+  switch (icuNode.type) {
+    case mf.TYPE.literal:
+      return icuLiteralElementToJsFragment(icuNode, context);
+    case mf.TYPE.argument:
+      return icuArgumentElementToJsFragment(icuNode, context);
+    case mf.TYPE.select:
+      return icuSelectElementToJsFragment(icuNode, context);
+    case mf.TYPE.plural:
+      return icuPluralElementToJsFragment(icuNode, context);
+    case mf.TYPE.number:
+      return icuNumberElementToJsFragment(icuNode, context);
+    case mf.TYPE.date:
+      return icuDateElementToJsFragment(icuNode, context);
+    case mf.TYPE.time:
+      return icuTimeElementToJsFragment(icuNode, context);
+    case mf.TYPE.pound:
+      return icuPoundElementToJsFragment(icuNode, context);
+    default:
+      throw new Error(`Unknown AST node type`);
   }
 }
 
@@ -496,7 +519,7 @@ export default function icuToReactComponent(
   const icuAst = mf.parse(icuStr, {
     captureLocation: true
   });
-  const returnValue = icuNodesToJsExpression(icuAst, context);
+  const returnValue = icuNodesToJsFragment(icuAst, context);
   const ast = t.functionExpression(
     t.identifier(componentName),
     context.buildArgsAst(),
