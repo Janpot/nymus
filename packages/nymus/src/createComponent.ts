@@ -35,44 +35,6 @@ type JSXFragmentChild =
   | t.JSXSpreadChild
   | t.JSXElement;
 
-function interpolateJsxFragment(
-  jsxFragment: JSXFragmentChild[],
-  fragments: Fragment[],
-  context: ComponentContext
-): Fragment {
-  const fragment = interpolateJsxFragmentChildren(
-    jsxFragment,
-    fragments,
-    context,
-    0
-  );
-  if (fragment.length <= 0) {
-    return { elm: false, ast: t.stringLiteral('') };
-  } else if (fragment.length === 1) {
-    return fragment[0];
-  } else {
-    const elm = fragment.some(frag => frag.elm);
-    if (elm) {
-      return {
-        elm,
-        ast: astUtil.buildReactElement(
-          t.memberExpression(t.identifier('React'), t.identifier('Fragment')),
-          fragment.map(frag => frag.ast)
-        )
-      };
-    } else {
-      const operands = fragment.map(fragment => fragment.ast);
-      if (!t.isStringLiteral(operands[0])) {
-        operands.unshift(t.stringLiteral(''));
-      }
-      return {
-        elm,
-        ast: astUtil.buildBinaryChain('+', ...operands)
-      };
-    }
-  }
-}
-
 function interpolateJsxFragmentChildren(
   jsx: JSXFragmentChild[],
   fragments: Fragment[],
@@ -146,45 +108,90 @@ function rewriteLocation(
   };
 }
 
+function icuNodesToJsFragments(
+  icuNodes: mf.MessageFormatElement[],
+  context: ComponentContext
+): Fragment[] {
+  if (icuNodes.length <= 0) {
+    return [];
+  } else if (context.react) {
+    const jsxContent = icuNodes
+      .map((icuNode, i) => {
+        if (mf.isLiteralElement(icuNode)) {
+          return icuNode.value;
+        }
+        // replace anything that is not a literal with an expression container placeholder
+        // of the same length to preserve location
+        const lines = icuNode.location!.end.line - icuNode.location!.start.line;
+        const columns =
+          lines > 0
+            ? icuNode.location!.end.column - 2
+            : icuNode.location!.end.column - icuNode.location!.start.column - 3;
+        return `{${'_' +
+          '\n'.repeat(lines) +
+          ' '.repeat(Math.max(columns, 0))}}`;
+      })
+      .join('');
+
+    // Wrap in a root element to turn it into valid JSX
+    const jsxElement = `<>${jsxContent}</>`;
+    const jsxAst = babylon.parseExpression(jsxElement, {
+      plugins: ['jsx']
+    }) as t.JSXFragment;
+
+    const interpollatedIcuNodes = icuNodes.filter(
+      node => !mf.isLiteralElement(node)
+    );
+
+    const fragments = interpollatedIcuNodes.map(icuNode =>
+      icuNodeToJsFragment(icuNode, context)
+    );
+
+    return interpolateJsxFragmentChildren(
+      jsxAst.children,
+      fragments,
+      context,
+      0
+    );
+  } else {
+    return icuNodes.map(icuNode => icuNodeToJsFragment(icuNode, context));
+  }
+}
+
+function flattenFragments(fragments: Fragment[]): Fragment {
+  if (fragments.length <= 0) {
+    return { elm: false, ast: t.stringLiteral('') };
+  } else if (fragments.length === 1) {
+    return fragments[0];
+  } else {
+    const elm = fragments.some(frag => frag.elm);
+    if (elm) {
+      return {
+        elm,
+        ast: astUtil.buildReactElement(
+          t.memberExpression(t.identifier('React'), t.identifier('Fragment')),
+          fragments.map(frag => frag.ast)
+        )
+      };
+    } else {
+      const operands = fragments.map(fragment => fragment.ast);
+      if (!t.isStringLiteral(operands[0])) {
+        operands.unshift(t.stringLiteral(''));
+      }
+      return {
+        elm,
+        ast: astUtil.buildBinaryChain('+', ...operands)
+      };
+    }
+  }
+}
+
 function icuNodesToJsFragment(
   icuNodes: mf.MessageFormatElement[],
   context: ComponentContext
 ): Fragment {
-  if (icuNodes.length <= 0) {
-    return { ast: t.stringLiteral(''), elm: false };
-  }
-
-  const jsxContent = icuNodes
-    .map((icuNode, i) => {
-      if (mf.isLiteralElement(icuNode)) {
-        return icuNode.value;
-      }
-      // replace anything that is not a literal with an expression container placeholder
-      // of the same length to preserve location
-      const lines = icuNode.location!.end.line - icuNode.location!.start.line;
-      const columns =
-        lines > 0
-          ? icuNode.location!.end.column - 2
-          : icuNode.location!.end.column - icuNode.location!.start.column - 3;
-      return `{${'_' + '\n'.repeat(lines) + ' '.repeat(Math.max(columns, 0))}}`;
-    })
-    .join('');
-
-  // Wrap in a root element to turn it into valid JSX
-  const jsxElement = `<>${jsxContent}</>`;
-  const jsxAst = babylon.parseExpression(jsxElement, {
-    plugins: ['jsx']
-  }) as t.JSXFragment;
-
-  const interpollatedIcuNodes = icuNodes.filter(
-    node => !mf.isLiteralElement(node)
-  );
-
-  const fragments = interpollatedIcuNodes.map(icuNode =>
-    icuNodeToJsFragment(icuNode, context)
-  );
-
-  return interpolateJsxFragment(jsxAst.children, fragments, context);
+  const fragments = icuNodesToJsFragments(icuNodes, context);
+  return flattenFragments(fragments);
 }
 
 function buildFormatterCall(formatter: t.Identifier, value: t.Identifier) {

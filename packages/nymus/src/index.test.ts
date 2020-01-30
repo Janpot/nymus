@@ -601,6 +601,16 @@ describe('with jsx', () => {
     expect(result).toBe('foo <span>bar</span>');
   });
 
+  it('ignores jsx when react is disabled', async () => {
+    const { React } = await createComponents(
+      { React: 'foo <A>bar</A>' },
+      { react: false }
+    );
+    expect(typeof React({})).toBe('string');
+    const result = render(React);
+    expect(result).toBe('foo &lt;A&gt;bar&lt;/A&gt;');
+  });
+
   it('can interpolate "React"', async () => {
     const withReact = await createComponent('foo {React} <A />baz');
     const result = render(withReact, { React: 'bar', A: () => null });
