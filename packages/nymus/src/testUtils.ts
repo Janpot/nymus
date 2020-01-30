@@ -37,27 +37,18 @@ interface Messages {
   [key: string]: string;
 }
 
-type ComponentsOf<T, C> = {
-  [K in keyof T]: C;
+type ComponentsOf<T> = {
+  [K in keyof T]: React.FunctionComponent<any>;
 };
 
 export async function createComponents<C, T extends Messages>(
   messages: T,
   options: CreateModuleOptions = {},
   intlMock: typeof Intl = Intl
-): Promise<ComponentsOf<T, C>> {
+): Promise<ComponentsOf<T>> {
   const { code } = await createModule(messages, options);
   // console.log(code);
-  const components = importFrom(code, options, intlMock) as ComponentsOf<T, C>;
-  for (const component of Object.values(components)) {
-    // create unique names to invalidate warning cache
-    // https://github.com/facebook/react/blob/db6ac5c01c4ad669db7ca264bc81ae5b3d6dfa01/src/isomorphic/classic/types/checkReactTypeSpec.js#L68
-    // https://github.com/facebook/react/issues/4302
-    // @ts-ignore
-    component.displayName = `${component.name}<${Math.random()
-      .toString()
-      .slice(2)}>`;
-  }
+  const components = importFrom(code, options, intlMock) as ComponentsOf<T>;
   return components;
 }
 
