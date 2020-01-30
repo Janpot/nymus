@@ -36,12 +36,12 @@ type JSXFragmentChild =
   | t.JSXElement;
 
 function interpolateJsxFragment(
-  jsxFragment: t.JSXFragment,
+  jsxFragment: JSXFragmentChild[],
   fragments: Fragment[],
   context: ComponentContext
 ): Fragment {
   const fragment = interpolateJsxFragmentChildren(
-    jsxFragment.children,
+    jsxFragment,
     fragments,
     context,
     0
@@ -83,7 +83,10 @@ function interpolateJsxFragmentChildren(
 
   for (const child of jsx) {
     if (t.isJSXFragment(child)) {
-      throw new TransformationError('Fragments are not allowed', child.loc);
+      throw new TransformationError(
+        'Fragments are not allowed',
+        rewriteLocation(child.loc)
+      );
     } else if (t.isJSXExpressionContainer(child)) {
       const fragment = fragments[index];
       index++;
@@ -93,13 +96,13 @@ function interpolateJsxFragmentChildren(
       if (!t.isJSXIdentifier(identifier)) {
         throw new TransformationError(
           'Invalid JSX element',
-          child.openingElement.name.loc
+          rewriteLocation(child.openingElement.name.loc)
         );
       }
       if (child.openingElement.attributes.length > 0) {
         throw new TransformationError(
           'JSX attributes are not allowed',
-          child.openingElement.attributes[0].loc
+          rewriteLocation(child.openingElement.attributes[0].loc)
         );
       }
 
@@ -125,6 +128,24 @@ function interpolateJsxFragmentChildren(
   return result;
 }
 
+function rewriteLocation(
+  loc: t.SourceLocation | null
+): t.SourceLocation | null {
+  if (!loc) {
+    return null;
+  }
+  return {
+    start: {
+      line: loc.start.line,
+      column: loc.start.line === 1 ? loc.start.column - 1 : loc.start.column
+    },
+    end: {
+      line: loc.end.line,
+      column: loc.end.line === 1 ? loc.end.column - 1 : loc.end.column
+    }
+  };
+}
+
 function icuNodesToJsFragment(
   icuNodes: mf.MessageFormatElement[],
   context: ComponentContext
@@ -143,9 +164,9 @@ function icuNodesToJsFragment(
       const lines = icuNode.location!.end.line - icuNode.location!.start.line;
       const columns =
         lines > 0
-          ? icuNode.location!.end.column
-          : icuNode.location!.end.column - icuNode.location!.start.column;
-      return `{${'_' + '\n'.repeat(lines) + ' '.repeat(columns)}}`;
+          ? icuNode.location!.end.column - 2
+          : icuNode.location!.end.column - icuNode.location!.start.column - 3;
+      return `{${'_' + '\n'.repeat(lines) + ' '.repeat(Math.max(columns, 0))}}`;
     })
     .join('');
 
@@ -163,7 +184,7 @@ function icuNodesToJsFragment(
     icuNodeToJsFragment(icuNode, context)
   );
 
-  return interpolateJsxFragment(jsxAst, fragments, context);
+  return interpolateJsxFragment(jsxAst.children, fragments, context);
 }
 
 function buildFormatterCall(formatter: t.Identifier, value: t.Identifier) {
@@ -223,6 +244,7 @@ function icuSelectElementToJsFragment(
     ast: astUtil.buildTernaryChain(cases, otherFragment.ast)
   };
 }
+
 function icuPluralElementToJsFragment(
   elm: mf.PluralElement,
   context: ComponentContext
@@ -520,7 +542,7 @@ export default function icuToReactComponent(
     captureLocation: true
   });
   const returnValue = icuNodesToJsFragment(icuAst, context);
-  const ast = t.functionExpression(
+  const ast = t.functionDeclaration(
     t.identifier(componentName),
     context.buildArgsAst(),
     t.blockStatement([

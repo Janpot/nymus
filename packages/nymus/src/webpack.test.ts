@@ -66,9 +66,9 @@ describe('webpack', () => {
     const stats = await compile(fixtureDir.path, './strings/en.json');
     const statsJson = stats.toJson();
     expect(statsJson.modules[0].source).toMatchInlineSnapshot(`
-      "const message = function message() {
+      "function message() {
         return \\"Hello world\\";
-      };
+      }
 
       export { message };"
     `);
@@ -82,7 +82,7 @@ describe('webpack', () => {
         encoding: 'utf-8'
       })
     ).toMatchInlineSnapshot(`
-      "declare const message: () => string;
+      "declare function message(): string;
       export { message };
       "
     `);

@@ -18,7 +18,7 @@ function getIntlFormatter(type: keyof Formats): string {
 
 interface Export {
   localName: string;
-  ast: t.Expression;
+  ast: t.Statement;
 }
 
 interface Formatter {
@@ -133,15 +133,26 @@ export default class Module {
     );
     const componentDeclarations: t.Statement[] = [];
     const exportSpecifiers: t.ExportSpecifier[] = [];
+    const displayNames: t.Statement[] = [];
     for (const [componentName, { localName, ast }] of this.exports.entries()) {
-      componentDeclarations.push(
-        t.variableDeclaration('const', [
-          t.variableDeclarator(t.identifier(localName), ast)
-        ])
-      );
+      componentDeclarations.push(ast);
       exportSpecifiers.push(
         t.exportSpecifier(t.identifier(localName), t.identifier(componentName))
       );
+      if (localName !== componentName) {
+        displayNames.push(
+          t.expressionStatement(
+            t.assignmentExpression(
+              '=',
+              t.memberExpression(
+                t.identifier(localName),
+                t.identifier('displayName')
+              ),
+              t.stringLiteral(componentName)
+            )
+          )
+        );
+      }
     }
     return [
       ...(this.react
@@ -154,6 +165,7 @@ export default class Module {
         : []),
       ...formatterDeclarations,
       ...componentDeclarations,
+      ...displayNames,
       t.exportNamedDeclaration(null, exportSpecifiers)
     ];
   }
