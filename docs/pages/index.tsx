@@ -39,17 +39,11 @@ export async function unstable_getStaticProps(): Promise<{
     Navigate: 'Go to our <Link>about page</Link>.'
   };
   const output = [
-    "import { Message, CurrentDate, Basket, Progress, Navigate } from '@locale'",
-    '',
-    'function Example () {',
-    '  return <>',
-    '    <Message name="johnny" score={0.75} />',
-    '    <CurrentDate now={new Date()} />',
-    '    <Basket eggs={12} />',
-    "    <Progress direction='up' />",
-    "    <Navigate Link={props => <a href='/about'>{props.children}</a>} />",
-    '  </>',
-    '}'
+    '<Message name="johnny" score={0.75} />',
+    '<CurrentDate now={new Date()} />',
+    '<Basket eggs={12} />',
+    "<Progress direction='up' />",
+    "<Navigate Link={props => <a href='/about'>{props.children}</a>} />"
   ].join('\n');
   return {
     props: {

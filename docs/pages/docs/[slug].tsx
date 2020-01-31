@@ -1,35 +1,33 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import marked from 'marked';
 import Link from '../../src/components/Link';
 import { promisify } from 'util';
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/core/styles';
-import highlight from '../../src/highlight';
 import { Typography, Box } from '@material-ui/core';
+import Mdx from '@mdx-js/runtime';
+import ReactDomServer from 'react-dom/server';
+import CodeBlock from '../../src/components/CodeBlock';
 
 const fsReadFile = promisify(fs.readFile);
 
+interface CodeProps {
+  className: string;
+  children: string;
+}
+
 async function renderMarkdown(markdown: string) {
-  const renderer = new marked.Renderer();
-  renderer.code = highlight;
-  renderer.codespan = code => `<code class="inline">${code}</code>`;
-  return new Promise<string>((resolve, reject) => {
-    marked(
-      markdown,
-      {
-        renderer
-      },
-      (err, result) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(result);
-      }
-    );
-  });
+  const components = {
+    code: ({ className, children }: CodeProps) => (
+      <CodeBlock language={className.replace(/language-/, '')}>
+        {children}
+      </CodeBlock>
+    )
+  };
+  return ReactDomServer.renderToStaticMarkup(
+    <Mdx components={components}>{markdown}</Mdx>
+  );
 }
 async function getManifest() {
   return import('../../markdown/manifest.json');
@@ -70,15 +68,7 @@ export async function unstable_getStaticProps({
 }
 
 const useStyles = makeStyles(theme => ({
-  content: {
-    '& .hljs': {
-      padding: theme.spacing(3)
-    },
-    '& code.inline': {
-      fontFamily: 'monospace',
-      fontSize: '1.5em'
-    }
-  }
+  content: {}
 }));
 
 export default function DocumentationPage({
