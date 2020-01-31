@@ -1,1 +1,1 @@
-export const CM_THEME = 'default';
+export const CM_THEME = 'duotone-light';

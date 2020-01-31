@@ -19,7 +19,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const SAMPLE = `
-{ gender, select,
+{gender, select,
   female {{
     count, plural,
        =0 {Ela não tem nenhum Pokémon}
