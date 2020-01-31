@@ -14,15 +14,13 @@
     "@babel/generator": "^7.8.3",
     "@material-ui/core": "^4.8.3",
     "@material-ui/icons": "^4.5.1",
-    "@types/react": "^16.9.17",
-    "@types/react-dom": "^16.9.4",
+    "@mdx-js/runtime": "^1.5.5",
     "codemirror": "^5.50.2",
     "codemirror-mode-icu": "^0.1.0",
-    "highlight.js": "^9.18.0",
-    "marked": "^0.8.0",
     "next": "^9.2.1",
     "nymus": "^0.1.12",
     "prettier": "^1.19.1",
+    "prism-react-renderer": "^1.0.2",
     "react": "16.12.0",
     "react-codemirror2": "^6.0.0",
     "react-dom": "16.12.0"
@@ -30,10 +28,10 @@
   "devDependencies": {
     "@types/babel__code-frame": "^7.0.1",
     "@types/babel__generator": "^7.6.1",
-    "@types/highlight.js": "^9.12.3",
-    "@types/marked": "^0.7.2",
     "@types/node": "^13.1.8",
     "@types/prettier": "^1.19.0",
+    "@types/react": "^16.9.17",
+    "@types/react-dom": "^16.9.4",
     "typescript": "^3.7.5"
   }
 }

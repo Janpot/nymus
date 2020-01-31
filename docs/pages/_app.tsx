@@ -1,6 +1,5 @@
 import '../src/app.css';
 import 'codemirror/lib/codemirror.css';
-import 'highlight.js/styles/default.css';
 
 import React from 'react';
 import { AppProps } from 'next/app';
