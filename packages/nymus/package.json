@@ -70,5 +70,6 @@
     "tmp": "^0.1.0",
     "typescript": "^3.7.5",
     "webpack": "^4.41.5"
-  }
+  },
+  "gitHead": "62422a94caa37e1780c069950fab8ac7d39df3f9"
 }
