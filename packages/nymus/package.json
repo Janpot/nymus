@@ -28,7 +28,8 @@
   },
   "files": [
     "dist",
-    "cli.js"
+    "cli.js",
+    "webpack.js"
   ],
   "author": "Jan Potoms",
   "license": "MIT",
