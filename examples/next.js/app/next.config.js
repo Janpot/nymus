@@ -6,10 +6,10 @@ const locales = process.env.LOCALES.split(',');
 const basePath = process.env.BASE_PATH || `/${locale}`;
 
 module.exports = {
-  distDir: `./.next/${locale}`,
   experimental: {
     basePath
   },
+  assetPrefix: basePath,
   env: {
     LOCALE: locale,
     LOCALES: locales.join(',')
