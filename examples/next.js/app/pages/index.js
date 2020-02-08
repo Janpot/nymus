@@ -45,7 +45,7 @@ const Home = () => (
   <div>
     <Head>
       <title>
-        <HomeLabel />
+        {HomeLabel()}
       </title>
       <link rel="icon" href="/favicon.ico" />
     </Head>
