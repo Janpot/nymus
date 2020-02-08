@@ -1,0 +1,22 @@
+{
+  "name": "example",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "LOCALE=en LOCALES=en,nl,fr next",
+    "build": "next build",
+    "start": "LOCALE=en LOCALES=en,nl,fr next start"
+  },
+  "dependencies": {
+    "concurrently": "^5.0.2",
+    "execa": "^4.0.0",
+    "micro-proxy": "^1.1.0",
+    "next": "^9.2.2-canary.12",
+    "now": "^17.0.2",
+    "react": "16.12.0",
+    "react-dom": "16.12.0"
+  },
+  "devDependencies": {
+    "nymus": "^0.1.16"
+  }
+}

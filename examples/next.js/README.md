@@ -12,26 +12,22 @@ The next app is made configurable through environment variables, which are read 
 
 It also adds `nymus/webpack` to load the localized string.
 
-Now the app can be started for a locale by running
+## Develop
+
+Now the app can be started by running
 
 ```
-LOCALE=en LOCALES=en,nl,fr next
-```
-
-a custum `build` and `start` also take care of setting up a proxy to each of the instances.
-
-## Instructions
-
-To build the example:
-
-```
-yarn build
-```
-
-To run the example
-
-```
-yarn start
+yarn dev
 ```
 
 then visit `http://localhost:3000/en`
+
+## Deploy to `now`
+
+The app can be deployed to `now` with the command
+
+```
+yarn deploy
+```
+
+You'll be required to set up a now project for each locale, this script will prompt you to create or link those. It will then deploy each locale and set up the necessary rewrites.
