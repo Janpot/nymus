@@ -3,6 +3,7 @@ const { promises: fs } = require('fs');
 const path = require('path');
 
 const name = 'nymus-example';
+const defaultLocale = 'en';
 const locales = ['en', 'fr', 'nl'];
 const projectRoot = path.resolve(__dirname, '..');
 const appPath = path.resolve(projectRoot, `app/`);
@@ -11,6 +12,8 @@ const prod = process.argv.includes('--prod');
 
 if (prod) {
   console.log('Deploying to production');
+} else {
+  console.log('Run with --prod to deploy to production');
 }
 
 async function copyContent(src, dest, { ignore = [] } = {}) {
@@ -38,7 +41,15 @@ async function copyContent(src, dest, { ignore = [] } = {}) {
 }
 
 async function removeContent(src, { ignore = [] } = {}) {
-  const entries = await fs.readdir(src);
+  let entries;
+  try {
+    entries = await fs.readdir(src);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return;
+    }
+    throw err;
+  }
   await Promise.all(
     entries.map(async entry => {
       if (!ignore.includes(entry)) {
@@ -48,22 +59,57 @@ async function removeContent(src, { ignore = [] } = {}) {
   );
 }
 
-async function deploy(folder) {
+async function deploy(folder, locale = defaultLocale) {
+  console.log(`Deploying "${locale}"`);
   const { stdout: url } = await execa(
     'now',
-    ['deploy', '--no-clipboard', ...(prod ? ['--prod'] : []), folder],
+    [
+      'deploy',
+      '--no-clipboard',
+      ...(prod ? ['--prod'] : []),
+      '--build-env',
+      `LOCALE=${locale}`,
+      '--build-env',
+      `LOCALES=${locales.join(',')}`,
+      folder
+    ],
     {
       cwd: __dirname,
       preferLocal: true
     }
   );
+  console.log(`  => ${url}`);
   return { url };
 }
 
 async function deployForLocale(locale) {
   const deploymentPath = path.resolve(projectRoot, `deployments/${locale}/`);
-  const nowFolder = path.resolve(deploymentPath, `.now/`);
-  const nowFolderBackup = path.resolve(projectRoot, `.now-${locale}-backup/`);
+
+  try {
+    await fs.stat(path.resolve(deploymentPath));
+  } catch (err) {
+    await fs.mkdir(deploymentPath);
+  }
+
+  try {
+    await fs.stat(path.resolve(deploymentPath, '.now'));
+  } catch (err) {
+    // deployment not set up
+    // set it up first
+    console.log(
+      `Set up a project for "${locale}". Or link a project if you have one already for this locale.`
+    );
+    try {
+      await execa('now', ['deploy', '--no-clipboard', deploymentPath], {
+        stdin: 'inherit',
+        stdout: 'inherit',
+        cwd: __dirname,
+        preferLocal: true
+      });
+    } catch (err) {
+      // ignore
+    }
+  }
 
   await removeContent(deploymentPath, {
     ignore: ['.now', '.gitignore']
@@ -73,27 +119,7 @@ async function deployForLocale(locale) {
     ignore: ['.next', '.now', 'now.json', '.gitignore', 'node_modules']
   });
 
-  const nowJsonPath = path.resolve(deploymentPath, 'now.json');
-  await fs.writeFile(
-    nowJsonPath,
-    JSON.stringify(
-      {
-        build: {
-          env: {
-            LOCALE: locale,
-            LOCALES: locales.join(',')
-          }
-        }
-      },
-      null,
-      2
-    ),
-    { encoding: 'utf-8' }
-  );
-
-  console.log(`Deploying "${locale}"`);
-  const { url } = await deploy(deploymentPath);
-  console.log(`  => ${url}`);
+  const { url } = await deploy(deploymentPath, locale);
 
   return {
     rewrite: {
@@ -122,10 +148,7 @@ async function main() {
     await fs.writeFile(nowJsonPath, JSON.stringify(overwrittenNowJson), {
       encoding: 'utf-8'
     });
-
-    console.log(`Deploying default`);
-    const { url } = await deploy(appPath);
-    console.log(`  => ${url}`);
+    await deploy(appPath, defaultLocale);
   } finally {
     await fs.writeFile(nowJsonPath, nowJsonContent, { encoding: 'utf-8' });
   }

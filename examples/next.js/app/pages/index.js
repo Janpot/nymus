@@ -44,9 +44,7 @@ function LinkSubTitle({ children }) {
 const Home = () => (
   <div>
     <Head>
-      <title>
-        {HomeLabel()}
-      </title>
+      <title>{HomeLabel()}</title>
       <link rel="icon" href="/favicon.ico" />
     </Head>
 

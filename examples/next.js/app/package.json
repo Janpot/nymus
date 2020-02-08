@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "LOCALE=en LOCALES=en,nl,fr next",
     "build": "next build",
-    "start": "LOCALE=en LOCALES=en,nl,fr next start",
-    "deploy": "node ./scripts/deploy"
+    "start": "LOCALE=en LOCALES=en,nl,fr next start"
   },
   "dependencies": {
     "concurrently": "^5.0.2",

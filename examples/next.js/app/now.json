@@ -1,9 +1,1 @@
-{
-  "build": {
-    "env": {
-      "LOCALE": "en",
-      "LOCALES": "en,nl,fr"
-    }
-  },
-  "rewrites": []
-}
+{}
