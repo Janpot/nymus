@@ -1,9 +1,11 @@
 const path = require('path');
+const fs = require('fs');
 
-const locale = process.env.LOCALE;
-const locales = process.env.LOCALES.split(',');
+const locale = process.env.LOCALE || 'en';
 
 const basePath = process.env.BASE_PATH || `/${locale}`;
+const localesFolder = path.resolve(__dirname, './locales/');
+const locales = fs.readdirSync(localesFolder);
 
 module.exports = {
   experimental: {
@@ -22,7 +24,7 @@ module.exports = {
 
     config.module.rules.push({
       test: /\.json$/,
-      include: [path.resolve(__dirname, './locales/')],
+      include: [localesFolder],
       type: 'javascript/auto',
       use: [
         options.defaultLoaders.babel,
