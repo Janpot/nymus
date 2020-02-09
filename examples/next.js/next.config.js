@@ -9,7 +9,21 @@ const locales = fs.readdirSync(localesFolder);
 
 module.exports = {
   experimental: {
-    basePath
+    basePath,
+    rewrites: async () => {
+      const localeRewrites = [];
+      for (const locale of locales) {
+        const localeUrl = process.env[`LOCALE_URL_${locale}`];
+        if (localeUrl) {
+          const destination = new URL(`/${locale}/:path*`, localeUrl);
+          localeRewrites.push({
+            source: `/${locale}/:path*`,
+            destination: destination.toString()
+          });
+        }
+      }
+      return localeRewrites;
+    }
   },
   assetPrefix: basePath,
   env: {

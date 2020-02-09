@@ -15,7 +15,11 @@ if (prod) {
   console.log('Run with --prod to deploy to production');
 }
 
-async function deploy({ locale, prod }) {
+async function deploy({ locale, prod = false, urls = {} }) {
+  const buildEnvParams = [];
+  for (const [urlLocale, localeUrl] of Object.entries(urls)) {
+    buildEnvParams.push('--build-env', `LOCALE_URL_${urlLocale}=${localeUrl}`);
+  }
   console.log(`Deploying "${locale}"`);
   const { stdout: url } = await execa(
     'now',
@@ -23,6 +27,7 @@ async function deploy({ locale, prod }) {
       'deploy',
       '--no-clipboard',
       ...(prod ? ['--prod'] : []),
+      ...buildEnvParams,
       '--build-env',
       `LOCALE=${locale}`,
       '--meta',
@@ -53,34 +58,17 @@ async function main() {
 
   const locales = await fs.readdir(localesFolder);
 
-  const rewrites = [];
+  const urls = {};
   for (const locale of locales) {
     const { url } = await deploy({ locale, prod: false });
-    rewrites.push({
-      source: `/${locale}(.*)`,
-      destination: `${url}/${locale}$1`
-    });
+    urls[locale] = url;
   }
 
-  const nowJsonPath = path.resolve(projectRoot, 'now.json');
-  const nowJsonContent = await fs.readFile(nowJsonPath, { encoding: 'utf-8' });
-  const nowJson = JSON.parse(nowJsonContent);
-  const overwrittenNowJson = {
-    ...nowJson,
-    rewrites: rewrites.concat(nowJson.rewrites || [])
-  };
-
-  try {
-    await fs.writeFile(nowJsonPath, JSON.stringify(overwrittenNowJson), {
-      encoding: 'utf-8'
-    });
-    await deploy({
-      locale: DEFAULT_LOCALE,
-      prod
-    });
-  } finally {
-    await fs.writeFile(nowJsonPath, nowJsonContent, { encoding: 'utf-8' });
-  }
+  await deploy({
+    locale: DEFAULT_LOCALE,
+    prod,
+    urls
+  });
 }
 
 process.on('unhandledRejection', err => {
