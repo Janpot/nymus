@@ -51,7 +51,7 @@ async function main() {
     });
   }
 
-  const locales = await fs.readdir(localesFolder)
+  const locales = await fs.readdir(localesFolder);
 
   const rewrites = [];
   for (const locale of locales) {
