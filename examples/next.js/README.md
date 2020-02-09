@@ -14,7 +14,7 @@ It also adds `nymus/webpack` to load the localized string.
 
 ## Develop
 
-Now the app can be started by running
+Now the app can be started for a single locale by running
 
 ```
 yarn dev
@@ -29,5 +29,3 @@ The app can be deployed to `now` with the command
 ```
 yarn deploy
 ```
-
-You'll be required to set up a now project for each locale, this script will prompt you to create or link those. It will then deploy each locale and set up the necessary rewrites.
