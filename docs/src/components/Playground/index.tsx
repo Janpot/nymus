@@ -48,10 +48,8 @@ const useStyles = makeStyles(theme => ({
     flexDirection: 'column'
   },
   pane: {
-    overflow: 'auto',
     flex: 1,
-    flexShrink: 0,
-    justifyItems: 'stretch'
+    overflow: 'auto'
   },
   editor: {
     height: '100%',
@@ -73,12 +71,6 @@ const useStyles = makeStyles(theme => ({
   error: {
     height: '100%',
     color: theme.palette.error.dark
-  },
-  closeButton: {
-    position: 'absolute',
-    right: theme.spacing(1),
-    top: theme.spacing(1),
-    color: theme.palette.grey[500]
   }
 }));
 
@@ -285,10 +277,10 @@ export default function Playground({ className }: PlaygroundProps) {
         />
       </div>
       <div className={classes.column}>
+        <Toolbar variant="dense">
+          <Typography className={classes.paneTitle}>Consumer</Typography>
+        </Toolbar>
         <div className={classes.pane}>
-          <Toolbar variant="dense">
-            <Typography className={classes.paneTitle}>Consumer</Typography>
-          </Toolbar>
           <IcuEditor
             mode="jsx"
             className={classes.editor}
@@ -297,12 +289,10 @@ export default function Playground({ className }: PlaygroundProps) {
             errors={compiledConsumer.errors}
           />
         </div>
+        <Toolbar variant="dense">
+          <Typography className={classes.paneTitle}>Rendered result</Typography>
+        </Toolbar>
         <div className={classes.pane}>
-          <Toolbar variant="dense">
-            <Typography className={classes.paneTitle}>
-              Rendered result
-            </Typography>
-          </Toolbar>
           <div className={classes.renderResult}>{renderedResult}</div>
         </div>
       </div>
