@@ -8,6 +8,7 @@ import {
   Box
 } from '@material-ui/core';
 import highlight from '../src/highlight';
+import Layout from '../src/components/Layout';
 
 const useStyles = makeStyles(theme => ({
   title: {
@@ -56,40 +57,42 @@ export async function unstable_getStaticProps(): Promise<{
 function Home({ exampleInput, exampleOutput }: HomePageProps) {
   const classes = useStyles();
   return (
-    <Container className={classes.title}>
-      <Typography variant="h1" align="center">
-        nymus
-      </Typography>
-      <Typography align="center">
-        Transform{' '}
-        <Link href="http://userguide.icu-project.org/formatparse/messages">
-          ICU message format
-        </Link>{' '}
-        into React components
-      </Typography>
-      <Box mt={5}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <Typography align="center" variant="h6">
-              Put in ICU formatted messages
-            </Typography>
-            <div
-              className={classes.code}
-              dangerouslySetInnerHTML={{ __html: exampleInput }}
-            />
+    <Layout>
+      <Container className={classes.title}>
+        <Typography variant="h1" align="center">
+          nymus
+        </Typography>
+        <Typography align="center">
+          Transform{' '}
+          <Link href="http://userguide.icu-project.org/formatparse/messages">
+            ICU message format
+          </Link>{' '}
+          into React components
+        </Typography>
+        <Box mt={5}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Typography align="center" variant="h6">
+                Put in ICU formatted messages
+              </Typography>
+              <div
+                className={classes.code}
+                dangerouslySetInnerHTML={{ __html: exampleInput }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography align="center" variant="h6">
+                Get out React components
+              </Typography>
+              <div
+                className={classes.code}
+                dangerouslySetInnerHTML={{ __html: exampleOutput }}
+              />
+            </Grid>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography align="center" variant="h6">
-              Get out React components
-            </Typography>
-            <div
-              className={classes.code}
-              dangerouslySetInnerHTML={{ __html: exampleOutput }}
-            />
-          </Grid>
-        </Grid>
-      </Box>
-    </Container>
+        </Box>
+      </Container>
+    </Layout>
   );
 }
 

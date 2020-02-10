@@ -2,6 +2,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { makeStyles } from '@material-ui/core/styles';
 import { CircularProgress } from '@material-ui/core';
+import Layout from '../src/components/Layout';
 
 const useStyles = makeStyles(theme => ({
   playground: {
@@ -32,5 +33,9 @@ function Loading() {
 
 export default function PlaygroundPage() {
   const classes = useStyles();
-  return <Playground className={classes.playground} />;
+  return (
+    <Layout>
+      <Playground className={classes.playground} />
+    </Layout>
+  );
 }
