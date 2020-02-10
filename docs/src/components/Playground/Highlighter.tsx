@@ -2,7 +2,7 @@ import 'codemirror/mode/jsx/jsx';
 import React from 'react';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import icuMode from 'codemirror-mode-icu';
-import { CM_THEME } from '../constants';
+import { CM_THEME } from '../../constants';
 
 interface HighlighterProps {
   mode: 'icu' | 'jsx';
@@ -26,9 +26,6 @@ export default function Highlighter({
         lineNumbers: true,
         mode,
         readOnly: 'nocursor'
-      }}
-      onBeforeChange={() => {
-        console.log('dkhlij');
       }}
     />
   );

@@ -1,6 +1,7 @@
-import '../src/app.css';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/duotone-light.css';
+import 'codemirror/addon/lint/lint.css';
+import '../src/app.css';
 
 import React from 'react';
 import { AppProps } from 'next/app';
