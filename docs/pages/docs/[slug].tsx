@@ -9,6 +9,7 @@ import { Typography, Box } from '@material-ui/core';
 import Mdx from '@mdx-js/runtime';
 import ReactDomServer from 'react-dom/server';
 import CodeBlock from '../../src/components/CodeBlock';
+import Layout from '../../src/components/Layout';
 
 const fsReadFile = promisify(fs.readFile);
 
@@ -33,11 +34,13 @@ async function getManifest() {
   return import('../../markdown/manifest.json');
 }
 
-export async function unstable_getStaticPaths(): Promise<
-  { params: { slug: string } }[]
-> {
+export async function unstable_getStaticPaths() {
   const { routes } = await getManifest();
-  return routes.map(route => ({ params: { slug: path.basename(route.path) } }));
+  return {
+    paths: routes.map(route => ({
+      params: { slug: path.basename(route.path) }
+    }))
+  };
 }
 
 async function readMarkdownFile(slug: string): Promise<string> {
@@ -50,8 +53,8 @@ async function readMarkdownFile(slug: string): Promise<string> {
 }
 
 interface DocumentationPageProps {
-  routes: { title: string; path: string }[];
-  content: string;
+  routes?: { title: string; path: string }[];
+  content?: string;
   slug: string;
 }
 
@@ -72,36 +75,38 @@ const useStyles = makeStyles(theme => ({
 }));
 
 export default function DocumentationPage({
-  routes,
-  content
+  routes = [],
+  content = ''
 }: DocumentationPageProps) {
   const classes = useStyles();
   return (
-    <Container maxWidth="lg">
-      <Grid container spacing={5}>
-        <Grid
-          item
-          xs={12}
-          md={8}
-          className={classes.content}
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
-        <Grid item xs={12} md={4}>
-          <Box mt={4} position={{ md: 'fixed' }}>
-            <Typography variant="h6">Docs</Typography>
-            {routes.map(route => (
-              <Link
-                display="block"
-                key={route.path}
-                variant="body1"
-                href={`/docs/${route.path}`}
-              >
-                {route.title}
-              </Link>
-            ))}
-          </Box>
+    <Layout>
+      <Container maxWidth="lg">
+        <Grid container spacing={5}>
+          <Grid
+            item
+            xs={12}
+            md={8}
+            className={classes.content}
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
+          <Grid item xs={12} md={4}>
+            <Box mt={4} position={{ md: 'fixed' }}>
+              <Typography variant="h6">Docs</Typography>
+              {routes.map(route => (
+                <Link
+                  display="block"
+                  key={route.path}
+                  variant="body1"
+                  href={`/docs/${route.path}`}
+                >
+                  {route.title}
+                </Link>
+              ))}
+            </Box>
+          </Grid>
         </Grid>
-      </Grid>
-    </Container>
+      </Container>
+    </Layout>
   );
 }
