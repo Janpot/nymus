@@ -32,3 +32,34 @@ declare module '@mdx-js/runtime' {
 
   export default mdxRuntime;
 }
+
+declare module '@babel/plugin-transform-typescript' {
+  import { PluginItem } from '@babel/core';
+  const plugin: PluginItem;
+  export default plugin;
+}
+
+declare module '@babel/plugin-transform-modules-commonjs' {
+  import { PluginItem } from '@babel/core';
+  const plugin: PluginItem;
+  export default plugin;
+}
+
+declare module '@babel/plugin-transform-react-jsx' {
+  import { PluginItem } from '@babel/core';
+  const plugin: PluginItem;
+  export default plugin;
+}
+
+declare module '@babel/standalone' {
+  import { BabelFileResult, TransformOptions, Node } from '@babel/core';
+  export function transform(
+    code: string,
+    options: TransformOptions
+  ): BabelFileResult;
+  export function transformFromAst(
+    ast: Node,
+    code?: string,
+    options: TransformOptions
+  ): BabelFileResult;
+}
