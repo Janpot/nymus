@@ -1,5 +1,5 @@
 import * as React from 'react';
-import IcuEditor, { EditorError } from './IcuEditor';
+import Editor, { EditorError } from './Editor';
 import { formatError, createModuleAst } from 'nymus';
 import { makeStyles } from '@material-ui/core/styles';
 import clsx from 'clsx';
@@ -13,6 +13,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
+import Paper from '@material-ui/core/Paper';
 import CodeIcon from '@material-ui/icons/Code';
 import { SourceLocation } from '@babel/code-frame';
 import CodeDialog from './CodeDialog';
@@ -38,32 +39,41 @@ const useStyles = makeStyles(theme => ({
   root: {
     height: '100%',
     display: 'flex',
-    flexDirection: 'row'
+    flexDirection: 'row',
+    padding: theme.spacing(1)
   },
   column: {
-    overflow: 'auto',
     flex: 1,
-    flexShrink: 0,
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  rightPanel: {
+    height: '50%',
     display: 'flex',
     flexDirection: 'column'
   },
   pane: {
-    flex: 1,
-    overflow: 'auto'
+    margin: theme.spacing(1)
+  },
+  paper: {
+    display: 'flex',
+    overflow: 'hidden',
+    flexDirection: 'column'
   },
   editor: {
-    height: '100%',
+    flex: 1,
+    position: 'relative',
     '& .CodeMirror': {
+      position: 'absolute',
       width: '100% !important',
       height: '100% !important'
-    },
-    '& .CodeMirror-scroll': {
-      overflowX: 'auto',
-      overflowY: 'hidden'
     }
   },
   paneTitle: {
     flex: 1
+  },
+  renderResultContainer: {
+    overflow: 'scroll'
   },
   renderResult: {
     padding: theme.spacing(3)
@@ -88,8 +98,7 @@ const SAMPLE = `
       one {Ele tem só um Pokémon}
     other {Ele tem # Pokémon}
   }}
-}
-`;
+}`;
 
 function toEditorError(
   error: Error & { loc?: SourceLocation; location?: SourceLocation }
@@ -242,9 +251,9 @@ export default function Playground({ className }: PlaygroundProps) {
   const classes = useStyles();
 
   const [generatedCodeOpen, setGeneratedCodeOpen] = React.useState(false);
-  const [icuInput, setIcuInput] = React.useState<string>(SAMPLE.trim() + '\n');
+  const [icuInput, setIcuInput] = React.useState<string>(SAMPLE.trim());
   const [consumerInput, setConsumerInput] = React.useState<string>(
-    `<${COMPONENT_NAME} gender="male" count={5} />\n`
+    `<${COMPONENT_NAME} gender="male" count={5} />`
   );
 
   const { generatedModule, compiledConsumer, renderedResult } = usePlayground({
@@ -254,7 +263,7 @@ export default function Playground({ className }: PlaygroundProps) {
 
   return (
     <div className={clsx(classes.root, className)}>
-      <div className={classes.column}>
+      <Paper className={clsx(classes.pane, classes.column, classes.paper)}>
         <Toolbar variant="dense">
           <Typography className={classes.paneTitle}>ICU message</Typography>
           <Tooltip title="Generated component">
@@ -263,7 +272,7 @@ export default function Playground({ className }: PlaygroundProps) {
             </IconButton>
           </Tooltip>
         </Toolbar>
-        <IcuEditor
+        <Editor
           className={classes.editor}
           value={icuInput}
           onChange={setIcuInput}
@@ -275,25 +284,31 @@ export default function Playground({ className }: PlaygroundProps) {
           title="Generated code"
           code={generatedModule.code}
         />
-      </div>
+      </Paper>
       <div className={classes.column}>
-        <Toolbar variant="dense">
-          <Typography className={classes.paneTitle}>Consumer</Typography>
-        </Toolbar>
-        <div className={classes.pane}>
-          <IcuEditor
+        <Paper
+          className={clsx(classes.pane, classes.rightPanel, classes.paper)}
+        >
+          <Toolbar variant="dense">
+            <Typography className={classes.paneTitle}>Consumer</Typography>
+          </Toolbar>
+          <Editor
             mode="jsx"
             className={classes.editor}
             value={consumerInput}
             onChange={setConsumerInput}
             errors={compiledConsumer.errors}
           />
-        </div>
-        <Toolbar variant="dense">
-          <Typography className={classes.paneTitle}>Rendered result</Typography>
-        </Toolbar>
-        <div className={classes.pane}>
-          <div className={classes.renderResult}>{renderedResult}</div>
+        </Paper>
+        <div className={clsx(classes.rightPanel, classes.pane)}>
+          <Toolbar variant="dense">
+            <Typography className={classes.paneTitle}>
+              Rendered result
+            </Typography>
+          </Toolbar>
+          <div className={classes.renderResultContainer}>
+            <div className={classes.renderResult}>{renderedResult}</div>
+          </div>
         </div>
       </div>
     </div>
