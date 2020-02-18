@@ -3,6 +3,7 @@ module.exports = {
     ignoreDevErrors: true
   },
   experimental: {
+    polyfillsOptimization: true,
     redirects: async () => {
       return [
         {
@@ -18,7 +19,8 @@ module.exports = {
       // Hack to make importing @babel/core not fail
       // TODO: Come up with a better alternative
       config.externals = config.externals || {};
-      config.externals.fs = 'fs';
+      config.externals.fs = 'null';
+      config.externals.typescript = 'null';
     }
     return config;
   }
