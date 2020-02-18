@@ -138,9 +138,11 @@ interface UsePLaygroundProps {
 function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
   const [generatedModule, setGeneratedModule] = React.useState<{
     code: string;
+    compiled: string | null;
     errors: Error[];
   }>({
     code: '',
+    compiled: null,
     errors: []
   });
 
@@ -150,36 +152,31 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
         const formatted = prettify(
           await createModule({ [COMPONENT_NAME]: icuInput })
         );
+        const { code: compiled = null } = Babel.transform(formatted, {
+          plugins: [CommonjsPlugin, TsPlugin]
+        });
         setGeneratedModule({
           errors: [],
-          code: formatted
+          code: formatted,
+          compiled
         });
       } catch (error) {
         setGeneratedModule({
           errors: [error],
-          code: commentLines(formatError(icuInput, error))
+          code: commentLines(formatError(icuInput, error)),
+          compiled: null
         });
       }
     })();
   }, [icuInput]);
-
-  const compiledModule = React.useMemo(() => {
-    const { code } = Babel.transform(generatedModule.code, {
-      plugins: [CommonjsPlugin, TsPlugin]
-    });
-    return code;
-  }, [generatedModule]);
 
   const compiledConsumer = React.useMemo<{
     errors: EditorError[];
     code: string;
   }>(() => {
     try {
-      const { code } = Babel.transform(`return (${consumerInput})`, {
-        plugins: [JsxPlugin],
-        parserOpts: {
-          allowReturnOutsideFunction: true
-        }
+      const { code } = Babel.transform(consumerInput, {
+        plugins: [CommonjsPlugin, JsxPlugin]
       });
       return {
         errors: [],
@@ -192,49 +189,55 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
       };
       return {
         errors: [Object.assign(error as Error, { location })],
-        code: `return null`
+        code: ``
       };
     }
   }, [consumerInput]);
 
   const renderedResult = React.useMemo(() => {
+    if (!generatedModule.compiled) {
+      return null;
+    }
     if (compiledConsumer.errors.length > 0) {
       return null;
     }
     try {
-      const createComponent = eval(`
-        (React) => {
-          const {
-            ${COMPONENT_NAME}
-          } = ((exports, require) => {
-            ${compiledModule}
-            return exports
-          })({}, (module) => {
-            if (module === 'react') {
-              return React;
-            } else {
-              throw new Error(\`Unknown module "${module}"\`)
-            }
-          });
-          if (${COMPONENT_NAME}) {
-            return () => {
-              try {
-                ${compiledConsumer.code}
-              } catch (error) {
-                return React.createElement(RendererError, {error})
-              }
-            };
-          } else {
-            return () => null
-          }
+      const modules: { [key: string]: string } = {};
+      const moduleInstances: { [key: string]: any } = {
+        react: React
+      };
+      const register = (moduleId: string, initializer: string) => {
+        modules[moduleId] = initializer;
+      };
+      const require = (moduleId: string) => {
+        if (moduleInstances[moduleId]) {
+          return moduleInstances[moduleId];
         }
-      `);
-      const Component = createComponent(React);
-      return <Component />;
+        if (!modules[moduleId]) {
+          throw new Error(`Unknown module "${moduleId}"`);
+        }
+        const exports = {};
+        moduleInstances[moduleId] = exports;
+        eval(`(exports, require) => {
+          ${modules[moduleId]}
+        }`)(exports, require);
+        return exports;
+      };
+
+      register('messages', generatedModule.compiled);
+      register('main', compiledConsumer.code);
+
+      const { default: Result } = require('main');
+
+      try {
+        return Result();
+      } catch (error) {
+        return <RendererError error={error} />;
+      }
     } catch (error) {
       return <RendererError error={error} />;
     }
-  }, [compiledConsumer, compiledModule]);
+  }, [generatedModule, compiledConsumer]);
 
   return {
     generatedModule,
@@ -253,7 +256,12 @@ export default function Playground({ className }: PlaygroundProps) {
   const [generatedCodeOpen, setGeneratedCodeOpen] = React.useState(false);
   const [icuInput, setIcuInput] = React.useState<string>(SAMPLE.trim());
   const [consumerInput, setConsumerInput] = React.useState<string>(
-    `<${COMPONENT_NAME} gender="male" count={5} />`
+    `import * as React from 'react';
+import { ${COMPONENT_NAME} } from 'messages';
+
+export default function () {
+  return <${COMPONENT_NAME} gender="male" count={5} />
+}`
   );
 
   const { generatedModule, compiledConsumer, renderedResult } = usePlayground({
