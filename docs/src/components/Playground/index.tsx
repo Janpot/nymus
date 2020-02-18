@@ -135,6 +135,8 @@ interface UsePLaygroundProps {
   consumerInput: string;
 }
 
+type ModuleInitializer = (exports: any, require: (id: string) => any) => void;
+
 function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
   const [generatedModule, setGeneratedModule] = React.useState<{
     code: string;
@@ -175,11 +177,8 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
     code: string;
   }>(() => {
     try {
-      const { code } = Babel.transform(`return (${consumerInput})`, {
-        plugins: [JsxPlugin],
-        parserOpts: {
-          allowReturnOutsideFunction: true
-        }
+      const { code } = Babel.transform(consumerInput, {
+        plugins: [CommonjsPlugin, JsxPlugin]
       });
       return {
         errors: [],
@@ -202,24 +201,48 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
       return null;
     }
     try {
-      const createComponent = eval(`
-        (React) => {
-          const {
-            ${COMPONENT_NAME}
-          } = ((exports, require) => {
+      const modules: { [ key: string]: ModuleInitializer } = {};
+      const moduleInstances: { [key: string]: any } = {};
+      const register = (moduleId: string, initializer: ModuleInitializer) => {
+        modules[moduleId] = initializer;
+      }
+      const require = (moduleId: string) => {
+        if (moduleInstances[moduleId]) {
+          return moduleInstances[moduleId]
+        }
+        if (!modules[moduleId]) {
+          throw new Error(`Unknown module "${moduleId}"`)
+        }
+        const exports = {};
+        moduleInstances[moduleId] = exports;
+        modules[moduleId](exports, require);
+      }
+      const Result = eval(`
+        (React, register) => {
+          const messages = ((exports, require) => {
             ${compiledModule}
             return exports
           })({}, (module) => {
             if (module === 'react') {
               return React;
             } else {
-              throw new Error(\`Unknown module "${module}"\`)
+              throw new Error(\`Unknown module "\${module}"\`)
             }
           });
-          if (${COMPONENT_NAME}) {
+          if (messages['${COMPONENT_NAME}']) {
             return () => {
               try {
-                ${compiledConsumer.code}
+                return ((require) => {
+                  const exports = {};
+                  ${compiledConsumer.code}
+                  return exports.default();
+                })((module) => {
+                  switch (module) {
+                    case 'react': return React;
+                    case 'messages': return messages;
+                    default: throw new Error(\`Unknown module "\${module}"\`);
+                  }
+                });
               } catch (error) {
                 return React.createElement(RendererError, {error})
               }
@@ -228,9 +251,8 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
             return () => null
           }
         }
-      `);
-      const Component = createComponent(React);
-      return <Component />;
+      `)(React, register);
+      return <Result />;
     } catch (error) {
       return <RendererError error={error} />;
     }
@@ -253,7 +275,11 @@ export default function Playground({ className }: PlaygroundProps) {
   const [generatedCodeOpen, setGeneratedCodeOpen] = React.useState(false);
   const [icuInput, setIcuInput] = React.useState<string>(SAMPLE.trim());
   const [consumerInput, setConsumerInput] = React.useState<string>(
-    `<${COMPONENT_NAME} gender="male" count={5} />`
+    `import { ${COMPONENT_NAME} } from 'messages';
+
+export default function () {
+  return <${COMPONENT_NAME} gender="male" count={5} />
+}`
   );
 
   const { generatedModule, compiledConsumer, renderedResult } = usePlayground({
