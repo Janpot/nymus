@@ -13,7 +13,7 @@ export interface EditorError extends Error {
   location: SourceLocation;
 }
 
-interface IcuEditorProps {
+interface EditorProps {
   mode?: 'icu' | 'jsx';
   stretch?: boolean;
   className?: string;
@@ -50,14 +50,14 @@ function linter(text: string, { errors = [] }: HelperOptions) {
 CodeMirror.registerHelper('lint', 'icu', linter);
 CodeMirror.registerHelper('lint', 'javascript', linter);
 
-export default function IcuEditor({
+export default function Editor({
   mode = 'icu',
   stretch,
   className,
   value,
   onChange,
   errors = []
-}: IcuEditorProps) {
+}: EditorProps) {
   return (
     <ReactCodeMirror
       // @ts-ignore
