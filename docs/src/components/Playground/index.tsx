@@ -135,6 +135,28 @@ interface UsePLaygroundProps {
   consumerInput: string;
 }
 
+// simplest module loader in the world
+function createRequire(
+  modules: { [key: string]: string },
+  moduleInstances: { [key: string]: any } = {}
+) {
+  const require = (moduleId: string) => {
+    if (moduleInstances[moduleId]) {
+      return moduleInstances[moduleId];
+    }
+    if (!modules[moduleId]) {
+      throw new Error(`Unknown module "${moduleId}"`);
+    }
+    const exports = {};
+    moduleInstances[moduleId] = exports;
+    eval(`(exports, require) => {
+      ${modules[moduleId]}
+    }`)(exports, require);
+    return exports;
+  };
+  return require;
+}
+
 function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
   const [generatedModule, setGeneratedModule] = React.useState<{
     code: string;
@@ -170,9 +192,10 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
     })();
   }, [icuInput]);
 
-  const compiledConsumer = React.useMemo<{
+  const consumerModule = React.useMemo<{
     errors: EditorError[];
     code: string;
+    compiled: string | null;
   }>(() => {
     try {
       const { code } = Babel.transform(consumerInput, {
@@ -180,7 +203,8 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
       });
       return {
         errors: [],
-        code: code || ''
+        code: consumerInput,
+        compiled: code || null
       };
     } catch (error) {
       const { line, column } = error.loc;
@@ -189,7 +213,8 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
       };
       return {
         errors: [Object.assign(error as Error, { location })],
-        code: ``
+        code: consumerInput,
+        compiled: null
       };
     }
   }, [consumerInput]);
@@ -198,50 +223,31 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
     if (!generatedModule.compiled) {
       return null;
     }
-    if (compiledConsumer.errors.length > 0) {
+    if (!consumerModule.compiled) {
       return null;
     }
     try {
-      const modules: { [key: string]: string } = {};
-      const moduleInstances: { [key: string]: any } = {
-        react: React
-      };
-      const register = (moduleId: string, initializer: string) => {
-        modules[moduleId] = initializer;
-      };
-      const require = (moduleId: string) => {
-        if (moduleInstances[moduleId]) {
-          return moduleInstances[moduleId];
+      const require = createRequire(
+        {
+          messages: generatedModule.compiled,
+          main: consumerModule.compiled
+        },
+        {
+          react: React
         }
-        if (!modules[moduleId]) {
-          throw new Error(`Unknown module "${moduleId}"`);
-        }
-        const exports = {};
-        moduleInstances[moduleId] = exports;
-        eval(`(exports, require) => {
-          ${modules[moduleId]}
-        }`)(exports, require);
-        return exports;
-      };
-
-      register('messages', generatedModule.compiled);
-      register('main', compiledConsumer.code);
+      );
 
       const { default: Result } = require('main');
 
-      try {
-        return Result();
-      } catch (error) {
-        return <RendererError error={error} />;
-      }
+      return Result();
     } catch (error) {
       return <RendererError error={error} />;
     }
-  }, [generatedModule, compiledConsumer]);
+  }, [generatedModule, consumerModule]);
 
   return {
     generatedModule,
-    compiledConsumer,
+    consumerModule,
     renderedResult
   };
 }
@@ -264,7 +270,7 @@ export default function () {
 }`
   );
 
-  const { generatedModule, compiledConsumer, renderedResult } = usePlayground({
+  const { generatedModule, consumerModule, renderedResult } = usePlayground({
     icuInput,
     consumerInput
   });
@@ -305,7 +311,7 @@ export default function () {
             className={classes.editor}
             value={consumerInput}
             onChange={setConsumerInput}
-            errors={compiledConsumer.errors}
+            errors={consumerModule.errors}
           />
         </Paper>
         <div className={clsx(classes.rightPanel, classes.pane)}>
