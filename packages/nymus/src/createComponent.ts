@@ -360,6 +360,8 @@ function icuNodeToJsFragment(
     case mf.TYPE.pound:
       return icuPoundElementToJsFragment(icuNode, context);
     default:
+      // to move to v4 we need to redo element handling:
+      // https://github.com/formatjs/formatjs/blob/master/packages/intl-messageformat-parser/CHANGELOG.md#breaking-changes
       throw new Error(
         `Unknown AST node type ${(icuNode as mf.MessageFormatElement).type}`
       );
