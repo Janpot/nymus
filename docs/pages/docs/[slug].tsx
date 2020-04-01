@@ -22,19 +22,20 @@ async function renderMarkdown(markdown: string) {
       <CodeBlock language={className.replace(/language-/, '')}>
         {children}
       </CodeBlock>
-    )
+    ),
   };
   return ReactDomServer.renderToStaticMarkup(
     <Mdx components={components}>{markdown}</Mdx>
   );
 }
 
-export async function unstable_getStaticPaths() {
+export async function getStaticPaths() {
   const { routes } = manifest;
   return {
-    paths: routes.map(route => ({
-      params: { slug: path.basename(route.path) }
-    }))
+    paths: routes.map((route) => ({
+      params: { slug: path.basename(route.path) },
+    })),
+    fallback: false,
   };
 }
 
@@ -51,8 +52,8 @@ interface DocumentationPageProps {
   content?: string;
 }
 
-export async function unstable_getStaticProps({
-  params
+export async function getStaticProps({
+  params,
 }: {
   params: { slug: string };
 }): Promise<{ props: DocumentationPageProps }> {
@@ -60,12 +61,12 @@ export async function unstable_getStaticProps({
   return { props: { content } };
 }
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   loader: {
     display: 'flex',
     justifyContent: 'center',
-    marginTop: theme.spacing(5)
-  }
+    marginTop: theme.spacing(5),
+  },
 }));
 
 export default function DocumentationPage({ content }: DocumentationPageProps) {
@@ -87,7 +88,7 @@ export default function DocumentationPage({ content }: DocumentationPageProps) {
           <Grid item xs={12} md={4}>
             <Box mt={4} position={{ md: 'fixed' }}>
               <Typography variant="h6">Docs</Typography>
-              {routes.map(route => (
+              {routes.map((route) => (
                 <Link
                   display="block"
                   key={route.path}

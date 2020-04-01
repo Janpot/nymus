@@ -72,22 +72,22 @@ const mode: ModeFactory<ModeState> = (
       return {
         stack: [
           {
-            type: 'text'
-          }
-        ]
+            type: 'text',
+          },
+        ],
       };
     },
 
     copyState(state) {
       return {
-        stack: state.stack.map(frame => Object.assign({}, frame))
+        stack: state.stack.map((frame) => Object.assign({}, frame)),
       };
     },
 
     token(stream, state) {
       const current = state.stack[state.stack.length - 1];
       const isInsidePlural = !!state.stack.find(
-        frame =>
+        (frame) =>
           frame.type === 'argument' &&
           frame.formatType &&
           ['selectordinal', 'plural'].includes(frame.formatType)
@@ -117,7 +117,7 @@ const mode: ModeFactory<ModeState> = (
           state.stack.push({
             type: 'argument',
             indentation: stream.indentation() + indentUnit,
-            argPos: 0
+            argPos: 0,
           });
           return 'bracket';
         }
@@ -208,7 +208,7 @@ const mode: ModeFactory<ModeState> = (
         return current.indentation - indentUnit;
       }
       return current.indentation;
-    }
+    },
   };
 };
 

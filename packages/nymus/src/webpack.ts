@@ -15,7 +15,7 @@ const icuLoader: loader.Loader = function icuLoader(source) {
       if (options.declarations && declarations) {
         const declarationsPath = this.resourcePath + '.d.ts';
         await fsWriteFile(declarationsPath, declarations, {
-          encoding: 'utf-8'
+          encoding: 'utf-8',
         });
       }
       callback!(null, code);

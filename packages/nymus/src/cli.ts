@@ -9,24 +9,24 @@ const fsReadFile = promisify(fs.readFile);
 const fsWriteFile = promisify(fs.writeFile);
 
 const { argv } = yargs
-    .usage('Usage: $0 [options] [file...]')
-    .example('$0 --locale en ./string-en.json', '')
-    .option('locale', {
-      type: 'string',
-      description: 'The locale to use for formatters',
-      alias: 'l',
-      requiresArg: true
-    })
-    .option('typescript', {
-      type: 'boolean',
-      description: 'Emit typescript instead of javascript',
-      alias: 't'
-    })
-    .option('declarations', {
-      type: 'boolean',
-      description: 'Emit type declarations (.d.ts)',
-      alias: 'd'
-    }) /*
+  .usage('Usage: $0 [options] [file...]')
+  .example('$0 --locale en ./string-en.json', '')
+  .option('locale', {
+    type: 'string',
+    description: 'The locale to use for formatters',
+    alias: 'l',
+    requiresArg: true,
+  })
+  .option('typescript', {
+    type: 'boolean',
+    description: 'Emit typescript instead of javascript',
+    alias: 't',
+  })
+  .option('declarations', {
+    type: 'boolean',
+    description: 'Emit type declarations (.d.ts)',
+    alias: 'd',
+  }); /*
   .option('output-dir', {
     type: 'string',
     description: 'The directory where transformed files should be stored',
@@ -36,7 +36,7 @@ const { argv } = yargs
     type: 'string',
     description:
       'The directory where the source files are considered relative from'
-  }) */;
+  }) */
 
 function getOutputDirectory(srcPath: string): string {
   return path.dirname(srcPath);
@@ -55,11 +55,11 @@ async function main() {
   }
   const resolvedFiles = await globby(argv._);
   await Promise.all(
-    resolvedFiles.map(async resolvedFile => {
+    resolvedFiles.map(async (resolvedFile) => {
       const { code, declarations } = await transformFile(resolvedFile, {
         ...argv,
         // force this for now
-        react: true
+        react: true,
       });
       const outputDirectory = getOutputDirectory(resolvedFile);
       const fileName = path.basename(resolvedFile);
@@ -79,13 +79,13 @@ async function main() {
         fsWriteFile(outputPath, code, { encoding: 'utf-8' }),
         declarations
           ? fsWriteFile(declarationsPath, declarations, { encoding: 'utf-8' })
-          : null
+          : null,
       ]);
     })
   );
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.log(error.message);
   process.exit(1);
 });

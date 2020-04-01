@@ -41,7 +41,7 @@ export function formatError(
   }
   return codeFrameColumns(input, location, {
     ...options,
-    message: err.message
+    message: err.message,
   });
 }
 
@@ -95,7 +95,7 @@ export default async function createModule(
         noResolve: true,
         types: [],
         emitDeclarationOnly: true,
-        declaration: true
+        declaration: true,
       },
       host
     );
@@ -105,7 +105,7 @@ export default async function createModule(
   const { code, ast } =
     (await babel.transformFromAstAsync(tsAst, undefined, {
       ast: options.ast,
-      plugins: [...(options.typescript ? [] : [TsPlugin])]
+      plugins: [...(options.typescript ? [] : [TsPlugin])],
     })) || {};
 
   if (!code) {
@@ -115,6 +115,6 @@ export default async function createModule(
   return {
     code,
     ast,
-    declarations
+    declarations,
   };
 }

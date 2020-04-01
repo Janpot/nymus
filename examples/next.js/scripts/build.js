@@ -14,7 +14,7 @@ function getPort(i) {
 async function buildProxyRules() {
   const rules = LOCALES.map((locale, i) => ({
     pathname: `/${locale}`,
-    dest: `http://localhost:${getPort(i)}`
+    dest: `http://localhost:${getPort(i)}`,
   }));
 
   await fsWriteFile(
@@ -27,7 +27,7 @@ async function buildProxyRules() {
 async function buildNext() {
   const commands = LOCALES.map((locale, i) => ({
     name: `build:${locale}`,
-    command: `LOCALE=${locale} LOCALES=${LOCALES.join(',')} next build`
+    command: `LOCALE=${locale} LOCALES=${LOCALES.join(',')} next build`,
   }));
   await concurrently(commands);
 }
@@ -36,7 +36,7 @@ async function main() {
   await Promise.all([buildProxyRules(), buildNext()]);
 }
 
-process.on('unhandledRejection', err => {
+process.on('unhandledRejection', (err) => {
   throw err;
 });
 main();

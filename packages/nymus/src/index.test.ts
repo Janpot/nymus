@@ -9,7 +9,7 @@ describe('shared', () => {
     await expect(
       createComponents({
         // @ts-ignore We want to test output on invalid input
-        message: {}
+        message: {},
       })
     ).rejects.toHaveProperty(
       'message',
@@ -66,15 +66,15 @@ describe('shared', () => {
       '{gender, select, male{He} female{She} other{They}}'
     );
     const maleResult = render(withSelect, {
-      gender: 'male'
+      gender: 'male',
     });
     expect(maleResult).toBe('He');
     const femaleResult = render(withSelect, {
-      gender: 'female'
+      gender: 'female',
     });
     expect(femaleResult).toBe('She');
     const otherResult = render(withSelect, {
-      gender: 'whatever'
+      gender: 'whatever',
     });
     expect(otherResult).toBe('They');
 
@@ -108,7 +108,7 @@ describe('shared', () => {
     const result = render(msg, {
       theDate: new Date(1507216343344),
       text: 'a disturbance in the Force',
-      planet: 7
+      planet: 7,
     });
     expect(result).toBe(
       'At 5:12:23 PM on Oct 5, 2017, there was a disturbance in the Force on planet 7.'
@@ -128,14 +128,14 @@ describe('shared', () => {
 
     const result = render(msg, {
       today: new Date(1507216343344),
-      count: 123
+      count: 123,
     });
 
     expect(result).toBe('Oct 5, 2017, 5:12:23 PM, 123, 123');
     expect(
       typeof msg({
         today: new Date(1507216343344),
-        count: 123
+        count: 123,
       })
     ).toBe('string');
   });
@@ -152,7 +152,7 @@ describe('shared', () => {
 
   it('handles number skeleton', async () => {
     const msg = await createComponent('{amount, number, ::currency/GBP .0#}', {
-      locale: 'en-US'
+      locale: 'en-US',
     });
 
     const result = render(msg, { amount: 123456.789 });
@@ -163,7 +163,7 @@ describe('shared', () => {
     const msg = await createComponent(
       "{today, date, ::hh 'o''clock' a, zzzz}",
       {
-        locale: 'en-US'
+        locale: 'en-US',
       }
     );
 
@@ -182,10 +182,10 @@ describe('shared', () => {
             hour: 'numeric',
             minute: 'numeric',
             second: 'numeric',
-            timeZoneName: 'short'
-          }
-        }
-      }
+            timeZoneName: 'short',
+          },
+        },
+      },
     });
     const result = render(msg, { time: new Date(0) });
     expect(result).toBe('Today is January 1, 1970, 1:00:00 AM GMT+1');
@@ -194,7 +194,7 @@ describe('shared', () => {
   it('can format percentages', async () => {
     const msg = await createComponent('Score: {percentage, number, percent}.');
     const result = render(msg, {
-      percentage: 0.6549
+      percentage: 0.6549,
     });
     expect(result).toBe('Score: 65%.');
     expect(typeof msg({ percentage: 0.6549 })).toBe('string');
@@ -209,14 +209,14 @@ describe('shared', () => {
     );
     const result = render(msg, {
       score: 0.6549,
-      max: 0.9436
+      max: 0.9436,
     });
     expect(spy).toHaveBeenCalledTimes(1);
     expect(result).toBe('Score: 65%, Maximum: 94%.');
     expect(
       typeof msg({
         score: 0.6549,
-        max: 0.9436
+        max: 0.9436,
       })
     ).toBe('string');
   });
@@ -239,13 +239,13 @@ describe('shared', () => {
         number: {
           USD: {
             style: 'currency',
-            currency: 'USD'
-          }
-        }
-      }
+            currency: 'USD',
+          },
+        },
+      },
     });
     const result = render(msg, {
-      amount: 123.456
+      amount: 123.456,
     });
     expect(result).toBe('It costs $123.46.');
   });
@@ -254,7 +254,7 @@ describe('shared', () => {
     const msg = await createComponent('hi @{there}', { locale: 'en' });
     expect(
       render(msg, {
-        there: '2008'
+        there: '2008',
       })
     ).toBe('hi @2008');
   });
@@ -278,7 +278,7 @@ describe('shared', () => {
         const output = render(mf, {
           a: false,
           b: null,
-          c: undefined
+          c: undefined,
         });
         expect(output).toBe('false null undefined');
       });
@@ -340,7 +340,7 @@ describe('shared', () => {
           '{NAME} est {GENDER, select, ' +
           'female {allée}' +
           'other {allé}}' +
-          ' à {CITY}.'
+          ' à {CITY}.',
       };
 
       var complex = {
@@ -354,38 +354,38 @@ describe('shared', () => {
           'other {sont {GENDER, select, ' +
           'female {allées}' +
           'other {allés}}}}' +
-          ' à {CITY}.'
+          ' à {CITY}.',
       };
 
       var maleObj = {
         NAME: 'Tony',
         CITY: 'Paris',
-        GENDER: 'male'
+        GENDER: 'male',
       };
 
       var femaleObj = {
         NAME: 'Jenny',
         CITY: 'Paris',
-        GENDER: 'female'
+        GENDER: 'female',
       };
 
       var maleTravelers = {
         TRAVELLERS: 'Lucas, Tony and Drew',
         TRAVELLER_COUNT: 3,
         GENDER: 'male',
-        CITY: 'Paris'
+        CITY: 'Paris',
       };
 
       var femaleTravelers = {
         TRAVELLERS: 'Monica',
         TRAVELLER_COUNT: 1,
         GENDER: 'female',
-        CITY: 'Paris'
+        CITY: 'Paris',
       };
 
       it('should format message en-US simple with different objects', async () => {
         const simpleEn = await createComponent(simple.en, {
-          locale: 'en-US'
+          locale: 'en-US',
         });
         expect(render(simpleEn, maleObj)).toBe('Tony went to Paris.');
         expect(render(simpleEn, femaleObj)).toBe('Jenny went to Paris.');
@@ -393,7 +393,7 @@ describe('shared', () => {
 
       it('should format message fr-FR simple with different objects', async () => {
         const simpleFr = await createComponent(simple.fr, {
-          locale: 'fr-FR'
+          locale: 'fr-FR',
         });
         expect(render(simpleFr, maleObj)).toBe('Tony est allé à Paris.');
         expect(render(simpleFr, femaleObj)).toBe('Jenny est allée à Paris.');
@@ -401,7 +401,7 @@ describe('shared', () => {
 
       it('should format message en-US complex with different objects', async () => {
         const complexEn = await createComponent(complex.en, {
-          locale: 'en-US'
+          locale: 'en-US',
         });
         expect(render(complexEn, maleTravelers)).toBe(
           'Lucas, Tony and Drew went to Paris.'
@@ -413,7 +413,7 @@ describe('shared', () => {
 
       it('should format message fr-FR complex with different objects', async () => {
         const complexFr = await createComponent(complex.fr, {
-          locale: 'fr-FR'
+          locale: 'fr-FR',
         });
         expect(render(complexFr, maleTravelers)).toBe(
           'Lucas, Tony and Drew sont allés à Paris.'
@@ -439,12 +439,12 @@ describe('shared', () => {
           'few {# компании опубликовали}' +
           'many {# компаний опубликовали}' +
           'other {# компаний опубликовали}}' +
-          ' новые книги.'
+          ' новые книги.',
       };
 
       it('should format a message with en-US locale', async () => {
         const msgFmt = await createComponent(messages.en, {
-          locale: 'en-US'
+          locale: 'en-US',
         });
         expect(render(msgFmt, { COMPANY_COUNT: 0 })).toBe(
           '0 companies published new books.'
@@ -465,7 +465,7 @@ describe('shared', () => {
 
       it('should format a message with ru-RU locale', async () => {
         const msgFmt = await createComponent(messages.ru, {
-          locale: 'ru-RU'
+          locale: 'ru-RU',
         });
         expect(render(msgFmt, { COMPANY_COUNT: 0 })).toBe(
           '0 компаний опубликовали новые книги.'
@@ -543,7 +543,7 @@ describe('with jsx', () => {
     // expect(result1).toBe('foo');
     const result2 = render(withJsx, {
       A: ({ children }: React.PropsWithChildren<{}>) =>
-        React.createElement('span', { className: 'bar' }, children)
+        React.createElement('span', { className: 'bar' }, children),
     });
     expect(result2).toBe('<span class="bar">foo</span>');
   });
@@ -556,7 +556,7 @@ describe('with jsx', () => {
     const result2 = render(withArgJsx, {
       A: ({ children }: React.PropsWithChildren<{}>) =>
         React.createElement('span', { className: 'bla' }, children),
-      bar: 'quux'
+      bar: 'quux',
     });
     expect(result2).toBe('<span class="bla">foo quux baz</span>');
   });
@@ -571,8 +571,8 @@ describe('with jsx', () => {
     const interpolate = await createComponent('a {b} c');
     const result = render(interpolate, {
       b: {
-        toString: () => 'b'
-      }
+        toString: () => 'b',
+      },
     });
     expect(result).toBe('a b c');
   });
@@ -580,7 +580,7 @@ describe('with jsx', () => {
   it('can interpolate arrays', async () => {
     const interpolate = await createComponent('a {b} c');
     const result = render(interpolate, {
-      b: ['x', 'y', 'z']
+      b: ['x', 'y', 'z'],
     });
     expect(result).toBe('a x,y,z c');
   });
@@ -621,7 +621,7 @@ describe('with jsx', () => {
     const withNestedJsx = await createComponent('<A>foo <B>bar</B> baz</A>');
     const result1 = render(withNestedJsx, {
       A: ({ children }: React.PropsWithChildren<{}>) => children,
-      B: ({ children }: React.PropsWithChildren<{}>) => children
+      B: ({ children }: React.PropsWithChildren<{}>) => children,
     });
     expect(result1).toBe('foo bar baz');
   });

@@ -48,11 +48,11 @@ function defineTest(
 ) {
   itFn(name, () => {
     const langStr = input
-      .map(token => {
+      .map((token) => {
         return typeof token === 'string' ? token : token[0];
       })
       .join('');
-    const expectedTokens = input.map(token => {
+    const expectedTokens = input.map((token) => {
       return typeof token === 'string' ? [token, null] : token;
     });
     const gotTokens = testMode(mode, langStr);
@@ -67,7 +67,7 @@ defineTest('simple argument', mode, [
   ['{', 'bracket'],
   ['def', 'def'],
   ['}', 'bracket'],
-  ['ghi', 'string']
+  ['ghi', 'string'],
 ]);
 
 defineTest('function argument', mode, [
@@ -75,7 +75,7 @@ defineTest('function argument', mode, [
   ['def', 'def'],
   ',',
   ['select', 'keyword'],
-  ['}', 'bracket']
+  ['}', 'bracket'],
 ]);
 
 defineTest('function with whitespace', mode, [
@@ -85,7 +85,7 @@ defineTest('function with whitespace', mode, [
   ' , ',
   ['select', 'keyword'],
   '  ',
-  ['}', 'bracket']
+  ['}', 'bracket'],
 ]);
 
 defineTest('function with format', mode, [
@@ -95,11 +95,11 @@ defineTest('function with format', mode, [
   ['date', 'keyword'],
   ',',
   ['short', 'variable'],
-  ['}', 'bracket']
+  ['}', 'bracket'],
 ]);
 
 defineTest('no placeholder detection in top level string', mode, [
-  ['ab#c', 'string']
+  ['ab#c', 'string'],
 ]);
 
 defineTest('ignore top level closing brace', mode, [['ab}c', 'string']]);
@@ -109,17 +109,17 @@ describe('escaped sequences', () => {
     defineTest('accepts "Don\'\'t"', mode, [
       ['Don', 'string'],
       ["''", 'string-2'],
-      ['t', 'string']
+      ['t', 'string'],
     ]);
 
     defineTest("starts quoting after '{", mode, [
       ['I see ', 'string'],
-      ["'{many}'", 'string-2']
+      ["'{many}'", 'string-2'],
     ]);
 
     defineTest("starts quoting after '{", mode, [
       ['I ay ', 'string'],
-      ["'{''wow''}'", 'string-2']
+      ["'{''wow''}'", 'string-2'],
     ]);
   }
 
@@ -146,41 +146,41 @@ describe('escaped sequences', () => {
     defineTest('uses single quotes for escape', doubleRequiredMode, [
       ['ab', 'string'],
       ["'{'", 'string-2'],
-      ['c', 'string']
+      ['c', 'string'],
     ]);
 
     defineTest('can escape in escaped sequence', doubleRequiredMode, [
       ['ab', 'string'],
       ["'c''d'", 'string-2'],
-      ['e', 'string']
+      ['e', 'string'],
     ]);
 
     defineTest('can escape a quote', doubleRequiredMode, [
       ['ab', 'string'],
       ["''", 'string-2'],
-      ['c', 'string']
+      ['c', 'string'],
     ]);
 
     defineTest('can on the next line', doubleRequiredMode, [
       ['ab', 'string'],
       ["'c\n'", 'string-2'],
-      ['d', 'string']
+      ['d', 'string'],
     ]);
 
     defineTest('can on the next line and text', doubleRequiredMode, [
       ['ab', 'string'],
       ["'\nc'", 'string-2'],
-      ['d', 'string']
+      ['d', 'string'],
     ]);
 
     defineTest('Starts escaping "Don\'t"', doubleRequiredMode, [
       ['Don', 'string'],
-      ["'t", 'string-2']
+      ["'t", 'string-2'],
     ]);
 
     defineTest('last character is quote', doubleRequiredMode, [
       ['a', 'string'],
-      ["'", 'string-2']
+      ["'", 'string-2'],
     ]);
   });
 });

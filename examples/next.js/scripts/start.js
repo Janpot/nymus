@@ -13,7 +13,7 @@ async function main() {
     const locales = LOCALES.join(',');
     return {
       command: `LOCALE=${locale} LOCALES=${locales} next start -p ${port}`,
-      name: `start:${locale}`
+      name: `start:${locale}`,
     };
   });
 
@@ -21,17 +21,17 @@ async function main() {
     [
       {
         command: `micro-proxy -r ./.next/rules.json -p ${PORT}`,
-        name: 'proxy'
+        name: 'proxy',
       },
-      ...commands
+      ...commands,
     ],
     {
-      killOthers: ['success', 'failure']
+      killOthers: ['success', 'failure'],
     }
   );
 }
 
-process.on('unhandledRejection', err => {
+process.on('unhandledRejection', (err) => {
   throw err;
 });
 main();

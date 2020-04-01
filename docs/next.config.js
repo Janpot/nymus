@@ -1,6 +1,6 @@
 module.exports = {
   typescript: {
-    ignoreDevErrors: true
+    ignoreDevErrors: true,
   },
   experimental: {
     polyfillsOptimization: true,
@@ -9,10 +9,10 @@ module.exports = {
         {
           source: '/docs',
           destination: '/docs/getting-started',
-          permanent: true
-        }
+          permanent: true,
+        },
       ];
-    }
+    },
   },
   webpack: (config, options) => {
     if (!options.isServer) {
@@ -23,5 +23,5 @@ module.exports = {
       config.externals.typescript = 'null';
     }
     return config;
-  }
+  },
 };

@@ -16,7 +16,7 @@ async function compile(context, fixture, options = {}): Promise<webpack.Stats> {
     entry: fixture,
     output: {
       path: path.resolve(__dirname),
-      filename: 'bundle.js'
+      filename: 'bundle.js',
     },
     module: {
       rules: [
@@ -25,15 +25,15 @@ async function compile(context, fixture, options = {}): Promise<webpack.Stats> {
           type: 'javascript/auto',
           use: {
             loader: path.resolve(__dirname, '../webpack.js'),
-            options
-          }
-        }
-      ]
-    }
+            options,
+          },
+        },
+      ],
+    },
   });
 
   compiler.outputFileSystem = Object.assign(createFsFromVolume(new Volume()), {
-    join: pathJoin
+    join: pathJoin,
   });
 
   return new Promise((resolve, reject) => {
@@ -79,7 +79,7 @@ describe('webpack', () => {
     await compile(fixtureDir.path, './strings/en.json', { declarations: true });
     expect(
       await fsReadFile(fixturePath('./strings/en.json.d.ts'), {
-        encoding: 'utf-8'
+        encoding: 'utf-8',
       })
     ).toMatchInlineSnapshot(`
       "declare function message(): string;

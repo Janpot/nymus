@@ -12,7 +12,7 @@ type CodeBlockProps = {
 export default ({
   className: outerClass,
   children,
-  language
+  language,
 }: CodeBlockProps) => {
   return (
     <Highlight

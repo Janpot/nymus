@@ -78,7 +78,7 @@ function interpolateJsxFragmentChildren(
 
       const interpolatedChild = astUtil.buildReactElement(
         localName,
-        fragment.map(frag => frag.ast)
+        fragment.map((frag) => frag.ast)
       );
 
       result.push({ elm: true, ast: interpolatedChild });
@@ -99,12 +99,12 @@ function rewriteLocation(
   return {
     start: {
       line: loc.start.line,
-      column: loc.start.line === 1 ? loc.start.column - 1 : loc.start.column
+      column: loc.start.line === 1 ? loc.start.column - 1 : loc.start.column,
     },
     end: {
       line: loc.end.line,
-      column: loc.end.line === 1 ? loc.end.column - 1 : loc.end.column
-    }
+      column: loc.end.line === 1 ? loc.end.column - 1 : loc.end.column,
+    },
   };
 }
 
@@ -127,23 +127,23 @@ function icuNodesToJsFragments(
           lines > 0
             ? icuNode.location!.end.column - 2
             : icuNode.location!.end.column - icuNode.location!.start.column - 3;
-        return `{${'_' +
-          '\n'.repeat(lines) +
-          ' '.repeat(Math.max(columns, 0))}}`;
+        return `{${
+          '_' + '\n'.repeat(lines) + ' '.repeat(Math.max(columns, 0))
+        }}`;
       })
       .join('');
 
     // Wrap in a root element to turn it into valid JSX
     const jsxElement = `<>${jsxContent}</>`;
     const jsxAst = babylon.parseExpression(jsxElement, {
-      plugins: ['jsx']
+      plugins: ['jsx'],
     }) as t.JSXFragment;
 
     const interpollatedIcuNodes = icuNodes.filter(
-      node => !mf.isLiteralElement(node)
+      (node) => !mf.isLiteralElement(node)
     );
 
-    const fragments = interpollatedIcuNodes.map(icuNode =>
+    const fragments = interpollatedIcuNodes.map((icuNode) =>
       icuNodeToJsFragment(icuNode, context)
     );
 
@@ -154,7 +154,7 @@ function icuNodesToJsFragments(
       0
     );
   } else {
-    return icuNodes.map(icuNode => icuNodeToJsFragment(icuNode, context));
+    return icuNodes.map((icuNode) => icuNodeToJsFragment(icuNode, context));
   }
 }
 
@@ -164,23 +164,23 @@ function flattenFragments(fragments: Fragment[]): Fragment {
   } else if (fragments.length === 1) {
     return fragments[0];
   } else {
-    const elm = fragments.some(frag => frag.elm);
+    const elm = fragments.some((frag) => frag.elm);
     if (elm) {
       return {
         elm,
         ast: astUtil.buildReactElement(
           t.memberExpression(t.identifier('React'), t.identifier('Fragment')),
-          fragments.map(frag => frag.ast)
-        )
+          fragments.map((frag) => frag.ast)
+        ),
       };
     } else {
-      const operands = fragments.map(fragment => fragment.ast);
+      const operands = fragments.map((fragment) => fragment.ast);
       if (!t.isStringLiteral(operands[0])) {
         operands.unshift(t.stringLiteral(''));
       }
       return {
         elm,
-        ast: astUtil.buildBinaryChain('+', ...operands)
+        ast: astUtil.buildBinaryChain('+', ...operands),
       };
     }
   }
@@ -241,14 +241,14 @@ function icuSelectElementToJsFragment(
   const cases = caseFragments.map(([name, fragment]) => {
     return [
       t.binaryExpression('===', argIdentifier, t.stringLiteral(name)),
-      fragment.ast
+      fragment.ast,
     ];
   }) as [t.Expression, t.Expression][];
   const otherFragment = icuNodesToJsFragment(other.value, context);
   return {
     elm:
       caseFragments.some(([, fragment]) => fragment.elm) || otherFragment.elm,
-    ast: astUtil.buildTernaryChain(cases, otherFragment.ast)
+    ast: astUtil.buildTernaryChain(cases, otherFragment.ast),
   };
 }
 
@@ -291,7 +291,7 @@ function icuPluralElementToJsFragment(
   return {
     elm:
       caseFragments.some(([, fragment]) => fragment.elm) || otherFragment.elm,
-    ast
+    ast,
   };
 }
 
@@ -360,7 +360,11 @@ function icuNodeToJsFragment(
     case mf.TYPE.pound:
       return icuPoundElementToJsFragment(icuNode, context);
     default:
-      throw new Error(`Unknown AST node type`);
+      // to move to v4 we need to redo element handling:
+      // https://github.com/formatjs/formatjs/blob/master/packages/intl-messageformat-parser/CHANGELOG.md#breaking-changes
+      throw new Error(
+        `Unknown AST node type ${(icuNode as mf.MessageFormatElement).type}`
+      );
   }
 }
 
@@ -528,12 +532,12 @@ class ComponentContext {
       t.variableDeclarator(
         t.identifier(sharedConst.localName),
         sharedConst.init
-      )
+      ),
     ]);
   }
 
   buildSharedConstsAst(): t.Statement[] {
-    return Array.from(this._sharedConsts.values(), sharedConst =>
+    return Array.from(this._sharedConsts.values(), (sharedConst) =>
       this._buildSharedConstAst(sharedConst)
     );
   }
@@ -546,7 +550,7 @@ export default function icuToReactComponent(
 ) {
   const context = createContext(module);
   const icuAst = mf.parse(icuStr, {
-    captureLocation: true
+    captureLocation: true,
   });
   const returnValue = icuNodesToJsFragment(icuAst, context);
   const ast = t.functionDeclaration(
@@ -554,12 +558,12 @@ export default function icuToReactComponent(
     context.buildArgsAst(),
     t.blockStatement([
       ...context.buildSharedConstsAst(),
-      t.returnStatement(returnValue.ast)
+      t.returnStatement(returnValue.ast),
     ])
   );
 
   return {
     ast,
-    args: context.args
+    args: context.args,
   };
 }

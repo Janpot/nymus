@@ -6,7 +6,7 @@ const CONTEXT_VARIABLES = new Set([
   'arguments',
   'undefined',
   'Infinity',
-  'NaN'
+  'NaN',
 ]);
 
 export default class Scope {
@@ -41,9 +41,7 @@ export default class Scope {
 
   generateUid(name: string = 'tmp'): string {
     // remove leading and trailing underscores
-    const idBase = toIdentifier(name)
-      .replace(/^_+/, '')
-      .replace(/_+$/, '');
+    const idBase = toIdentifier(name).replace(/^_+/, '').replace(/_+$/, '');
     let uid;
     let i = 0;
     do {

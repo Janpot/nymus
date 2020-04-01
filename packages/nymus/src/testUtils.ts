@@ -11,7 +11,7 @@ function importFrom(
 ) {
   const { code: cjs } =
     babelCore.transformSync(code, {
-      plugins: ['@babel/plugin-transform-modules-commonjs']
+      plugins: ['@babel/plugin-transform-modules-commonjs'],
     }) || {};
 
   if (!cjs) {

@@ -5,15 +5,15 @@ const useStyles = makeStyles({
   root: {
     display: 'flex',
     flexDirection: 'column',
-    height: '100%'
+    height: '100%',
   },
   title: {
-    flexGrow: 1
+    flexGrow: 1,
   },
   content: {
     flex: 1,
-    overflow: 'auto'
-  }
+    overflow: 'auto',
+  },
 });
 
 export default function Layout({ children }: React.PropsWithChildren<{}>) {

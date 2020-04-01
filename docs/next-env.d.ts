@@ -63,3 +63,10 @@ declare module '@babel/standalone' {
     options: TransformOptions
   ): BabelFileResult;
 }
+
+// this can be removed when @types/prettier have updated to take the
+// babel => babylon rename into account
+declare module 'prettier/parser-babel' {
+  import plugin from 'prettier/parser-babylon';
+  export = plugin;
+}

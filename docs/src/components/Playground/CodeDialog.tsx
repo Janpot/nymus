@@ -6,19 +6,19 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import CloseIcon from '@material-ui/icons/Close';
 import CodeBlock from '../CodeBlock';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   container: {
-    overflow: 'auto'
+    overflow: 'auto',
   },
   content: {
-    margin: 0
+    margin: 0,
   },
   closeButton: {
     position: 'absolute',
     right: theme.spacing(1),
     top: theme.spacing(1),
-    color: theme.palette.grey[500]
-  }
+    color: theme.palette.grey[500],
+  },
 }));
 
 interface CodeDialogProps {
@@ -32,7 +32,7 @@ export default function CodeDialog({
   open,
   onClose,
   title,
-  code
+  code,
 }: CodeDialogProps) {
   const classes = useStyles();
   return (

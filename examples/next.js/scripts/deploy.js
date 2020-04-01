@@ -32,11 +32,11 @@ async function deploy({ locale, prod = false, urls = {} }) {
       `LOCALE=${locale}`,
       '--meta',
       `locale=${locale}`,
-      projectRoot
+      projectRoot,
     ],
     {
       cwd: __dirname,
-      preferLocal: true
+      preferLocal: true,
     }
   );
   console.log(`  => ${url}`);
@@ -52,7 +52,7 @@ async function main() {
     await execa('now', ['deploy', '--no-clipboard', deploymentPath], {
       stdio: 'inherit',
       cwd: __dirname,
-      preferLocal: true
+      preferLocal: true,
     });
   }
 
@@ -67,11 +67,11 @@ async function main() {
   await deploy({
     locale: DEFAULT_LOCALE,
     prod,
-    urls
+    urls,
   });
 }
 
-process.on('unhandledRejection', err => {
+process.on('unhandledRejection', (err) => {
   throw err;
 });
 main();
