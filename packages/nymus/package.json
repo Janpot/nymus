@@ -41,7 +41,7 @@
     "@babel/types": "^7.7.4",
     "@formatjs/intl-unified-numberformat": "^3.1.0",
     "globby": "^11.0.0",
-    "intl-messageformat-parser": "^4.1.1",
+    "intl-messageformat-parser": "^3.6.4",
     "loader-utils": "^2.0.0",
     "yargs": "^15.1.0"
   },

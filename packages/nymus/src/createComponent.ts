@@ -360,7 +360,7 @@ function icuNodeToJsFragment(
     case mf.TYPE.pound:
       return icuPoundElementToJsFragment(icuNode, context);
     default:
-      throw new Error(`Unknown AST node type`);
+      throw new Error(`Unknown AST node type ${icuNode.type}`);
   }
 }
 
