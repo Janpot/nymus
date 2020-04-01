@@ -32,7 +32,7 @@ function linter(text: string, { errors = [] }: HelperOptions) {
     const { location = { start: { line: 1 } } } = error;
     const {
       start,
-      end = { ...start, column: start.column ? start.column + 1 : 1 }
+      end = { ...start, column: start.column ? start.column + 1 : 1 },
     } = location;
     const startColumn = start.column ? start.column - 1 : 0;
     const endColumn = end.column ? end.column - 1 : 0;
@@ -41,7 +41,7 @@ function linter(text: string, { errors = [] }: HelperOptions) {
       severity: 'error',
       type: 'validation',
       from: CodeMirror.Pos(start.line - 1, startColumn),
-      to: CodeMirror.Pos(end.line - 1, endColumn)
+      to: CodeMirror.Pos(end.line - 1, endColumn),
     });
   }
   return editorHints;
@@ -56,7 +56,7 @@ export default function Editor({
   className,
   value,
   onChange,
-  errors = []
+  errors = [],
 }: EditorProps) {
   return (
     <ReactCodeMirror
@@ -73,8 +73,8 @@ export default function Editor({
           mode,
           gutters: ['CodeMirror-lint-markers'],
           lint: {
-            errors
-          }
+            errors,
+          },
         } as unknown) as CodeMirror.EditorConfiguration
       }
       onBeforeChange={(editor, data, value) => {

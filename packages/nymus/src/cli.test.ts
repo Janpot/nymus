@@ -5,11 +5,11 @@ import * as path from 'path';
 import { tmpDirFromTemplate, fileExists } from './fileUtil';
 
 function exec(cwd: string, command: string) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     childProcess.exec(command, { cwd }, (error, stdout) => {
       resolve({
         code: error ? error.code : null,
-        stdout: stdout.trim()
+        stdout: stdout.trim(),
       });
     });
   });
@@ -37,7 +37,7 @@ describe('cli', () => {
       exec(fixtureDir.path, 'nymus ./invalid-json.json')
     ).resolves.toMatchObject({
       code: 1,
-      stdout: `Unexpected end of JSON input`
+      stdout: `Unexpected end of JSON input`,
     });
   });
 
@@ -46,7 +46,7 @@ describe('cli', () => {
       exec(fixtureDir.path, 'nymus ./invalid-message.json')
     ).resolves.toMatchObject({
       code: 1,
-      stdout: `Invalid JSON, "invalid" is not a string`
+      stdout: `Invalid JSON, "invalid" is not a string`,
     });
   });
 

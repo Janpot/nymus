@@ -19,7 +19,7 @@ function LocalePicker() {
         `}
       </style>
       {locales
-        .filter(locale => locale !== process.env.LOCALE)
+        .filter((locale) => locale !== process.env.LOCALE)
         .map((locale, i) => {
           return (
             <>
@@ -28,7 +28,7 @@ function LocalePicker() {
                 {{
                   en: <LocaleEn />,
                   nl: <LocaleNl />,
-                  fr: <LocaleFr />
+                  fr: <LocaleFr />,
                 }[locale] || '??'}
               </a>
             </>
@@ -40,10 +40,10 @@ function LocalePicker() {
 
 const links = [
   { href: 'https://zeit.co/now', label: 'ZEIT' },
-  { href: 'https://github.com/zeit/next.js', label: 'GitHub' }
-].map(link => ({
+  { href: 'https://github.com/zeit/next.js', label: 'GitHub' },
+].map((link) => ({
   ...link,
-  key: `nav-link-${link.href}-${link.label}`
+  key: `nav-link-${link.href}-${link.label}`,
 }));
 
 const Nav = () => (

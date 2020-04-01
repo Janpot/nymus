@@ -18,17 +18,17 @@ module.exports = {
           const destination = new URL(`/${locale}/:path*`, localeUrl);
           localeRewrites.push({
             source: `/${locale}/:path*`,
-            destination: destination.toString()
+            destination: destination.toString(),
           });
         }
       }
       return localeRewrites;
-    }
+    },
   },
   assetPrefix: basePath,
   env: {
     LOCALE: locale,
-    LOCALES: locales.join(',')
+    LOCALES: locales.join(','),
   },
   webpack: (config, options) => {
     config.resolve.alias['@locale'] = path.resolve(
@@ -44,11 +44,11 @@ module.exports = {
         options.defaultLoaders.babel,
         {
           loader: 'nymus/webpack',
-          options: { locale, declarations: false }
-        }
-      ]
+          options: { locale, declarations: false },
+        },
+      ],
     });
 
     return config;
-  }
+  },
 };

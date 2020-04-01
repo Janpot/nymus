@@ -1,67 +1,67 @@
 const DEFAULTS = {
   number: {
     currency: {
-      style: 'currency'
+      style: 'currency',
     },
 
     percent: {
-      style: 'percent'
-    }
+      style: 'percent',
+    },
   },
 
   date: {
     short: {
       month: 'numeric',
       day: 'numeric',
-      year: '2-digit'
+      year: '2-digit',
     },
 
     medium: {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     },
 
     long: {
       month: 'long',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     },
 
     full: {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
-      year: 'numeric'
-    }
+      year: 'numeric',
+    },
   },
 
   time: {
     short: {
       hour: 'numeric',
-      minute: 'numeric'
+      minute: 'numeric',
     },
 
     medium: {
       hour: 'numeric',
       minute: 'numeric',
-      second: 'numeric'
+      second: 'numeric',
     },
 
     long: {
       hour: 'numeric',
       minute: 'numeric',
       second: 'numeric',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     },
 
     full: {
       hour: 'numeric',
       minute: 'numeric',
       second: 'numeric',
-      timeZoneName: 'short'
-    }
-  }
+      timeZoneName: 'short',
+    },
+  },
 };
 
 interface FormatterStyles {
@@ -81,17 +81,17 @@ export function mergeFormats(...formattersList: Partial<Formats>[]): Formats {
     number: Object.assign(
       {},
       DEFAULTS.number,
-      ...formattersList.map(formatters => formatters.number)
+      ...formattersList.map((formatters) => formatters.number)
     ),
     date: Object.assign(
       {},
       DEFAULTS.date,
-      ...formattersList.map(formatters => formatters.date)
+      ...formattersList.map((formatters) => formatters.date)
     ),
     time: Object.assign(
       {},
       DEFAULTS.time,
-      ...formattersList.map(formatters => formatters.time)
-    )
+      ...formattersList.map((formatters) => formatters.time)
+    ),
   };
 }

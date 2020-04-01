@@ -8,7 +8,7 @@ import TsPlugin from '@babel/plugin-transform-typescript';
 import CommonjsPlugin from '@babel/plugin-transform-modules-commonjs';
 import JsxPlugin from '@babel/plugin-transform-react-jsx';
 import { format } from 'prettier/standalone';
-import parserBabylon from 'prettier/parser-babylon';
+import babelParser from 'prettier/parser-babel';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -23,7 +23,7 @@ const COMPONENT_NAME = 'Message';
 async function createModule(input: { [key: string]: string }): Promise<string> {
   const ast = await createModuleAst(input, { typescript: true, react: true });
   const { code } = Babel.transformFromAst(ast, undefined, {
-    generatorOpts: { concise: true }
+    generatorOpts: { concise: true },
   });
   return code || '';
 }
@@ -31,34 +31,34 @@ async function createModule(input: { [key: string]: string }): Promise<string> {
 function prettify(code: string): string {
   return format(code, {
     parser: 'babel',
-    plugins: [parserBabylon]
+    plugins: [babelParser],
   });
 }
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   root: {
     height: '100%',
     display: 'flex',
     flexDirection: 'row',
-    padding: theme.spacing(1)
+    padding: theme.spacing(1),
   },
   column: {
     flex: 1,
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
   },
   rightPanel: {
     height: '50%',
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
   },
   pane: {
-    margin: theme.spacing(1)
+    margin: theme.spacing(1),
   },
   paper: {
     display: 'flex',
     overflow: 'hidden',
-    flexDirection: 'column'
+    flexDirection: 'column',
   },
   editor: {
     flex: 1,
@@ -66,22 +66,22 @@ const useStyles = makeStyles(theme => ({
     '& .CodeMirror': {
       position: 'absolute',
       width: '100% !important',
-      height: '100% !important'
-    }
+      height: '100% !important',
+    },
   },
   paneTitle: {
-    flex: 1
+    flex: 1,
   },
   renderResultContainer: {
-    overflow: 'scroll'
+    overflow: 'scroll',
   },
   renderResult: {
-    padding: theme.spacing(3)
+    padding: theme.spacing(3),
   },
   error: {
     height: '100%',
-    color: theme.palette.error.dark
-  }
+    color: theme.palette.error.dark,
+  },
 }));
 
 const SAMPLE = `
@@ -117,7 +117,7 @@ function toEditorError(
 function commentLines(lines: string) {
   return lines
     .split('\n')
-    .map(line => `// ${line}`)
+    .map((line) => `// ${line}`)
     .join('\n');
 }
 
@@ -165,7 +165,7 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
   }>({
     code: '',
     compiled: null,
-    errors: []
+    errors: [],
   });
 
   React.useEffect(() => {
@@ -175,18 +175,18 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
           await createModule({ [COMPONENT_NAME]: icuInput })
         );
         const { code: compiled = null } = Babel.transform(formatted, {
-          plugins: [CommonjsPlugin, TsPlugin]
+          plugins: [CommonjsPlugin, TsPlugin],
         });
         setGeneratedModule({
           errors: [],
           code: formatted,
-          compiled
+          compiled,
         });
       } catch (error) {
         setGeneratedModule({
           errors: [error],
           code: commentLines(formatError(icuInput, error)),
-          compiled: null
+          compiled: null,
         });
       }
     })();
@@ -199,22 +199,22 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
   }>(() => {
     try {
       const { code } = Babel.transform(consumerInput, {
-        plugins: [CommonjsPlugin, JsxPlugin]
+        plugins: [CommonjsPlugin, JsxPlugin],
       });
       return {
         errors: [],
         code: consumerInput,
-        compiled: code || null
+        compiled: code || null,
       };
     } catch (error) {
       const { line, column } = error.loc;
       const location = {
-        start: { line, column: line === 1 ? column - 7 : column }
+        start: { line, column: line === 1 ? column - 7 : column },
       };
       return {
         errors: [Object.assign(error as Error, { location })],
         code: consumerInput,
-        compiled: null
+        compiled: null,
       };
     }
   }, [consumerInput]);
@@ -230,10 +230,10 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
       const require = createRequire(
         {
           messages: generatedModule.compiled,
-          main: consumerModule.compiled
+          main: consumerModule.compiled,
         },
         {
-          react: React
+          react: React,
         }
       );
 
@@ -248,7 +248,7 @@ function usePlayground({ icuInput, consumerInput }: UsePLaygroundProps) {
   return {
     generatedModule,
     consumerModule,
-    renderedResult
+    renderedResult,
   };
 }
 
@@ -272,7 +272,7 @@ export default function () {
 
   const { generatedModule, consumerModule, renderedResult } = usePlayground({
     icuInput,
-    consumerInput
+    consumerInput,
   });
 
   return (

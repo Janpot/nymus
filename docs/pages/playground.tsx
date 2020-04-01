@@ -4,22 +4,22 @@ import { makeStyles } from '@material-ui/core/styles';
 import { CircularProgress } from '@material-ui/core';
 import Layout from '../src/components/Layout';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   playground: {
-    flex: 1
+    flex: 1,
   },
   loading: {
     flex: 1,
     display: 'flex',
     height: '100%',
     justifyContent: 'center',
-    alignItems: 'center'
-  }
+    alignItems: 'center',
+  },
 }));
 
 const Playground = dynamic(() => import('../src/components/Playground'), {
   ssr: false,
-  loading: Loading
+  loading: Loading,
 });
 
 function Loading() {

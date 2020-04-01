@@ -74,7 +74,7 @@ export default class Module {
       t.memberExpression(t.identifier('Intl'), t.identifier(constructor)),
       [
         this.locale ? t.stringLiteral(this.locale) : t.identifier('undefined'),
-        options ? astUtil.buildJson(options) : t.identifier('undefined')
+        options ? astUtil.buildJson(options) : t.identifier('undefined'),
       ]
     );
   }
@@ -122,14 +122,14 @@ export default class Module {
       t.variableDeclarator(
         t.identifier(sharedConst.localName),
         sharedConst.init
-      )
+      ),
     ]);
   }
 
   buildModuleAst() {
     const formatterDeclarations = Array.from(
       this._sharedConsts.values(),
-      sharedConst => this._buildSharedConstAst(sharedConst)
+      (sharedConst) => this._buildSharedConstAst(sharedConst)
     );
     const componentDeclarations: t.Statement[] = [];
     const exportSpecifiers: t.ExportSpecifier[] = [];
@@ -160,13 +160,13 @@ export default class Module {
             t.importDeclaration(
               [t.importNamespaceSpecifier(t.identifier('React'))],
               t.stringLiteral('react')
-            )
+            ),
           ]
         : []),
       ...formatterDeclarations,
       ...componentDeclarations,
       ...displayNames,
-      t.exportNamedDeclaration(null, exportSpecifiers)
+      t.exportNamedDeclaration(null, exportSpecifiers),
     ];
   }
 }

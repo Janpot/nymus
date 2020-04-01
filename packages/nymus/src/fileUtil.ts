@@ -22,7 +22,7 @@ export async function copyRecursive(src: string, dest: string) {
     }
     const entries = await fsReaddir(src);
     await Promise.all(
-      entries.map(async entry => {
+      entries.map(async (entry) => {
         await copyRecursive(path.join(src, entry), path.join(dest, entry));
       })
     );

@@ -17,6 +17,6 @@
   "devDependencies": {
     "@now/next": "^2.3.12",
     "lerna": "^3.20.2",
-    "prettier": "^1.19.1"
+    "prettier": "^2.0.2"
   }
 }

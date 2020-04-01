@@ -5,23 +5,23 @@ import {
   Link,
   Typography,
   makeStyles,
-  Box
+  Box,
 } from '@material-ui/core';
 import highlight from '../src/highlight';
 import Layout from '../src/components/Layout';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   title: {
-    marginTop: theme.spacing(5)
+    marginTop: theme.spacing(5),
   },
   subtitle: {
-    fontSize: 20
+    fontSize: 20,
   },
   code: {
     '& .hljs': {
-      padding: theme.spacing(3)
-    }
-  }
+      padding: theme.spacing(3),
+    },
+  },
 }));
 
 interface HomePageProps {
@@ -29,7 +29,7 @@ interface HomePageProps {
   exampleOutput: string;
 }
 
-export async function unstable_getStaticProps(): Promise<{
+export async function getStaticProps(): Promise<{
   props: HomePageProps;
 }> {
   const input = {
@@ -37,20 +37,20 @@ export async function unstable_getStaticProps(): Promise<{
     CurrentDate: "It's {now, time, short}.",
     Basket: 'I have {eggs, plural, one {one egg} other {# eggs}}.',
     Progress: 'Your score went {direction, select, up {up} other {down}}.',
-    Navigate: 'Go to our <Link>about page</Link>.'
+    Navigate: 'Go to our <Link>about page</Link>.',
   };
   const output = [
     '<Message name="johnny" score={0.75} />',
     '<CurrentDate now={new Date()} />',
     '<Basket eggs={12} />',
     "<Progress direction='up' />",
-    "<Navigate Link={props => <a href='/about'>{props.children}</a>} />"
+    "<Navigate Link={props => <a href='/about'>{props.children}</a>} />",
   ].join('\n');
   return {
     props: {
       exampleInput: highlight(JSON.stringify(input, null, 2), 'json'),
-      exampleOutput: highlight(output, 'jsx')
-    }
+      exampleOutput: highlight(output, 'jsx'),
+    },
   };
 }
 

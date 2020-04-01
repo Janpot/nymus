@@ -27,12 +27,12 @@ module.exports = {
         use: [
           {
             loader: 'nymus/webpack',
-            options: { locale }
-          }
-        ]
-      }
-    ]
-  }
+            options: { locale },
+          },
+        ],
+      },
+    ],
+  },
 };
 ```
 
@@ -50,7 +50,7 @@ Use the `--help` option to get an overview of the [available options](/docs/conf
 import createModule from 'nymus';
 
 const MESSAGES = {
-  Welcome: 'Hi there, {name}'
+  Welcome: 'Hi there, {name}',
 };
 
 createModule(MESSAGES).then(({ code }) => console.log(code));
