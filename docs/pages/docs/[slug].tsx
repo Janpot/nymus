@@ -35,6 +35,7 @@ export async function getStaticPaths() {
     paths: routes.map((route) => ({
       params: { slug: path.basename(route.path) },
     })),
+    fallback: false,
   };
 }
 
