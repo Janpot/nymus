@@ -35,7 +35,7 @@
     "@types/babel__code-frame": "^7.0.1",
     "@types/babel__standalone": "^7.1.0",
     "@types/node": "^13.1.8",
-    "@types/prettier": "^1.19.0",
+    "@types/prettier": "^2.0.0",
     "@types/react": "^16.9.17",
     "@types/react-dom": "^16.9.4",
     "typescript": "^3.7.5"
