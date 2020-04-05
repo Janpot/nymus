@@ -230,10 +230,9 @@ function tagElementToJsFragment(
       );
     }
     const localName = context.addArgument(elm.value, 'React.Element');
-    const ast = astUtil.buildReactElement(
-      localName,
-      [icuNodesToJsFragment(elm.children, context).ast]
-    );
+    const ast = astUtil.buildReactElement(localName, [
+      icuNodesToJsFragment(elm.children, context).ast,
+    ]);
     return { elm: true, ast };
   } else {
     return {
@@ -243,7 +242,7 @@ function tagElementToJsFragment(
         t.stringLiteral(`<${elm.value}>`),
         icuNodesToJsFragment(elm.children, context).ast,
         t.stringLiteral(`</${elm.value}>`)
-      )
+      ),
     };
   }
 }
