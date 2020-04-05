@@ -54,6 +54,12 @@ function interpolateJsxFragmentChildren(
       index++;
       result.push(fragment);
     } else if (t.isJSXElement(child)) {
+      if (!child.closingElement) {
+        throw new TransformationError(
+          'self-closing JSX elements are not allowed',
+          rewriteLocation(child.loc)
+        );
+      }
       const identifier = child.openingElement.name;
       if (!t.isJSXIdentifier(identifier)) {
         throw new TransformationError(

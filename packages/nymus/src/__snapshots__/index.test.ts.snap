@@ -30,3 +30,10 @@ exports[`error formatting error snapshot  5`] = `
 "> 1 | <>foo {bar}</> baz
     | ^^^^^^^^^^^^^^ Fragments are not allowed"
 `;
+
+exports[`error formatting error snapshot  6`] = `
+"> 1 | <selfClosing/>
+    | ^^^^^^^^^^^^^^ self-closing JSX elements are not allowed"
+`;
+
+exports[`error formatting error snapshot  7`] = `""`;

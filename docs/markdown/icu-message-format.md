@@ -16,16 +16,4 @@ Read [the formatjs.io guide](https://formatjs.io/guides/message-syntax/) to get 
 <MoreInfo docsLink={({ children }) => <a href="/docs">{children}</a>} />
 ```
 
-Self-closing tags are also supported:
-
-```json
-{
-  "GitHub": "All of our code is hosted on <icon /> GitHub."
-}
-```
-
-```jsx
-<MoreInfo icon={GitHubIcon} />
-```
-
-Attributes are not allowed and `nymus` will throw an error if they are used.
+Attributes and self-closing elements are not allowed and `nymus` will throw an error if they are used.

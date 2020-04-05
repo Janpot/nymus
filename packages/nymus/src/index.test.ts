@@ -533,6 +533,8 @@ describe('error formatting', () => {
     }
   `);
   errorSnapshotTest('<>foo {bar}</> baz');
+  errorSnapshotTest('<selfClosing/>');
+  errorSnapshotTest('<hyphen-tag></hyphen-tag>');
 });
 
 describe('with jsx', () => {
@@ -585,12 +587,6 @@ describe('with jsx', () => {
     expect(result).toBe('a x,y,z c');
   });
 
-  it('understands jsx with <React />', async () => {
-    const withReact = await createComponent('foo <React /> bar');
-    const result = render(withReact, { React: () => 'quux' });
-    expect(result).toBe('foo quux bar');
-  });
-
   it('understands component named "React"', async () => {
     const { React } = await createComponents(
       { React: 'foo <A>bar</A>' },
@@ -612,7 +608,7 @@ describe('with jsx', () => {
   });
 
   it('can interpolate "React"', async () => {
-    const withReact = await createComponent('foo {React} <A />baz');
+    const withReact = await createComponent('foo {React} <A></A>baz');
     const result = render(withReact, { React: 'bar', A: () => null });
     expect(result).toBe('foo bar baz');
   });
@@ -624,17 +620,5 @@ describe('with jsx', () => {
       B: ({ children }: React.PropsWithChildren<{}>) => children,
     });
     expect(result1).toBe('foo bar baz');
-  });
-
-  it('understands self closing jsx', async () => {
-    const selfClosing = await createComponent('a<B/>c');
-    const result = render(selfClosing, { B: () => 'b' });
-    expect(result).toBe('abc');
-  });
-
-  it('can interpolate void elements', async () => {
-    const selfClosing = await createComponent('<A/>');
-    const result = render(selfClosing, { A: 'br' });
-    expect(result).toBe('<br/>');
   });
 });
