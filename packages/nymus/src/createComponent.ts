@@ -1,6 +1,5 @@
 import * as mf from 'intl-messageformat-parser';
 import * as t from '@babel/types';
-import * as babylon from '@babel/parser';
 import Scope from './Scope';
 import TransformationError from './TransformationError';
 import Module from './Module';
@@ -28,137 +27,12 @@ interface Argument {
   type: ArgumentType;
 }
 
-type JSXFragmentChild =
-  | t.JSXFragment
-  | t.JSXText
-  | t.JSXExpressionContainer
-  | t.JSXSpreadChild
-  | t.JSXElement;
-
-function interpolateJsxFragmentChildren(
-  jsx: JSXFragmentChild[],
-  fragments: Fragment[],
-  context: ComponentContext,
-  index: number
-): Fragment[] {
-  const result = [];
-
-  for (const child of jsx) {
-    if (t.isJSXFragment(child)) {
-      throw new TransformationError(
-        'Fragments are not allowed',
-        rewriteLocation(child.loc)
-      );
-    } else if (t.isJSXExpressionContainer(child)) {
-      const fragment = fragments[index];
-      index++;
-      result.push(fragment);
-    } else if (t.isJSXElement(child)) {
-      if (!child.closingElement) {
-        throw new TransformationError(
-          'self-closing JSX elements are not allowed',
-          rewriteLocation(child.loc)
-        );
-      }
-      const identifier = child.openingElement.name;
-      if (!t.isJSXIdentifier(identifier)) {
-        throw new TransformationError(
-          'Invalid JSX element',
-          rewriteLocation(child.openingElement.name.loc)
-        );
-      }
-      if (child.openingElement.attributes.length > 0) {
-        throw new TransformationError(
-          'JSX attributes are not allowed',
-          rewriteLocation(child.openingElement.attributes[0].loc)
-        );
-      }
-
-      const localName = context.addArgument(identifier.name, 'React.Element');
-      const fragment = interpolateJsxFragmentChildren(
-        child.children,
-        fragments,
-        context,
-        index
-      );
-
-      const interpolatedChild = astUtil.buildReactElement(
-        localName,
-        fragment.map((frag) => frag.ast)
-      );
-
-      result.push({ elm: true, ast: interpolatedChild });
-    } else if (t.isJSXText(child)) {
-      result.push({ elm: false, ast: t.stringLiteral(child.value) });
-    }
-  }
-
-  return result;
-}
-
-function rewriteLocation(
-  loc: t.SourceLocation | null
-): t.SourceLocation | null {
-  if (!loc) {
-    return null;
-  }
-  return {
-    start: {
-      line: loc.start.line,
-      column: loc.start.line === 1 ? loc.start.column - 1 : loc.start.column,
-    },
-    end: {
-      line: loc.end.line,
-      column: loc.end.line === 1 ? loc.end.column - 1 : loc.end.column,
-    },
-  };
-}
-
 function icuNodesToJsFragments(
   icuNodes: mf.MessageFormatElement[],
   context: ComponentContext
 ): Fragment[] {
   if (icuNodes.length <= 0) {
     return [];
-  } else if (context.react) {
-    const jsxContent = icuNodes
-      .map((icuNode, i) => {
-        if (mf.isLiteralElement(icuNode)) {
-          return icuNode.value;
-        }
-        // replace anything that is not a literal with an expression container placeholder
-        // of the same length to preserve location
-        const lines = icuNode.location!.end.line - icuNode.location!.start.line;
-        const columns =
-          lines > 0
-            ? icuNode.location!.end.column - 2
-            : icuNode.location!.end.column - icuNode.location!.start.column - 3;
-        return `{${
-          '_' + '\n'.repeat(lines) + ' '.repeat(Math.max(columns, 0))
-        }}`;
-      })
-      .join('');
-
-    // Wrap in a root element to turn it into valid JSX
-    const jsxElement = `<>${jsxContent}</>`;
-    const jsxAst = babylon.parseExpression(jsxElement, {
-      plugins: ['jsx'],
-    }) as t.JSXFragment;
-
-    const interpollatedIcuNodes = icuNodes.filter(
-      (node) => !mf.isLiteralElement(node)
-    );
-
-    const fragments = interpollatedIcuNodes.map((icuNode) =>
-      icuNodeToJsFragment(icuNode, context)
-    );
-
-    return interpolateJsxFragmentChildren(
-      jsxAst.children,
-      fragments,
-      context,
-      0
-    );
   } else {
     return icuNodes.map((icuNode) => icuNodeToJsFragment(icuNode, context));
   }
@@ -344,6 +218,36 @@ function icuPoundElementToJsFragment(
   return { elm: false, ast: context.getPound() };
 }
 
+function tagElementToJsFragment(
+  elm: mf.TagElement,
+  context: ComponentContext
+): Fragment {
+  if (context.react) {
+    if (!t.isValidIdentifier(elm.value)) {
+      throw new TransformationError(
+        `"${elm.value}" is not a valid identifier`,
+        elm.location || null
+      );
+    }
+    const localName = context.addArgument(elm.value, 'React.Element');
+    const ast = astUtil.buildReactElement(
+      localName,
+      [icuNodesToJsFragment(elm.children, context).ast]
+    );
+    return { elm: true, ast };
+  } else {
+    return {
+      elm: false,
+      ast: astUtil.buildBinaryChain(
+        '+',
+        t.stringLiteral(`<${elm.value}>`),
+        icuNodesToJsFragment(elm.children, context).ast,
+        t.stringLiteral(`</${elm.value}>`)
+      )
+    };
+  }
+}
+
 function icuNodeToJsFragment(
   icuNode: mf.MessageFormatElement,
   context: ComponentContext
@@ -365,6 +269,8 @@ function icuNodeToJsFragment(
       return icuTimeElementToJsFragment(icuNode, context);
     case mf.TYPE.pound:
       return icuPoundElementToJsFragment(icuNode, context);
+    case mf.TYPE.tag:
+      return tagElementToJsFragment(icuNode, context);
     default:
       // to move to v4 we need to redo element handling:
       // https://github.com/formatjs/formatjs/blob/master/packages/intl-messageformat-parser/CHANGELOG.md#breaking-changes

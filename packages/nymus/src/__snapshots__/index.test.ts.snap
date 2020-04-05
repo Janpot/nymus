@@ -1,21 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`error formatting error snapshot  1`] = `
+exports[`error formatting error snapshot 1`] = `
 "> 1 | unclosed {argument message
     |                    ^ Expected \\",\\" but \\"m\\" found."
 `;
 
-exports[`error formatting error snapshot  2`] = `
+exports[`error formatting error snapshot 2`] = `
 "> 1 | <Comp prop=\\"bar\\">foo</Comp>
-    |       ^^^^^^^^^^ JSX attributes are not allowed"
+    | ^ Expected \\"#\\", \\"'\\", \\"\\\\n\\", \\"{\\", argumentElement, double apostrophes, end of input, or tagElement but \\"<\\" found."
 `;
 
-exports[`error formatting error snapshot  3`] = `
+exports[`error formatting error snapshot 3`] = `
 "> 1 | <A.B>foo</A.B>
-    |  ^^^ Invalid JSX element"
+    | ^ Expected \\"#\\", \\"'\\", \\"\\\\n\\", \\"{\\", argumentElement, double apostrophes, end of input, or tagElement but \\"<\\" found."
 `;
 
-exports[`error formatting error snapshot  4`] = `
+exports[`error formatting error snapshot 4`] = `
 "  1 | 
 > 2 |     {gender, select,
     |     ^^^^^^^^^^^^^^^^
@@ -26,14 +26,12 @@ exports[`error formatting error snapshot  4`] = `
   5 |   "
 `;
 
-exports[`error formatting error snapshot  5`] = `
+exports[`error formatting error snapshot 5`] = `
 "> 1 | <>foo {bar}</> baz
-    | ^^^^^^^^^^^^^^ Fragments are not allowed"
+    | ^ Expected \\"#\\", \\"'\\", \\"\\\\n\\", \\"{\\", argumentElement, double apostrophes, end of input, or tagElement but \\"<\\" found."
 `;
 
-exports[`error formatting error snapshot  6`] = `
-"> 1 | <selfClosing/>
-    | ^^^^^^^^^^^^^^ self-closing JSX elements are not allowed"
+exports[`error formatting error snapshot 6`] = `
+"> 1 | <hyphen-tag></hyphen-tag>
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^ \\"hyphen-tag\\" is not a valid identifier"
 `;
-
-exports[`error formatting error snapshot  7`] = `""`;

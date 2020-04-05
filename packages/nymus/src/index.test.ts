@@ -512,7 +512,7 @@ describe('shared', () => {
 });
 
 function errorSnapshotTest(message: string) {
-  it('error snapshot ', async () => {
+  it('error snapshot', async () => {
     expect.assertions(1);
     try {
       await createComponent(message);
@@ -533,7 +533,6 @@ describe('error formatting', () => {
     }
   `);
   errorSnapshotTest('<>foo {bar}</> baz');
-  errorSnapshotTest('<selfClosing/>');
   errorSnapshotTest('<hyphen-tag></hyphen-tag>');
 });
 
