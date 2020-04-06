@@ -273,14 +273,14 @@ describe('shared', () => {
         expect(output).toBe('I am 0 years old.');
       });
 
-      it('should stringify false, null, and undefined', async () => {
+      it('should render false, null, and undefined like react renders them', async () => {
         const mf = await createComponent('{a} {b} {c}');
         const output = render(mf, {
           a: false,
           b: null,
           c: undefined,
         });
-        expect(output).toBe('false null undefined');
+        expect(output).toBe('  ');
       });
     });
 
@@ -568,22 +568,12 @@ describe('with jsx', () => {
     expect(result).toBe('Hel&#x27;lo Wo&quot;rld!');
   });
 
-  it('can interpolate objects', async () => {
-    const interpolate = await createComponent('a {b} c');
-    const result = render(interpolate, {
-      b: {
-        toString: () => 'b',
-      },
-    });
-    expect(result).toBe('a b c');
-  });
-
   it('can interpolate arrays', async () => {
     const interpolate = await createComponent('a {b} c');
     const result = render(interpolate, {
       b: ['x', 'y', 'z'],
     });
-    expect(result).toBe('a x,y,z c');
+    expect(result).toBe('a xyz c');
   });
 
   it('understands component named "React"', async () => {
@@ -610,6 +600,14 @@ describe('with jsx', () => {
     const withReact = await createComponent('foo {React} <A></A>baz');
     const result = render(withReact, { React: 'bar', A: () => null });
     expect(result).toBe('foo bar baz');
+  });
+
+  it('can interpolate React elements', async () => {
+    const withReact = await createComponent('foo {elm} bar');
+    const result = render(withReact, {
+      elm: React.createElement('span', null, 'baz')
+    });
+    expect(result).toBe('foo <span>baz</span> bar');
   });
 
   it('understands nested jsx', async () => {
