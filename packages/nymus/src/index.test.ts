@@ -605,7 +605,7 @@ describe('with jsx', () => {
   it('can interpolate React elements', async () => {
     const withReact = await createComponent('foo {elm} bar');
     const result = render(withReact, {
-      elm: React.createElement('span', null, 'baz')
+      elm: React.createElement('span', null, 'baz'),
     });
     expect(result).toBe('foo <span>baz</span> bar');
   });

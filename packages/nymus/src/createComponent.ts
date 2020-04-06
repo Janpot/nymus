@@ -99,7 +99,7 @@ function icuArgumentElementToJsFragment(
   elm: mf.ArgumentElement,
   context: ComponentContext
 ): Fragment {
-  const argIdentifier = context.addArgument(elm.value, 'string');
+  const argIdentifier = context.addArgument(elm.value, ArgumentType.ReactNode);
   return { elm: true, ast: argIdentifier };
 }
 
@@ -107,7 +107,7 @@ function icuSelectElementToJsFragment(
   elm: mf.SelectElement,
   context: ComponentContext
 ): Fragment {
-  const argIdentifier = context.addArgument(elm.value, 'string');
+  const argIdentifier = context.addArgument(elm.value, ArgumentType.string);
   if (!elm.options.hasOwnProperty('other')) {
     throw new TransformationError(
       'A select element requires an "other"',
@@ -136,7 +136,7 @@ function icuPluralElementToJsFragment(
   elm: mf.PluralElement,
   context: ComponentContext
 ): Fragment {
-  const argIdentifier = context.addArgument(elm.value, 'number');
+  const argIdentifier = context.addArgument(elm.value, ArgumentType.number);
   const formatted = context.useFormattedValue(
     argIdentifier,
     'number',
@@ -179,7 +179,7 @@ function icuNumberElementToJsFragment(
   elm: mf.NumberElement,
   context: ComponentContext
 ): Fragment {
-  const value = context.addArgument(elm.value, 'number');
+  const value = context.addArgument(elm.value, ArgumentType.number);
   const style = mf.isNumberSkeleton(elm.style)
     ? mf.convertNumberSkeletonToNumberFormatOptions(elm.style.tokens)
     : elm.style || 'decimal';
@@ -191,7 +191,7 @@ function icuDateElementToJsFragment(
   elm: mf.DateElement,
   context: ComponentContext
 ): Fragment {
-  const value = context.addArgument(elm.value, 'Date');
+  const value = context.addArgument(elm.value, ArgumentType.Date);
   const style = mf.isDateTimeSkeleton(elm.style)
     ? mf.parseDateTimeSkeleton(elm.style.pattern)
     : elm.style || 'medium';
@@ -203,7 +203,7 @@ function icuTimeElementToJsFragment(
   elm: mf.TimeElement,
   context: ComponentContext
 ): Fragment {
-  const value = context.addArgument(elm.value, 'Date');
+  const value = context.addArgument(elm.value, ArgumentType.Date);
   const style = mf.isDateTimeSkeleton(elm.style)
     ? mf.parseDateTimeSkeleton(elm.style.pattern)
     : elm.style || 'medium';
@@ -229,7 +229,7 @@ function tagElementToJsFragment(
         elm.location || null
       );
     }
-    const localName = context.addArgument(elm.value, 'React.Element');
+    const localName = context.addArgument(elm.value, ArgumentType.ReactElement);
     const ast = astUtil.buildReactElement(localName, [
       icuNodesToJsFragment(elm.children, context).ast,
     ]);
@@ -281,17 +281,27 @@ function createContext(module: Module): ComponentContext {
   return new ComponentContext(module);
 }
 
-type ArgumentType = 'string' | 'number' | 'Date' | 'React.Element';
+enum ArgumentType {
+  string,
+  number,
+  Date,
+  ReactElement,
+  ReactNode,
+}
 
 function getTypeAnnotation(type: ArgumentType) {
   switch (type) {
-    case 'string':
+    case ArgumentType.string:
       return t.tsStringKeyword();
-    case 'number':
+    case ArgumentType.number:
       return t.tsNumberKeyword();
-    case 'Date':
+    case ArgumentType.Date:
       return t.tsTypeReference(t.identifier('Date'));
-    case 'React.Element':
+    case ArgumentType.ReactNode:
+      return t.tsTypeReference(
+        t.tsQualifiedName(t.identifier('React'), t.identifier('ReactNode'))
+      );
+    case ArgumentType.ReactElement:
       return t.tsTypeReference(
         t.tsQualifiedName(t.identifier('React'), t.identifier('Element'))
       );
