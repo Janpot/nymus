@@ -144,14 +144,10 @@ function icuSelectElementToFragment(
     );
   }
   const { other, ...options } = elm.options;
-  const cases = new Map(
-    Object.entries(options).map(([name, caseNode]) => {
-      return [
-        t.binaryExpression('===', argIdentifier, t.stringLiteral(name)),
-        icuNodesToExpression(caseNode.value, context),
-      ];
-    })
-  );
+  const cases = Object.entries(options).map(([name, caseNode]) => ({
+    test: t.binaryExpression('===', argIdentifier, t.stringLiteral(name)),
+    consequent: icuNodesToExpression(caseNode.value, context),
+  }));
   const otherFragment = icuNodesToExpression(other.value, context);
   return createExpressionFragment(
     astUtil.buildTernaryChain(cases, otherFragment),
@@ -180,18 +176,16 @@ function icuPluralElementToFragment(
   const otherFragment = icuNodesToExpression(other.value, context);
   const withOffset = context.useWithOffset(argIdentifier, elm.offset);
   const localized = context.useLocalizedMatcher(withOffset, elm.pluralType);
-  const cases = new Map(
-    Object.entries(options).map(([name, caseNode]) => {
-      const test = name.startsWith('=')
-        ? t.binaryExpression(
-            '===',
-            withOffset,
-            t.numericLiteral(Number(name.slice(1)))
-          )
-        : t.binaryExpression('===', localized, t.stringLiteral(name));
-      return [test, icuNodesToExpression(caseNode.value, context)];
-    })
-  );
+  const cases = Object.entries(options).map(([name, caseNode]) => {
+    const test = name.startsWith('=')
+      ? t.binaryExpression(
+          '===',
+          withOffset,
+          t.numericLiteral(Number(name.slice(1)))
+        )
+      : t.binaryExpression('===', localized, t.stringLiteral(name));
+    return { test, consequent: icuNodesToExpression(caseNode.value, context) };
+  });
   context.exitPlural();
   return createExpressionFragment(
     astUtil.buildTernaryChain(cases, otherFragment),

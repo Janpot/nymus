@@ -59,17 +59,17 @@ export function buildReactElement(
  *     : alternate
  */
 export function buildTernaryChain(
-  cases: Map<t.Expression, t.Expression>,
+  cases: { test: t.Expression; consequent: t.Expression }[],
   alternate: t.Expression
 ): t.Expression {
-  if (cases.size <= 0) {
+  if (cases.length <= 0) {
     return alternate;
   }
-  const [[test, consequent], ...restCases] = cases;
+  const [{ test, consequent }, ...restCases] = cases;
   return t.conditionalExpression(
     test,
     consequent,
-    buildTernaryChain(new Map(restCases), alternate)
+    buildTernaryChain(restCases, alternate)
   );
 }
 
