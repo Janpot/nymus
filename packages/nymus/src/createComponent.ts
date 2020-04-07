@@ -125,10 +125,7 @@ function icuArgumentElementToFragment(
   elm: mf.ArgumentElement,
   context: ComponentContext
 ) {
-  const localIdentifier = context.addArgument(
-    elm.value,
-    ArgumentType.ReactNode
-  );
+  const localIdentifier = context.addArgument(elm.value, ArgumentType.Text);
   return createExpressionFragment(localIdentifier, context.react);
 }
 
@@ -249,7 +246,7 @@ function tagElementToFragment(elm: mf.TagElement, context: ComponentContext) {
       elm.location || null
     );
   }
-  const localName = context.addArgument(elm.value, ArgumentType.ReactElement);
+  const localName = context.addArgument(elm.value, ArgumentType.Markup);
   if (context.react) {
     const ast = t.jsxElement(
       t.jsxOpeningElement(t.jsxIdentifier(localName.name), [], false),
@@ -306,11 +303,11 @@ enum ArgumentType {
   string,
   number,
   Date,
-  ReactElement,
-  ReactNode,
+  Markup,
+  Text,
 }
 
-function getTypeAnnotation(type: ArgumentType) {
+function getTypeAnnotation(type: ArgumentType, context: ComponentContext) {
   switch (type) {
     case ArgumentType.string:
       return t.tsStringKeyword();
@@ -318,14 +315,28 @@ function getTypeAnnotation(type: ArgumentType) {
       return t.tsNumberKeyword();
     case ArgumentType.Date:
       return t.tsTypeReference(t.identifier('Date'));
-    case ArgumentType.ReactNode:
-      return t.tsTypeReference(
-        t.tsQualifiedName(t.identifier('React'), t.identifier('ReactNode'))
-      );
-    case ArgumentType.ReactElement:
-      return t.tsTypeReference(
-        t.tsQualifiedName(t.identifier('React'), t.identifier('Element'))
-      );
+    case ArgumentType.Text:
+      if (context.react) {
+        return t.tsTypeReference(
+          t.tsQualifiedName(t.identifier('React'), t.identifier('ReactNode'))
+        );
+      } else {
+        return t.tsStringKeyword();
+      }
+    case ArgumentType.Markup:
+      if (context.react) {
+        return t.tsTypeReference(
+          t.tsQualifiedName(t.identifier('React'), t.identifier('Element'))
+        );
+      } else {
+        const childrenParam = t.identifier('children');
+        childrenParam.typeAnnotation = t.tsTypeAnnotation(t.tsStringKeyword());
+        return t.tsFunctionType(
+          null,
+          [childrenParam],
+          t.tsTypeAnnotation(t.tsStringKeyword())
+        );
+      }
   }
 }
 
@@ -458,7 +469,7 @@ class ComponentContext {
           Array.from(this.args.entries(), ([name, arg]) => {
             return t.tsPropertySignature(
               t.identifier(name),
-              t.tsTypeAnnotation(getTypeAnnotation(arg.type))
+              t.tsTypeAnnotation(getTypeAnnotation(arg.type, this))
             );
           })
         )
