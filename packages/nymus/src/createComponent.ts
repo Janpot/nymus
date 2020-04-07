@@ -15,11 +15,37 @@ export type FormatOptions = ToType<
   UnifiedNumberFormatOptions | mf.ExtendedDateTimeFormatOptions
 >;
 
-interface Fragment {
-  // Flag to indicate whether this fragment contains parts that can be React Elements
-  elm: boolean;
-  // AST representation of the fragment
-  ast: t.Expression;
+interface LiteralFragment {
+  type: 'literal';
+  value: string;
+  isJsx: false;
+}
+
+interface ExpressionFragment {
+  type: 'dynamic';
+  value: t.Expression;
+  isJsx: boolean;
+}
+
+type TemplateFragment = LiteralFragment | ExpressionFragment;
+
+function createLiteralFragment(value: string): LiteralFragment {
+  return {
+    type: 'literal',
+    value,
+    isJsx: false,
+  };
+}
+
+function createExpressionFragment(
+  value: t.Expression,
+  isJsx: boolean
+): ExpressionFragment {
+  return {
+    type: 'dynamic',
+    value,
+    isJsx,
+  };
 }
 
 interface Argument {
@@ -27,51 +53,51 @@ interface Argument {
   type: ArgumentType;
 }
 
-function icuNodesToJsFragments(
+function icuNodesToExpression(
   icuNodes: mf.MessageFormatElement[],
   context: ComponentContext
-): Fragment[] {
-  if (icuNodes.length <= 0) {
-    return [];
-  } else {
-    return icuNodes.map((icuNode) => icuNodeToJsFragment(icuNode, context));
-  }
-}
+): t.Expression {
+  const fragments = icuNodes.map((icuNode) =>
+    icuNodeToJsFragment(icuNode, context)
+  );
 
-function flattenFragments(fragments: Fragment[]): Fragment {
-  if (fragments.length <= 0) {
-    return { elm: false, ast: t.stringLiteral('') };
-  } else if (fragments.length === 1) {
-    return fragments[0];
-  } else {
-    const elm = fragments.some((frag) => frag.elm);
-    if (elm) {
-      return {
-        elm,
-        ast: astUtil.buildReactElement(
-          t.memberExpression(t.identifier('React'), t.identifier('Fragment')),
-          fragments.map((frag) => frag.ast)
-        ),
-      };
-    } else {
-      const operands = fragments.map((fragment) => fragment.ast);
-      if (!t.isStringLiteral(operands[0])) {
-        operands.unshift(t.stringLiteral(''));
-      }
-      return {
-        elm,
-        ast: astUtil.buildBinaryChain('+', ...operands),
-      };
+  const containsJsx = fragments.some((fragment) => fragment.isJsx);
+
+  if (containsJsx) {
+    if (!context.react) {
+      throw new Error(
+        "Invariant: a fragment shouldn't be jsx when a string template is generated"
+      );
     }
+    return t.jsxFragment(
+      t.jsxOpeningFragment(),
+      t.jsxClosingFragment(),
+      fragments.map((fragment) => {
+        switch (fragment.type) {
+          case 'literal':
+            return t.jsxText(fragment.value);
+          case 'dynamic':
+            return t.jsxExpressionContainer(fragment.value);
+        }
+      })
+    );
+  } else {
+    if (fragments.length <= 0) {
+      return t.stringLiteral('');
+    }
+    return astUtil.buildBinaryChain(
+      '+',
+      t.stringLiteral(''),
+      ...fragments.map((fragment) => {
+        switch (fragment.type) {
+          case 'literal':
+            return t.stringLiteral(fragment.value);
+          case 'dynamic':
+            return fragment.value;
+        }
+      })
+    );
   }
-}
-
-function icuNodesToJsFragment(
-  icuNodes: mf.MessageFormatElement[],
-  context: ComponentContext
-): Fragment {
-  const fragments = icuNodesToJsFragments(icuNodes, context);
-  return flattenFragments(fragments);
 }
 
 function buildFormatterCall(formatter: t.Identifier, value: t.Identifier) {
@@ -88,25 +114,28 @@ function buildPluralRulesCall(formatter: t.Identifier, value: t.Identifier) {
   );
 }
 
-function icuLiteralElementToJsFragment(
+function icuLiteralElementToFragment(
   elm: mf.LiteralElement,
   context: ComponentContext
-): Fragment {
-  return { elm: false, ast: t.stringLiteral(elm.value) };
+) {
+  return createLiteralFragment(elm.value);
 }
 
-function icuArgumentElementToJsFragment(
+function icuArgumentElementToFragment(
   elm: mf.ArgumentElement,
   context: ComponentContext
-): Fragment {
-  const argIdentifier = context.addArgument(elm.value, ArgumentType.ReactNode);
-  return { elm: true, ast: argIdentifier };
+) {
+  const localIdentifier = context.addArgument(
+    elm.value,
+    ArgumentType.ReactNode
+  );
+  return createExpressionFragment(localIdentifier, context.react);
 }
 
-function icuSelectElementToJsFragment(
+function icuSelectElementToFragment(
   elm: mf.SelectElement,
   context: ComponentContext
-): Fragment {
+) {
   const argIdentifier = context.addArgument(elm.value, ArgumentType.string);
   if (!elm.options.hasOwnProperty('other')) {
     throw new TransformationError(
@@ -115,27 +144,25 @@ function icuSelectElementToJsFragment(
     );
   }
   const { other, ...options } = elm.options;
-  const caseFragments = Object.entries(options).map(([name, caseNode]) => {
-    return [name, icuNodesToJsFragment(caseNode.value, context)];
-  }) as [string, Fragment][];
-  const cases = caseFragments.map(([name, fragment]) => {
-    return [
-      t.binaryExpression('===', argIdentifier, t.stringLiteral(name)),
-      fragment.ast,
-    ];
-  }) as [t.Expression, t.Expression][];
-  const otherFragment = icuNodesToJsFragment(other.value, context);
-  return {
-    elm:
-      caseFragments.some(([, fragment]) => fragment.elm) || otherFragment.elm,
-    ast: astUtil.buildTernaryChain(cases, otherFragment.ast),
-  };
+  const cases = new Map(
+    Object.entries(options).map(([name, caseNode]) => {
+      return [
+        t.binaryExpression('===', argIdentifier, t.stringLiteral(name)),
+        icuNodesToExpression(caseNode.value, context),
+      ];
+    })
+  );
+  const otherFragment = icuNodesToExpression(other.value, context);
+  return createExpressionFragment(
+    astUtil.buildTernaryChain(cases, otherFragment),
+    false
+  );
 }
 
-function icuPluralElementToJsFragment(
+function icuPluralElementToFragment(
   elm: mf.PluralElement,
   context: ComponentContext
-): Fragment {
+) {
   const argIdentifier = context.addArgument(elm.value, ArgumentType.number);
   const formatted = context.useFormattedValue(
     argIdentifier,
@@ -150,126 +177,126 @@ function icuPluralElementToJsFragment(
     );
   }
   const { other, ...options } = elm.options;
-  const otherFragment = icuNodesToJsFragment(other.value, context);
+  const otherFragment = icuNodesToExpression(other.value, context);
   const withOffset = context.useWithOffset(argIdentifier, elm.offset);
   const localized = context.useLocalizedMatcher(withOffset, elm.pluralType);
-  const caseFragments = Object.entries(options).map(([name, caseNode]) => {
-    return [name, icuNodesToJsFragment(caseNode.value, context)];
-  }) as [string, Fragment][];
-  const cases = caseFragments.map(([name, fragment]) => {
-    const test = name.startsWith('=')
-      ? t.binaryExpression(
-          '===',
-          withOffset,
-          t.numericLiteral(Number(name.slice(1)))
-        )
-      : t.binaryExpression('===', localized, t.stringLiteral(name));
-    return [test, fragment.ast];
-  }) as [t.Expression, t.Expression][];
-  const ast = astUtil.buildTernaryChain(cases, otherFragment.ast);
+  const cases = new Map(
+    Object.entries(options).map(([name, caseNode]) => {
+      const test = name.startsWith('=')
+        ? t.binaryExpression(
+            '===',
+            withOffset,
+            t.numericLiteral(Number(name.slice(1)))
+          )
+        : t.binaryExpression('===', localized, t.stringLiteral(name));
+      return [test, icuNodesToExpression(caseNode.value, context)];
+    })
+  );
   context.exitPlural();
-  return {
-    elm:
-      caseFragments.some(([, fragment]) => fragment.elm) || otherFragment.elm,
-    ast,
-  };
+  return createExpressionFragment(
+    astUtil.buildTernaryChain(cases, otherFragment),
+    false
+  );
 }
 
-function icuNumberElementToJsFragment(
+function icuNumberElementToFragment(
   elm: mf.NumberElement,
   context: ComponentContext
-): Fragment {
+) {
   const value = context.addArgument(elm.value, ArgumentType.number);
   const style = mf.isNumberSkeleton(elm.style)
     ? mf.convertNumberSkeletonToNumberFormatOptions(elm.style.tokens)
     : elm.style || 'decimal';
-  const formattedValue = context.useFormattedValue(value, 'number', style);
-  return { elm: false, ast: formattedValue };
+  return createExpressionFragment(
+    context.useFormattedValue(value, 'number', style),
+    false
+  );
 }
 
-function icuDateElementToJsFragment(
+function icuDateElementToFragment(
   elm: mf.DateElement,
   context: ComponentContext
-): Fragment {
+) {
   const value = context.addArgument(elm.value, ArgumentType.Date);
   const style = mf.isDateTimeSkeleton(elm.style)
     ? mf.parseDateTimeSkeleton(elm.style.pattern)
     : elm.style || 'medium';
-  const formattedValue = context.useFormattedValue(value, 'date', style);
-  return { elm: false, ast: formattedValue };
+  return createExpressionFragment(
+    context.useFormattedValue(value, 'date', style),
+    false
+  );
 }
 
-function icuTimeElementToJsFragment(
+function icuTimeElementToFragment(
   elm: mf.TimeElement,
   context: ComponentContext
-): Fragment {
+) {
   const value = context.addArgument(elm.value, ArgumentType.Date);
   const style = mf.isDateTimeSkeleton(elm.style)
     ? mf.parseDateTimeSkeleton(elm.style.pattern)
     : elm.style || 'medium';
-  const formattedValue = context.useFormattedValue(value, 'time', style);
-  return { elm: false, ast: formattedValue };
+  return createExpressionFragment(
+    context.useFormattedValue(value, 'time', style),
+    false
+  );
 }
 
-function icuPoundElementToJsFragment(
+function icuPoundElementToFragment(
   elm: mf.PoundElement,
   context: ComponentContext
-): Fragment {
-  return { elm: false, ast: context.getPound() };
+) {
+  return createExpressionFragment(context.getPound(), false);
 }
 
-function tagElementToJsFragment(
-  elm: mf.TagElement,
-  context: ComponentContext
-): Fragment {
+function tagElementToFragment(elm: mf.TagElement, context: ComponentContext) {
+  if (!t.isValidIdentifier(elm.value)) {
+    throw new TransformationError(
+      `"${elm.value}" is not a valid identifier`,
+      elm.location || null
+    );
+  }
+  const localName = context.addArgument(elm.value, ArgumentType.ReactElement);
   if (context.react) {
-    if (!t.isValidIdentifier(elm.value)) {
-      throw new TransformationError(
-        `"${elm.value}" is not a valid identifier`,
-        elm.location || null
-      );
-    }
-    const localName = context.addArgument(elm.value, ArgumentType.ReactElement);
-    const ast = astUtil.buildReactElement(localName, [
-      icuNodesToJsFragment(elm.children, context).ast,
-    ]);
-    return { elm: true, ast };
+    const ast = t.jsxElement(
+      t.jsxOpeningElement(t.jsxIdentifier(localName.name), [], false),
+      t.jsxClosingElement(t.jsxIdentifier(localName.name)),
+      [t.jsxExpressionContainer(icuNodesToExpression(elm.children, context))],
+      false
+    );
+    return createExpressionFragment(ast, true);
   } else {
-    return {
-      elm: false,
-      ast: astUtil.buildBinaryChain(
-        '+',
-        t.stringLiteral(`<${elm.value}>`),
-        icuNodesToJsFragment(elm.children, context).ast,
-        t.stringLiteral(`</${elm.value}>`)
-      ),
-    };
+    return createExpressionFragment(
+      t.callExpression(localName, [
+        icuNodesToExpression(elm.children, context),
+      ]),
+      false
+    );
   }
 }
 
 function icuNodeToJsFragment(
   icuNode: mf.MessageFormatElement,
   context: ComponentContext
-): Fragment {
+): TemplateFragment {
   switch (icuNode.type) {
     case mf.TYPE.literal:
-      return icuLiteralElementToJsFragment(icuNode, context);
+      return icuLiteralElementToFragment(icuNode, context);
     case mf.TYPE.argument:
-      return icuArgumentElementToJsFragment(icuNode, context);
+      return icuArgumentElementToFragment(icuNode, context);
     case mf.TYPE.select:
-      return icuSelectElementToJsFragment(icuNode, context);
+      return icuSelectElementToFragment(icuNode, context);
     case mf.TYPE.plural:
-      return icuPluralElementToJsFragment(icuNode, context);
+      return icuPluralElementToFragment(icuNode, context);
     case mf.TYPE.number:
-      return icuNumberElementToJsFragment(icuNode, context);
+      return icuNumberElementToFragment(icuNode, context);
     case mf.TYPE.date:
-      return icuDateElementToJsFragment(icuNode, context);
+      return icuDateElementToFragment(icuNode, context);
     case mf.TYPE.time:
-      return icuTimeElementToJsFragment(icuNode, context);
+      return icuTimeElementToFragment(icuNode, context);
     case mf.TYPE.pound:
-      return icuPoundElementToJsFragment(icuNode, context);
+      return icuPoundElementToFragment(icuNode, context);
     case mf.TYPE.tag:
-      return tagElementToJsFragment(icuNode, context);
+      return tagElementToFragment(icuNode, context);
     default:
       throw new Error(
         `Unknown AST node type ${(icuNode as mf.MessageFormatElement).type}`
@@ -471,13 +498,13 @@ export default function icuToReactComponent(
   const icuAst = mf.parse(icuStr, {
     captureLocation: true,
   });
-  const returnValue = icuNodesToJsFragment(icuAst, context);
+  const returnValue = icuNodesToExpression(icuAst, context);
   const ast = t.functionDeclaration(
     t.identifier(componentName),
     context.buildArgsAst(),
     t.blockStatement([
       ...context.buildSharedConstsAst(),
-      t.returnStatement(returnValue.ast),
+      t.returnStatement(returnValue),
     ])
   );
 

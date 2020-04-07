@@ -37,18 +37,28 @@ interface Messages {
   [key: string]: string;
 }
 
-type ComponentsOf<T> = {
-  [K in keyof T]: React.FunctionComponent<any>;
+type ComponentsOf<T, C> = {
+  [K in keyof T]: C;
 };
 
-export async function createComponents<C, T extends Messages>(
+export async function createComponents<T extends Messages>(
+  messages: T,
+  options?: CreateModuleOptions & { react?: true },
+  intlMock?: typeof Intl
+): Promise<ComponentsOf<T, React.FunctionComponent<any>>>;
+export async function createComponents<T extends Messages>(
+  messages: T,
+  options: CreateModuleOptions & { react: false },
+  intlMock?: typeof Intl
+): Promise<ComponentsOf<T, (props?: any) => string>>;
+export async function createComponents<T extends Messages, C>(
   messages: T,
   options: CreateModuleOptions = {},
   intlMock: typeof Intl = Intl
-): Promise<ComponentsOf<T>> {
+): Promise<ComponentsOf<T, C>> {
   const { code } = await createModule(messages, options);
   // console.log(code);
-  const components = importFrom(code, options, intlMock) as ComponentsOf<T>;
+  const components = importFrom(code, options, intlMock) as ComponentsOf<T, C>;
   return components;
 }
 
@@ -57,10 +67,24 @@ export async function createComponent(
   options?: CreateModuleOptions,
   intlMock: typeof Intl = Intl
 ): Promise<React.FunctionComponent<any>> {
-  const { Component } = await createComponents<
-    React.FunctionComponent<any>,
-    { Component: string }
-  >({ Component: message }, { ...options, react: true }, intlMock);
+  const { Component } = await createComponents<{ Component: string }>(
+    { Component: message },
+    { ...options, react: true },
+    intlMock
+  );
+  return Component;
+}
+
+export async function createTemplate(
+  message: string,
+  options?: CreateModuleOptions,
+  intlMock: typeof Intl = Intl
+): Promise<(props?: any) => string> {
+  const { Component } = await createComponents<{ Component: string }>(
+    { Component: message },
+    { ...options, react: false },
+    intlMock
+  );
   return Component;
 }
 

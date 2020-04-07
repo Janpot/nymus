@@ -1,6 +1,11 @@
 /* eslint-env jest */
 
-import { createComponents, createComponent, render } from './testUtils';
+import {
+  createComponents,
+  createComponent,
+  render,
+  createTemplate,
+} from './testUtils';
 import * as React from 'react';
 import { formatError } from './index';
 
@@ -22,6 +27,12 @@ describe('shared', () => {
     const result = render(empty);
     expect(result).toBe('');
     expect(typeof empty({})).toBe('string');
+  });
+
+  it('creates empty component', async () => {
+    const empty = await createTemplate('', { react: false });
+    const result = empty();
+    expect(result).toBe('');
   });
 
   it('creates simple text component', async () => {
@@ -577,12 +588,15 @@ describe('with jsx', () => {
   });
 
   it('understands component named "React"', async () => {
-    const { React } = await createComponents(
+    const components = await createComponents(
       { React: 'foo <A>bar</A>' },
       { react: true }
     );
-    expect(React).toHaveProperty('displayName', 'React');
-    const result = render(React, { A: 'span' });
+    expect(components.React).toHaveProperty('displayName', 'React');
+    const result = render(components.React, {
+      A: ({ children }: React.PropsWithChildren<{}>) =>
+        React.createElement('span', null, children),
+    });
     expect(result).toBe('foo <span>bar</span>');
   });
 
@@ -591,9 +605,11 @@ describe('with jsx', () => {
       { React: 'foo <A>bar</A>' },
       { react: false }
     );
-    expect(typeof React({})).toBe('string');
-    const result = render(React);
-    expect(result).toBe('foo &lt;A&gt;bar&lt;/A&gt;');
+    const result = React({
+      A: (children: string) => `_${children}_`,
+    });
+    expect(typeof result).toBe('string');
+    expect(result).toBe('foo _bar_');
   });
 
   it('can interpolate "React"', async () => {
