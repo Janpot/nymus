@@ -38,7 +38,7 @@ jobs:
         id: full-icu-cache
         with:
           path: ${{ steps.icu-cache.outputs.dir }}
-          key: ${{ runner.os }}-icu
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-icu
       - name: Download ICU data
         id: full-icu
         if: steps.full-icu-cache.outputs.cache-hit != 'true'
@@ -61,7 +61,3 @@ jobs:
           CI: true
           TZ: Europe/Brussels
           NODE_ICU_DATA: ${{ steps.icu-cache.outputs.dir }}
-
-      - name: Publish
-        if: github.ref == 'ref/head/master'
-        run: yarn run publish
