@@ -61,3 +61,7 @@ jobs:
           CI: true
           TZ: Europe/Brussels
           NODE_ICU_DATA: ${{ steps.icu-cache.outputs.dir }}
+
+      - name: Publish
+        if: github.ref == 'ref/head/master'
+        run: yarn run publish
