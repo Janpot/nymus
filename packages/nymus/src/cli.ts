@@ -59,7 +59,7 @@ async function main() {
       const { code, declarations } = await transformFile(resolvedFile, {
         ...argv,
         // force this for now
-        react: true,
+        target: 'react',
       });
       const outputDirectory = getOutputDirectory(resolvedFile);
       const fileName = path.basename(resolvedFile);

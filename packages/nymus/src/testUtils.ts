@@ -20,7 +20,7 @@ function importFrom(
 
   const exports = {};
   const requireFn = (moduleId: string) => {
-    if (moduleId === 'react' && !options.react) {
+    if (moduleId === 'react' && options.target !== 'react') {
       throw new Error('importing react is not allowed');
     }
     return require(moduleId);
@@ -43,12 +43,12 @@ type ComponentsOf<T, C> = {
 
 export async function createComponents<T extends Messages>(
   messages: T,
-  options?: CreateModuleOptions & { react?: true },
+  options?: CreateModuleOptions & { target?: 'react' },
   intlMock?: typeof Intl
 ): Promise<ComponentsOf<T, React.FunctionComponent<any>>>;
 export async function createComponents<T extends Messages>(
   messages: T,
-  options: CreateModuleOptions & { react: false },
+  options: CreateModuleOptions & { target: 'string' },
   intlMock?: typeof Intl
 ): Promise<ComponentsOf<T, (props?: any) => string>>;
 export async function createComponents<T extends Messages, C>(
@@ -69,7 +69,7 @@ export async function createComponent(
 ): Promise<React.FunctionComponent<any>> {
   const { Component } = await createComponents<{ Component: string }>(
     { Component: message },
-    { ...options, react: true },
+    { ...options, target: 'react' },
     intlMock
   );
   return Component;
@@ -82,7 +82,7 @@ export async function createTemplate(
 ): Promise<(props?: any) => string> {
   const { Component } = await createComponents<{ Component: string }>(
     { Component: message },
-    { ...options, react: false },
+    { ...options, target: 'string' },
     intlMock
   );
   return Component;

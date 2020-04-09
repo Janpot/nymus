@@ -30,7 +30,7 @@ describe('shared', () => {
   });
 
   it('creates empty component', async () => {
-    const empty = await createTemplate('', { react: false });
+    const empty = await createTemplate('', { target: 'string' });
     const result = empty();
     expect(result).toBe('');
   });
@@ -590,7 +590,7 @@ describe('with jsx', () => {
   it('understands component named "React"', async () => {
     const components = await createComponents(
       { React: 'foo <A>bar</A>' },
-      { react: true }
+      { target: 'react' }
     );
     expect(components.React).toHaveProperty('displayName', 'React');
     const result = render(components.React, {
@@ -603,7 +603,7 @@ describe('with jsx', () => {
   it('ignores jsx when react is disabled', async () => {
     const { React } = await createComponents(
       { React: 'foo <A>bar</A>' },
-      { react: false }
+      { target: 'string' }
     );
     const result = React({
       A: (children: string) => `_${children}_`,

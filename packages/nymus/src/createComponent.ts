@@ -64,7 +64,7 @@ function icuNodesToExpression(
   const containsJsx = fragments.some((fragment) => fragment.isJsx);
 
   if (containsJsx) {
-    if (!context.react) {
+    if (context.target !== 'react') {
       throw new Error(
         "Invariant: a fragment shouldn't be jsx when a string template is generated"
       );
@@ -126,7 +126,7 @@ function icuArgumentElementToFragment(
   context: ComponentContext
 ) {
   const localIdentifier = context.addArgument(elm.value, ArgumentType.Text);
-  return createExpressionFragment(localIdentifier, context.react);
+  return createExpressionFragment(localIdentifier, context.target === 'react');
 }
 
 function icuSelectElementToFragment(
@@ -247,7 +247,7 @@ function tagElementToFragment(elm: mf.TagElement, context: ComponentContext) {
     );
   }
   const localName = context.addArgument(elm.value, ArgumentType.Markup);
-  if (context.react) {
+  if (context.target === 'react') {
     const ast = t.jsxElement(
       t.jsxOpeningElement(t.jsxIdentifier(localName.name), [], false),
       t.jsxClosingElement(t.jsxIdentifier(localName.name)),
@@ -316,7 +316,7 @@ function getTypeAnnotation(type: ArgumentType, context: ComponentContext) {
     case ArgumentType.Date:
       return t.tsTypeReference(t.identifier('Date'));
     case ArgumentType.Text:
-      if (context.react) {
+      if (context.target === 'react') {
         return t.tsTypeReference(
           t.tsQualifiedName(t.identifier('React'), t.identifier('ReactNode'))
         );
@@ -324,7 +324,7 @@ function getTypeAnnotation(type: ArgumentType, context: ComponentContext) {
         return t.tsStringKeyword();
       }
     case ArgumentType.Markup:
-      if (context.react) {
+      if (context.target === 'react') {
         return t.tsTypeReference(
           t.tsQualifiedName(t.identifier('React'), t.identifier('Element'))
         );
@@ -380,8 +380,8 @@ class ComponentContext {
     return this._module.formats;
   }
 
-  get react() {
-    return this._module.react;
+  get target() {
+    return this._module.target;
   }
 
   addArgument(name: string, type: ArgumentType): t.Identifier {

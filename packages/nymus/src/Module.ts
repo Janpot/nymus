@@ -32,8 +32,10 @@ interface SharedConst {
   init: t.Expression;
 }
 
+export type ModuleTarget = 'react' | 'string';
+
 export default class Module {
-  readonly react: boolean;
+  readonly target: ModuleTarget;
   readonly scope: Scope;
   readonly exports: Map<string, Export>;
   readonly formatters: Map<string, Formatter>;
@@ -42,9 +44,9 @@ export default class Module {
   readonly formats: Formats;
 
   constructor(options: CreateModuleOptions) {
-    this.react = options.react || false;
+    this.target = options.target || 'react';
     this.scope = new Scope();
-    if (this.react) {
+    if (this.target === 'react') {
       this.scope.createBinding('React');
     }
     this.exports = new Map();
@@ -155,7 +157,7 @@ export default class Module {
       }
     }
     return [
-      ...(this.react
+      ...(this.target === 'react'
         ? [
             t.importDeclaration(
               [t.importNamespaceSpecifier(t.identifier('React'))],

@@ -2,7 +2,7 @@ import * as t from '@babel/types';
 import * as babel from '@babel/core';
 import { Formats } from './formats';
 import { codeFrameColumns, BabelCodeFrameOptions } from '@babel/code-frame';
-import Module from './Module';
+import Module, { ModuleTarget } from './Module';
 import TsPlugin from '@babel/plugin-transform-typescript';
 
 interface Messages {
@@ -13,6 +13,7 @@ export interface CreateModuleOptions {
   locale?: string;
   formats?: Partial<Formats>;
   ast?: boolean;
+  target?: ModuleTarget;
   react?: boolean;
   typescript?: boolean;
   declarations?: boolean;

@@ -10,7 +10,7 @@ const icuLoader: loader.Loader = function icuLoader(source) {
   const options = loaderUtils.getOptions(this);
   const callback = this.async();
   const messages = JSON.parse(String(source));
-  createModule(messages, { ...options, react: true })
+  createModule(messages, { ...options, target: 'react' })
     .then(async ({ code, declarations }) => {
       if (options.declarations && declarations) {
         const declarationsPath = this.resourcePath + '.d.ts';
