@@ -84,6 +84,8 @@ function icuNodesToExpression(
   } else {
     if (fragments.length <= 0) {
       return t.stringLiteral('');
+    } else if (fragments.length === 1 && fragments[0].type === 'literal') {
+      return t.stringLiteral(fragments[0].value);
     }
     return astUtil.buildBinaryChain(
       '+',
